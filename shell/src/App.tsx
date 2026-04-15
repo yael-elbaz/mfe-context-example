@@ -1,9 +1,28 @@
-import React, { useEffect, lazy, Suspense } from 'react';
+import React, { useEffect, lazy, Suspense, Component, ReactNode } from 'react';
 import { useAppContext } from './store/appContext';
 import { Header } from './components/Header';
 
 // טעינה עצלה של ה-MFE מהשרת שלו
 const TasksMFE = lazy(() => import('mfe_tasks/App'));
+
+// Error Boundary לתפיסת שגיאות בטעינת MFEs
+class MFEErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
+  state = { error: null };
+  static getDerivedStateFromError(error: Error) { return { error }; }
+  render() {
+    if (this.state.error) {
+      return (
+        <div style={{ padding: '24px', color: '#c00', background: '#fff0f0', borderRadius: '8px' }}>
+          <strong>שגיאה בטעינת מודול משימות</strong>
+          <pre style={{ fontSize: '12px', marginTop: '8px' }}>
+            {(this.state.error as Error).message}
+          </pre>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 // סימולציה של קריאת API לטעינת פרטי משתמש
 async function fetchUserSession() {
@@ -15,6 +34,7 @@ async function fetchUserSession() {
       name: 'דנה לוי',
       email: 'dana@org.co.il',
       roles: ['admin', 'user'],
+      image: 'https://i.pravatar.cc/150?img=47',
     },
     availableUnits: [
       { id: 'unit-1', name: 'מחלקת כספים', department: 'finance' },
@@ -26,12 +46,12 @@ async function fetchUserSession() {
 
 const App: React.FC = () => {
   const { user, setUser, setSelectedUnit } = useAppContext();
-  const setAvailableUnits = useAppContext((s) => s.availableUnits);
 
   useEffect(() => {
     // טוען את פרטי המשתמש בעת אתחול ה-Shell ומכניס לסטור
     fetchUserSession().then(({ user, availableUnits }) => {
-      useAppContext.setState({ user, availableUnits });
+      setUser(user);
+      useAppContext.setState({ availableUnits });
       // ברירת מחדל — יחידה ראשונה
       setSelectedUnit(availableUnits[0]);
     });
@@ -60,9 +80,11 @@ const App: React.FC = () => {
 
       <main style={{ padding: '24px' }}>
         {/* כאן ניתן לנתב בין MFEs שונים לפי route */}
-        <Suspense fallback={<div>טוען מודול משימות...</div>}>
-          <TasksMFE />
-        </Suspense>
+        <MFEErrorBoundary>
+          <Suspense fallback={<div>טוען מודול משימות...</div>}>
+            <TasksMFE />
+          </Suspense>
+        </MFEErrorBoundary>
       </main>
     </div>
   );

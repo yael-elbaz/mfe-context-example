@@ -5,6 +5,7 @@
  * בסביבת dev standalone, מזריקים נתוני mock לסטור.
  */
 import React from 'react';
+import './index.css';
 import ReactDOM from 'react-dom/client';
 import { useAppContext } from 'shell/store'; // בפיתוח standalone — נדרש שה-Shell יירוץ
 import App from './App';

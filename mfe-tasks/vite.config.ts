@@ -1,9 +1,11 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
 import federation from '@originjs/vite-plugin-federation';
 
 export default defineConfig({
   plugins: [
+    tailwindcss(),
     react(),
     federation({
       name: 'mfe_tasks',
@@ -24,9 +26,11 @@ export default defineConfig({
   ],
   server: {
     port: 3001,
+    cors: true,
   },
   preview: {
     port: 3001,
+    cors: true,
   },
   build: {
     target: 'esnext',
