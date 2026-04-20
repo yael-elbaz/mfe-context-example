@@ -30,7 +30,7 @@ const UnitDropdown: React.FC = () => {
           direction: 'rtl',
         }}
       >
-        <span style={{ fontFamily: 'Rubik', fontSize: '14px', color: '#00033D' }}>
+        <span className="text-navy" style={{ fontFamily: 'Rubik', fontSize: '14px' }}>
           {selectedUnit?.name ?? '—'}
         </span>
         <ChevronDown />
@@ -45,8 +45,8 @@ const UnitDropdown: React.FC = () => {
             <button
               key={unit.id}
               onClick={() => { setSelectedUnit(unit); setOpen(false); }}
-              className="w-full text-right px-4 py-2 hover:bg-gray-50"
-              style={{ fontFamily: 'Rubik', fontSize: '14px', color: '#00033D', direction: 'rtl' }}
+              className="w-full text-right px-4 py-2 hover:bg-gray-50 text-navy"
+              style={{ fontFamily: 'Rubik', fontSize: '14px', direction: 'rtl' }}
             >
               {unit.name}
             </button>
@@ -86,27 +86,27 @@ export const UserPopup: React.FC<Props> = ({ onClose }) => {
       }}
     >
       {/* ── חלק עליון: פרטי משתמש + בחירת יחידה — רקע אפור ── */}
-      <div className="flex flex-col gap-3" style={{ background: '#F8F9FD', borderRadius: '8px', padding: '12px' }}>
+      <div className="flex flex-col gap-3 bg-surface" style={{ borderRadius: '8px', padding: '12px' }}>
         <div className="flex flex-col gap-1">
           <span
+            className="text-blue-heading"
             style={{
               fontFamily: 'Rubik',
               fontWeight: 500,
               fontSize: '18px',
               lineHeight: '22.06px',
-              color: '#1E3BA2',
               textAlign: 'right',
             }}
           >
             {user?.name ?? 'ישראל ישראלי'}
           </span>
           <span
+            className="text-gray-muted"
             style={{
               fontFamily: 'Rubik',
               fontWeight: 400,
               fontSize: '16px',
               lineHeight: '22.06px',
-              color: '#848282',
               textAlign: 'right',
             }}
           >
@@ -116,7 +116,7 @@ export const UserPopup: React.FC<Props> = ({ onClose }) => {
 
         {/* בחירת יחידה */}
         <div className="flex flex-col gap-2">
-          <span style={{ fontFamily: 'Rubik', fontSize: '13px', color: '#00033D', textAlign: 'right' }}>
+          <span className="text-navy text-right" style={{ fontFamily: 'Rubik', fontSize: '13px' }}>
             בחירת יחידה
           </span>
           <UnitDropdown />
@@ -135,13 +135,13 @@ export const UserPopup: React.FC<Props> = ({ onClose }) => {
           gap: '12px',
         }}
       >
-        <span style={{ fontFamily: 'Rubik', fontSize: '12px', color: '#848282', textAlign: 'right' }}>
+        <span className="text-gray-muted text-right" style={{ fontFamily: 'Rubik', fontSize: '12px' }}>
           סגן מידע
         </span>
 
         {/* בחירת מחוז */}
         <div className="flex flex-col gap-2">
-          <span style={{ fontFamily: 'Rubik', fontSize: '13px', color: '#00033D', textAlign: 'right' }}>
+          <span className="text-navy text-right" style={{ fontFamily: 'Rubik', fontSize: '13px' }}>
             בחירת מחוז
           </span>
           <div className="flex flex-row-reverse gap-2 w-full">
@@ -156,9 +156,9 @@ export const UserPopup: React.FC<Props> = ({ onClose }) => {
                   fontFamily: 'Rubik',
                   fontSize: '13px',
                   cursor: 'pointer',
-                  background: activeDistrict === d ? '#4395FF' : '#FFFFFF',
+                  background: activeDistrict === d ? 'var(--color-active)' : '#FFFFFF',
                   border: activeDistrict === d ? '1px solid #01278C' : '1px solid #C5CBDD',
-                  color: activeDistrict === d ? '#FFFFFF' : '#00033D',
+                  color: activeDistrict === d ? '#FFFFFF' : 'var(--color-navy)',
                 }}
               >
                 {d}
@@ -169,7 +169,7 @@ export const UserPopup: React.FC<Props> = ({ onClose }) => {
 
         {/* בחירת יחידה — חלק תחתון */}
         <div className="flex flex-col gap-2">
-          <span style={{ fontFamily: 'Rubik', fontSize: '13px', color: '#00033D', textAlign: 'right' }}>
+          <span className="text-navy text-right" style={{ fontFamily: 'Rubik', fontSize: '13px' }}>
             בחירת יחידה
           </span>
           <UnitDropdown />
@@ -177,7 +177,7 @@ export const UserPopup: React.FC<Props> = ({ onClose }) => {
 
         {/* בחירת אגף — ללא עיצוב */}
         <div className="flex flex-col gap-2">
-          <span style={{ fontFamily: 'Rubik', fontSize: '13px', color: '#00033D', textAlign: 'right' }}>
+          <span className="text-navy text-right" style={{ fontFamily: 'Rubik', fontSize: '13px' }}>
             בחירת אגף
           </span>
           <div className="flex flex-wrap gap-2">

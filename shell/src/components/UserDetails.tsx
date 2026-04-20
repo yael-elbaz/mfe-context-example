@@ -48,12 +48,12 @@ export const UserDetails: React.FC = () => {
     <div className="relative flex items-center gap-2" ref={ref}>
       <Avatar image={user?.image} name={user?.name} />
       <span
+        className="hidden lg:inline text-navy"
         style={{
           fontFamily: 'Rubik',
           fontWeight: 400,
           fontSize: '16px',
           lineHeight: '22.06px',
-          color: '#00033D',
         }}
       >
         {user?.name ?? 'ישראל ישראלי'}

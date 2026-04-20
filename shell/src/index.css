@@ -1,1 +1,24 @@
 @import "tailwindcss";
+
+:root {
+  --header-height: 44px;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --header-height: 66px;
+  }
+}
+
+@theme {
+  /* טקסט */
+  --color-navy:        #00033D;   /* שם משתמש בהדר, labels */
+  --color-blue-heading: #1E3BA2;  /* שם משתמש בפופאפ */
+  --color-blue-sub:    #1B2B6B;   /* placeholder חיפוש */
+  --color-gray-muted:  #848282;   /* מספר מס׳, תוויות משנה */
+
+  /* רקעים */
+  --color-surface:     #F8F9FD;   /* רקע פופאפ / hover */
+  --color-search-bg:   #F8F8F8;   /* רקע שדה חיפוש */
+  --color-active:      #4395FF;   /* כפתור נבחר */
+}

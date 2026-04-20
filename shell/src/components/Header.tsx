@@ -24,57 +24,72 @@ const SearchIcon = () => (
   </svg>
 );
 
+const HamburgerIcon = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M3 6h18M3 12h18M3 18h18" stroke="#1C2B5E" strokeWidth="1.5" strokeLinecap="round" />
+  </svg>
+);
+
 // ── Header ───────────────────────────────────────────────────────
 
 export const Header: React.FC = () => {
   return (
     <header
-      className="fixed flex items-center justify-between bg-white"
+      className="fixed flex items-center justify-between lg:justify-end bg-white h-11 md:h-[66px]"
       style={{
         top: 0,
         left: 0,
         right: 0,
-        width: '100%',
-        height: '66px',
+        width: '100vw',
         padding: '16px',
         boxShadow: '0px 3px 5.9px 14px #00000040',
         zIndex: 100,
         direction: 'rtl',
+        margin: 0,
+        boxSizing: 'border-box',
       }}
     >
-      {/* לוגו — ימין */}
-      <div
-        className="flex-shrink-0 bg-gray-100 flex items-center justify-center overflow-hidden"
-        style={{ width: '52px', height: '50px', borderRadius: '7px' }}
-      >
-        {/* TODO: החלף ב-<img src="/logo.png" alt="לוגו" /> כשהקובץ יסופק */}
-        <span className="text-xs text-gray-400">לוגו</span>
+      {/* לוגו + המבורגר — מוצגים רק על tablet/mobile, צמודים יחד */}
+      <div className="lg:hidden flex items-center gap-2">
+        <button className="flex items-center justify-center" aria-label="תפריט">
+          <HamburgerIcon />
+        </button>
+        <div
+          className="flex-shrink-0 bg-gray-100 flex items-center justify-center overflow-hidden w-7 h-[27px] md:w-[52px] md:h-[50px]"
+          style={{ borderRadius: '7px' }}
+        >
+          <span className="text-xs text-gray-400">לוגו</span>
+        </div>
       </div>
 
       <div className="flex items-center gap-4">
-        {/* חיפוש כללי */}
+        {/* בר חיפוש מלא — desktop/laptop בלבד */}
         <div
-          className="flex items-center flex-row-reverse gap-2"
+          className="hidden lg:flex items-center flex-row-reverse gap-2 bg-search-bg"
           style={{
             width: '245px',
             height: '38px',
             borderRadius: '38px',
-            background: '#F8F8F8',
             paddingInlineStart: '20px',
             paddingInlineEnd: '16px',
           }}
         >
           <span
-            className="flex-1 text-right bg-transparent outline-none text-sm"
-            style={{ fontFamily: 'Rubik', color: '#00033D', opacity: 0.4 }}
+            className="flex-1 text-right bg-transparent outline-none text-sm text-navy opacity-40"
+            style={{ fontFamily: 'Rubik' }}
           >
             חיפוש כללי
           </span>
           <SearchIcon />
         </div>
 
-        {/* איקונים: לוח שנה + פעמון */}
-        <div className="flex items-center" style={{ gap: '13px' }}>
+        {/* אייקון חיפוש בודד — tablet/mobile בלבד */}
+        <button className="lg:hidden flex items-center justify-center" aria-label="חיפוש">
+          <SearchIcon />
+        </button>
+
+        {/* איקונים: לוח שנה + פעמון — מוסתר על mobile */}
+        <div className="hidden md:flex items-center" style={{ gap: '13px' }}>
           <CalendarIcon />
           <BellIcon />
         </div>
