@@ -16,7 +16,7 @@ const Avatar: React.FC<{ image?: string; name?: string }> = ({ image, name }) =>
       <img
         src={image}
         alt={name ?? 'משתמש'}
-        style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }}
+        style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', border: '1.5px solid #00033D', opacity: 1 }}
       />
     );
   }

@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+/* פונטים נטענים דינמית מ-loadFonts.ts לפי ה-env */
+
 :root {
   --header-height: 44px;
 }
@@ -10,7 +12,15 @@
   }
 }
 
+@layer base {
+  * {
+    font-family: 'Rubik', sans-serif;
+  }
+}
+
 @theme {
+  --font-sans: 'Rubik', sans-serif;
+
   /* טקסט */
   --color-navy:        #00033D;   /* שם משתמש בהדר, labels */
   --color-blue-heading: #1E3BA2;  /* שם משתמש בפופאפ */

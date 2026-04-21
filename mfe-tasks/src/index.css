@@ -1,1 +1,27 @@
 @import "tailwindcss";
+
+@font-face {
+  font-family: 'Rubik';
+  src: url('http://repo/font/rubik.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Rubik Bold';
+  src: url('http://repo/font/rubik-bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@layer base {
+  * {
+    font-family: 'Rubik', sans-serif;
+  }
+}
+
+@theme {
+  --font-sans: 'Rubik', sans-serif;
+}

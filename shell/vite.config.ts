@@ -33,4 +33,7 @@ export default defineConfig({
   build: {
     target: 'esnext',
   },
+  define: {
+    __FONT_BASE_URL__: JSON.stringify(process.env.VITE_FONT_BASE_URL ?? './assets'),
+  },
 });
