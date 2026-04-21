@@ -75,7 +75,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <div style={{ fontFamily: 'Arial, sans-serif', direction: 'rtl' }}>
+    <div style={{ fontFamily: 'Rubik, sans-serif', direction: 'rtl' }}>
       <Header />
 
       <main style={{ padding: '24px' }}>

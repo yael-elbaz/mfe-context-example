@@ -54,15 +54,7 @@ export const Header: React.FC = () => {
       <div className="flex items-center gap-4">
         {/* חיפוש כללי */}
         <div
-          className="flex items-center flex-row-reverse gap-2"
-          style={{
-            width: '245px',
-            height: '38px',
-            borderRadius: '38px',
-            background: '#F8F8F8',
-            paddingInlineStart: '20px',
-            paddingInlineEnd: '16px',
-          }}
+          className="flex items-center flex-row-reverse gap-2 w-[245px] h-[38px] rounded-[38px] bg-[#F8F8F8] ps-[20px] pe-[16px]"
         >
           <span
             className="flex-1 text-right bg-transparent outline-none text-sm"
