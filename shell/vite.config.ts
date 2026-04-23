@@ -2,11 +2,16 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import federation from '@originjs/vite-plugin-federation';
+import replace from '@rollup/plugin-replace';
 
 export default defineConfig({
   plugins: [
     tailwindcss(),
     react(),
+    replace({
+      'dev-repo': 'env/repo',
+      preventAssignment: false,
+    }),
     federation({
       name: 'shell',
       // מה ה-Shell מחשיף ל-MFEs
