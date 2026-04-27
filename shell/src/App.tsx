@@ -1,11 +1,12 @@
 import React, { useEffect, lazy, Suspense, Component, ReactNode } from 'react';
+import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
 import { useAppContext } from './store/appContext';
 import { Header } from './components/Header';
+import EmployeePortfolio from './components/EmployeePortfolio';
 
-// טעינה עצלה של ה-MFE מהשרת שלו
 const TasksMFE = lazy(() => import('mfe_tasks/App'));
+const SearchEmployeeMFE = lazy(() => import('mfe_search_employee/App'));
 
-// Error Boundary לתפיסת שגיאות בטעינת MFEs
 class MFEErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
   state = { error: null };
   static getDerivedStateFromError(error: Error) { return { error }; }
@@ -13,7 +14,7 @@ class MFEErrorBoundary extends Component<{ children: ReactNode }, { error: Error
     if (this.state.error) {
       return (
         <div style={{ padding: '24px', color: '#c00', background: '#fff0f0', borderRadius: '8px' }}>
-          <strong>שגיאה בטעינת מודול משימות</strong>
+          <strong>שגיאה בטעינת מודול</strong>
           <pre style={{ fontSize: '12px', marginTop: '8px' }}>
             {(this.state.error as Error).message}
           </pre>
@@ -24,9 +25,71 @@ class MFEErrorBoundary extends Component<{ children: ReactNode }, { error: Error
   }
 }
 
-// סימולציה של קריאת API לטעינת פרטי משתמש
+const mfe = (fallback: string, Comp: React.LazyExoticComponent<React.ComponentType>) => (
+  <MFEErrorBoundary>
+    <Suspense fallback={<div>{fallback}</div>}>
+      <Comp />
+    </Suspense>
+  </MFEErrorBoundary>
+);
+
+const EmployeeNumberInput: React.FC = () => {
+  const [value, setValue] = React.useState('');
+  const navigate = useNavigate();
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = value.trim();
+    if (trimmed) navigate(`/employee-portfolio?employeeId=${trimmed}`);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+      <input
+        type="number"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        placeholder="הכנס מספר עובד"
+        style={{
+          padding: '10px 14px',
+          border: '1px solid #C5CBDD',
+          borderRadius: '8px',
+          fontSize: '14px',
+          color: '#00033D',
+          direction: 'rtl',
+          outline: 'none',
+          width: '200px',
+        }}
+      />
+      <button
+        type="submit"
+        style={{
+          padding: '10px 20px',
+          background: '#1E3BA2',
+          color: '#fff',
+          border: 'none',
+          borderRadius: '8px',
+          fontSize: '14px',
+          cursor: 'pointer',
+        }}
+      >
+        עבור לפרופיל
+      </button>
+    </form>
+  );
+};
+
+const NavigationListener: React.FC = () => {
+  const navigate = useNavigate();
+  useEffect(() => {
+    const handler = (e: Event) => navigate((e as CustomEvent<string>).detail);
+    window.addEventListener('mfe:navigate', handler);
+    return () => window.removeEventListener('mfe:navigate', handler);
+  }, [navigate]);
+  return null;
+};
+
 async function fetchUserSession() {
-  // בפרויקט אמיתי — קריאת fetch/axios לשרת
   await new Promise((r) => setTimeout(r, 600));
   return {
     user: {
@@ -48,45 +111,40 @@ const App: React.FC = () => {
   const { user, setUser, setSelectedUnit } = useAppContext();
 
   useEffect(() => {
-    // טוען את פרטי המשתמש בעת אתחול ה-Shell ומכניס לסטור
     fetchUserSession().then(({ user, availableUnits }) => {
       setUser(user);
       useAppContext.setState({ availableUnits });
-      // ברירת מחדל — יחידה ראשונה
       setSelectedUnit(availableUnits[0]);
     });
   }, []);
 
   if (!user) {
     return (
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          height: '100vh',
-          fontSize: '16px',
-          color: '#555',
-        }}
-      >
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', fontSize: '16px', color: '#555' }}>
         ⏳ טוען נתוני משתמש...
       </div>
     );
   }
 
   return (
-    <div style={{ fontFamily: 'Arial, sans-serif', direction: 'rtl' }}>
-      <Header />
-
-      <main style={{ padding: '24px' }}>
-        {/* כאן ניתן לנתב בין MFEs שונים לפי route */}
-        <MFEErrorBoundary>
-          <Suspense fallback={<div>טוען מודול משימות...</div>}>
-            <TasksMFE />
-          </Suspense>
-        </MFEErrorBoundary>
-      </main>
-    </div>
+    <BrowserRouter>
+      <NavigationListener />
+      <div style={{ fontFamily: 'Arial, sans-serif', direction: 'rtl' }}>
+        <Header />
+        <main style={{ padding: '24px', paddingTop: '108px' }}>
+          <Routes>
+            <Route path="/" element={
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                <EmployeeNumberInput />
+                {mfe('טוען מודול משימות...', TasksMFE)}
+                {mfe('טוען מודול חיפוש עובד...', SearchEmployeeMFE)}
+              </div>
+            } />
+            <Route path="/employee-portfolio" element={<EmployeePortfolio />} />
+          </Routes>
+        </main>
+      </div>
+    </BrowserRouter>
   );
 };
 

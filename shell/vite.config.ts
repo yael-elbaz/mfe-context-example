@@ -2,31 +2,35 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import federation from '@originjs/vite-plugin-federation';
-import replace from '@rollup/plugin-replace';
-
 export default defineConfig({
   plugins: [
     tailwindcss(),
     react(),
-    replace({
-      'dev-repo': 'env/repo',
-      preventAssignment: false,
-    }),
+    {
+      name: 'string-replace',
+      transform(code) {
+        return code.replace(/dev-repo/g, 'env/repo');
+      },
+    },
     federation({
       name: 'shell',
       // מה ה-Shell מחשיף ל-MFEs
       exposes: {
         './store': './src/store/appContext.ts',
+        './employeeStore': './src/store/employeeStore.ts',
       },
       // מגדירים את ה-remotes גם כאן כדי ש-Rollup יידע שהם חיצוניים
       remotes: {
         mfe_tasks: 'http://localhost:3001/assets/remoteEntry.js',
+        mfe_search_employee: 'http://localhost:3002/assets/remoteEntry.js',
+        mfe_employee_portfolio: 'http://localhost:3003/assets/remoteEntry.js',
       },
       shared: {
         react: { singleton: true, eager: true },
         'react-dom': { singleton: true, eager: true },
         zustand: { singleton: true, eager: true },
-      },
+        'react-router-dom': { singleton: true, eager: true },
+      } as any,
     }),
   ],
   server: {
