@@ -2,7 +2,9 @@ import React, { useEffect, lazy, Suspense, Component, ReactNode } from 'react';
 import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
 import { useAppContext } from './store/appContext';
 import { Header } from './components/Header';
-import EmployeePortfolio from './components/EmployeePortfolio';
+import EmployeePortfolioLayout from './components/EmployeePortfolioLayout';
+import EmployeePortfolioIndex from './components/EmployeePortfolioIndex';
+import SectionFullView from './components/SectionFullView';
 
 const TasksMFE = lazy(() => import('mfe_tasks/App'));
 const SearchEmployeeMFE = lazy(() => import('mfe_search_employee/App'));
@@ -131,16 +133,19 @@ const App: React.FC = () => {
       <NavigationListener />
       <div style={{ fontFamily: 'Arial, sans-serif', direction: 'rtl' }}>
         <Header />
-        <main style={{ padding: '24px', paddingTop: '108px' }}>
+        <main style={{ padding: '24px' }}>
           <Routes>
             <Route path="/" element={
               <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                <EmployeeNumberInput />
-                {mfe('טוען מודול משימות...', TasksMFE)}
+                {/* <EmployeeNumberInput /> */}
                 {mfe('טוען מודול חיפוש עובד...', SearchEmployeeMFE)}
+                {mfe('טוען מודול משימות...', TasksMFE)}
               </div>
             } />
-            <Route path="/employee-portfolio" element={<EmployeePortfolio />} />
+            <Route path="/employee-portfolio" element={<EmployeePortfolioLayout />}>
+              <Route index element={<EmployeePortfolioIndex />} />
+              <Route path=":section" element={<SectionFullView />} />
+            </Route>
           </Routes>
         </main>
       </div>

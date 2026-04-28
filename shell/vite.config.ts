@@ -24,6 +24,7 @@ export default defineConfig({
         mfe_tasks: 'http://localhost:3001/assets/remoteEntry.js',
         mfe_search_employee: 'http://localhost:3002/assets/remoteEntry.js',
         mfe_employee_portfolio: 'http://localhost:3003/assets/remoteEntry.js',
+        mfe_digital_objects: 'http://localhost:3004/assets/remoteEntry.js',
       },
       shared: {
         react: { singleton: true, eager: true },

@@ -30,84 +30,77 @@ const App: React.FC = () => {
   }
 
   return (
-    <div
-      style={{
-        background: 'white',
-        borderRadius: '12px',
-        padding: '32px',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-        direction: 'rtl',
-        maxWidth: '720px',
-      }}
-    >
+    <div style={{
+      background: 'white',
+      borderRadius: '12px',
+      padding: '24px 20px',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+      direction: 'rtl',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      gap: '16px',
+    }}>
       <button
         onClick={handleBack}
         style={{
+          alignSelf: 'flex-start',
           background: 'none',
           border: 'none',
           cursor: 'pointer',
           color: '#1E3BA2',
-          fontSize: '14px',
-          marginBottom: '24px',
+          fontSize: '13px',
           padding: 0,
-          display: 'flex',
-          alignItems: 'center',
-          gap: '4px',
         }}
       >
-        ← חזרה לחיפוש
+        ← חזרה לדף הבית
       </button>
 
-      <div style={{ display: 'flex', gap: '24px', alignItems: 'flex-start' }}>
-        <img
-          src={employee.image}
-          alt={`${employee.firstName} ${employee.lastName}`}
-          style={{ width: '96px', height: '96px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
-        />
+      <img
+        src={employee.image}
+        alt={`${employee.firstName} ${employee.lastName}`}
+        style={{ width: '80px', height: '80px', borderRadius: '50%', objectFit: 'cover' }}
+      />
 
-        <div style={{ flex: 1 }}>
-          <h2 style={{ margin: '0 0 4px', color: '#1E3BA2', fontSize: '22px' }}>
-            {employee.firstName} {employee.lastName}
-          </h2>
-          <div style={{ color: '#848282', fontSize: '14px', marginBottom: '16px' }}>
-            {employee.role} · {employee.department}
-          </div>
+      <div style={{ textAlign: 'center' }}>
+        <h2 style={{ margin: '0 0 4px', color: '#1E3BA2', fontSize: '18px' }}>
+          {employee.firstName} {employee.lastName}
+        </h2>
+        <div style={{ color: '#848282', fontSize: '13px' }}>
+          {employee.role} · {employee.department}
+        </div>
+      </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
-            {[
-              { label: 'מספר עובד', value: employee.id },
-              { label: 'יחידה', value: employee.unit },
-              { label: 'ותק בחברה', value: `${employee.yearsInCompany} שנים` },
-              { label: 'מחלקה', value: employee.department },
-              { label: 'אימייל', value: employee.email },
-              { label: 'טלפון', value: employee.phone },
-            ].map(({ label, value }) => (
-              <div key={label} style={{ background: '#F8F9FD', borderRadius: '8px', padding: '10px 14px' }}>
-                <div style={{ fontSize: '11px', color: '#848282', marginBottom: '2px' }}>{label}</div>
-                <div style={{ fontSize: '14px', color: '#00033D', fontWeight: 500 }}>{value}</div>
-              </div>
-            ))}
+      <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        {[
+          { label: 'מספר עובד', value: employee.id },
+          { label: 'יחידה', value: employee.unit },
+          { label: 'ותק בחברה', value: `${employee.yearsInCompany} שנים` },
+          { label: 'מחלקה', value: employee.department },
+          { label: 'אימייל', value: employee.email },
+          { label: 'טלפון', value: employee.phone },
+        ].map(({ label, value }) => (
+          <div key={label} style={{ background: '#F8F9FD', borderRadius: '8px', padding: '8px 12px' }}>
+            <div style={{ fontSize: '10px', color: '#848282', marginBottom: '2px' }}>{label}</div>
+            <div style={{ fontSize: '13px', color: '#00033D', fontWeight: 500, wordBreak: 'break-word' }}>{value}</div>
           </div>
+        ))}
+      </div>
 
-          <div>
-            <div style={{ fontSize: '13px', color: '#848282', marginBottom: '8px' }}>כישורים</div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-              {employee.skills.map((skill) => (
-                <span
-                  key={skill}
-                  style={{
-                    background: '#EEF2FF',
-                    color: '#1E3BA2',
-                    borderRadius: '6px',
-                    padding: '4px 10px',
-                    fontSize: '13px',
-                  }}
-                >
-                  {skill}
-                </span>
-              ))}
-            </div>
-          </div>
+      <div style={{ width: '100%' }}>
+        <div style={{ fontSize: '12px', color: '#848282', marginBottom: '8px' }}>כישורים</div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+          {employee.skills.map((skill) => (
+            <span key={skill} style={{
+              background: '#EEF2FF',
+              color: '#1E3BA2',
+              borderRadius: '6px',
+              padding: '3px 8px',
+              fontSize: '12px',
+            }}>
+              {skill}
+            </span>
+          ))}
         </div>
       </div>
     </div>
