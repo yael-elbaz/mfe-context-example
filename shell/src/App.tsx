@@ -5,6 +5,7 @@ import { Header } from './components/Header';
 import EmployeePortfolioLayout from './components/EmployeePortfolioLayout';
 import EmployeePortfolioIndex from './components/EmployeePortfolioIndex';
 import SectionFullView from './components/SectionFullView';
+import { SherutDynamicView } from './sections/SherutDynamicView';
 
 const TasksMFE = lazy(() => import('mfe_tasks/App'));
 const SearchEmployeeMFE = lazy(() => import('mfe_search_employee/App'));
@@ -144,6 +145,7 @@ const App: React.FC = () => {
             } />
             <Route path="/employee-portfolio" element={<EmployeePortfolioLayout />}>
               <Route index element={<EmployeePortfolioIndex />} />
+              <Route path="tik-asir/sherutim/:idntSheryut" element={<SherutDynamicView />} />
               <Route path=":section" element={<SectionFullView />} />
             </Route>
           </Routes>

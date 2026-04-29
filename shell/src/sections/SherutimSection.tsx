@@ -2,30 +2,32 @@ import React from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 
 const MOCK_SHERUTIM = [
-  { id: 's1', title: 'בקשת חופשה', status: 'פתוח' },
-  { id: 's2', title: 'אישור נסיעות', status: 'ממתין' },
-  { id: 's3', title: 'עדכון פרטים אישיים', status: 'הושלם' },
-  { id: 's4', title: 'בקשת ציוד משרדי', status: 'פתוח' },
-  { id: 's5', title: 'דיווח שעות עבודה', status: 'ממתין' },
+  { id: 's1', idntSheryut: 'SHR001', title: 'בקשת חופשה', status: 'פתוח' },
+  { id: 's2', idntSheryut: 'SHR002', title: 'אישור נסיעות', status: 'ממתין' },
+  { id: 's3', idntSheryut: 'SHR003', title: 'עדכון פרטים אישיים', status: 'הושלם' },
+  { id: 's4', idntSheryut: 'SHR004', title: 'בקשת ציוד משרדי', status: 'פתוח' },
+  { id: 's5', idntSheryut: 'SHR005', title: 'דיווח שעות עבודה', status: 'ממתין' },
 ];
 
-const SherutimCard: React.FC<{ title: string; status: string }> = ({ title, status }) => (
-  <div style={{
-    padding: '20px 16px',
-    borderRadius: '12px',
-    border: '1px solid #C5CBDD',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '10px',
-    direction: 'rtl',
-    minWidth: '120px',
-    flex: '1 1 120px',
-    textAlign: 'center',
-    cursor: 'pointer',
-    transition: 'box-shadow 0.15s',
-  }}
+const SherutimCard: React.FC<{ title: string; status: string; onClick: () => void }> = ({ title, status, onClick }) => (
+  <div
+    onClick={onClick}
+    style={{
+      padding: '20px 16px',
+      borderRadius: '12px',
+      border: '1px solid #C5CBDD',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '10px',
+      direction: 'rtl',
+      minWidth: '120px',
+      flex: '1 1 120px',
+      textAlign: 'center',
+      cursor: 'pointer',
+      transition: 'box-shadow 0.15s',
+    }}
     onMouseEnter={e => (e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.12)')}
     onMouseLeave={e => (e.currentTarget.style.boxShadow = 'none')}
   >
@@ -57,7 +59,14 @@ export const SherutimPreview: React.FC = () => {
         </button>
       </div>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
-        {MOCK_SHERUTIM.slice(0, 3).map(s => <SherutimCard key={s.id} title={s.title} status={s.status} />)}
+        {MOCK_SHERUTIM.slice(0, 3).map(s => (
+          <SherutimCard
+            key={s.id}
+            title={s.title}
+            status={s.status}
+            onClick={() => navigate(`/employee-portfolio/tik-asir/sherutim/${s.idntSheryut}?employeeId=${employeeId}`)}
+          />
+        ))}
       </div>
     </div>
   );
@@ -80,7 +89,14 @@ export const SherutimFull: React.FC = () => {
         </button>
       </div>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
-        {MOCK_SHERUTIM.map(s => <SherutimCard key={s.id} title={s.title} status={s.status} />)}
+        {MOCK_SHERUTIM.map(s => (
+          <SherutimCard
+            key={s.id}
+            title={s.title}
+            status={s.status}
+            onClick={() => navigate(`/employee-portfolio/tik-asir/sherutim/${s.idntSheryut}?employeeId=${employeeId}`)}
+          />
+        ))}
       </div>
     </div>
   );
