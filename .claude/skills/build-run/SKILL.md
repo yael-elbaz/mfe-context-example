@@ -40,6 +40,8 @@ Follow the steps below **in order**. Do not skip steps.
 
 ## Step 1 — Install dependencies
 
+**Automatically skip installation if node_modules already exists.** Do not ask the user - just check and proceed.
+
 Check each package directory and run `npm install` only where `node_modules` is missing.
 Run these sequentially so output is readable:
 
