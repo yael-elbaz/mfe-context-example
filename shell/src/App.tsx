@@ -145,7 +145,7 @@ const App: React.FC = () => {
             } />
             <Route path="/employee-portfolio" element={<EmployeePortfolioLayout />}>
               <Route index element={<EmployeePortfolioIndex />} />
-              <Route path="tik-asir/sherutim/:idntSheryut" element={<SherutDynamicView />} />
+              <Route path="sherutim/:idntSheryut" element={<SherutDynamicView />} />
               <Route path=":section" element={<SectionFullView />} />
             </Route>
           </Routes>

@@ -64,7 +64,7 @@ export const SherutimPreview: React.FC = () => {
             key={s.id}
             title={s.title}
             status={s.status}
-            onClick={() => navigate(`/employee-portfolio/tik-asir/sherutim/${s.idntSheryut}?employeeId=${employeeId}`)}
+            onClick={() => navigate(`/employee-portfolio/sherutim/${s.idntSheryut}?employeeId=${employeeId}`)}
           />
         ))}
       </div>
@@ -94,7 +94,7 @@ export const SherutimFull: React.FC = () => {
             key={s.id}
             title={s.title}
             status={s.status}
-            onClick={() => navigate(`/employee-portfolio/tik-asir/sherutim/${s.idntSheryut}?employeeId=${employeeId}`)}
+            onClick={() => navigate(`/employee-portfolio/sherutim/${s.idntSheryut}?employeeId=${employeeId}`)}
           />
         ))}
       </div>
