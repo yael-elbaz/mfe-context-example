@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
-import { getSherutMfeConfig } from '../services/sherutimService';
+import { useParams, useSearchParams, useNavigate, useLocation } from 'react-router-dom';
+import { getSherutMfeConfig, type SherutMfeConfig } from '../services/sherutimService';
 import { loadRemoteModule } from '../utils/dynamicFederation';
 
 type Phase = 'config' | 'module' | 'done' | 'error';
@@ -28,6 +28,7 @@ export const SherutDynamicView: React.FC = () => {
   const [searchParams] = useSearchParams();
   const employeeId = searchParams.get('employeeId') ?? '';
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [phase, setPhase] = useState<Phase>('config');
   const [DynamicComponent, setDynamicComponent] = useState<React.ComponentType<any> | null>(null);
@@ -39,11 +40,19 @@ export const SherutDynamicView: React.FC = () => {
 
     (async () => {
       try {
-        setPhase('config');
-        const config = await getSherutMfeConfig(idntSheryut);
-        if (cancelled) return;
+        const cached = (location.state as { mfeConfig?: SherutMfeConfig } | null)?.mfeConfig;
 
-        setPhase('module');
+        let config: SherutMfeConfig;
+        if (cached) {
+          config = cached;
+          setPhase('module');
+        } else {
+          setPhase('config');
+          config = await getSherutMfeConfig(idntSheryut);
+          if (cancelled) return;
+          setPhase('module');
+        }
+
         const Component = await loadRemoteModule(config.remoteUrl, config.module);
         if (cancelled) return;
 

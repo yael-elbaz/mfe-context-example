@@ -1,12 +1,18 @@
 import React from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 
+const EXEMPLAT_MFE = {
+  remoteUrl: 'http://localhost:3005/assets/remoteEntry.js',
+  scope: 'mfe_sherut_exemplat',
+  module: './App',
+};
+
 const MOCK_SHERUTIM = [
-  { id: 's1', idntSheryut: 'SHR001', title: 'בקשת חופשה', status: 'פתוח' },
-  { id: 's2', idntSheryut: 'SHR002', title: 'אישור נסיעות', status: 'ממתין' },
-  { id: 's3', idntSheryut: 'SHR003', title: 'עדכון פרטים אישיים', status: 'הושלם' },
-  { id: 's4', idntSheryut: 'SHR004', title: 'בקשת ציוד משרדי', status: 'פתוח' },
-  { id: 's5', idntSheryut: 'SHR005', title: 'דיווח שעות עבודה', status: 'ממתין' },
+  { id: 's1', idntSheryut: 'SHR001', title: 'בקשת חופשה',        status: 'פתוח',  mfeConfig: EXEMPLAT_MFE },
+  { id: 's2', idntSheryut: 'SHR002', title: 'אישור נסיעות',       status: 'ממתין', mfeConfig: EXEMPLAT_MFE },
+  { id: 's3', idntSheryut: 'SHR003', title: 'עדכון פרטים אישיים', status: 'הושלם', mfeConfig: EXEMPLAT_MFE },
+  { id: 's4', idntSheryut: 'SHR004', title: 'בקשת ציוד משרדי',    status: 'פתוח',  mfeConfig: EXEMPLAT_MFE },
+  { id: 's5', idntSheryut: 'SHR005', title: 'דיווח שעות עבודה',   status: 'ממתין', mfeConfig: EXEMPLAT_MFE },
 ];
 
 const SherutimCard: React.FC<{ title: string; status: string; onClick: () => void }> = ({ title, status, onClick }) => (
@@ -64,7 +70,10 @@ export const SherutimPreview: React.FC = () => {
             key={s.id}
             title={s.title}
             status={s.status}
-            onClick={() => navigate(`/employee-portfolio/sherutim/${s.idntSheryut}?employeeId=${employeeId}`)}
+            onClick={() => navigate(
+              `/employee-portfolio/sherutim/${s.idntSheryut}?employeeId=${employeeId}`,
+              { state: { mfeConfig: s.mfeConfig } }
+            )}
           />
         ))}
       </div>
@@ -94,7 +103,10 @@ export const SherutimFull: React.FC = () => {
             key={s.id}
             title={s.title}
             status={s.status}
-            onClick={() => navigate(`/employee-portfolio/sherutim/${s.idntSheryut}?employeeId=${employeeId}`)}
+            onClick={() => navigate(
+              `/employee-portfolio/sherutim/${s.idntSheryut}?employeeId=${employeeId}`,
+              { state: { mfeConfig: s.mfeConfig } }
+            )}
           />
         ))}
       </div>
