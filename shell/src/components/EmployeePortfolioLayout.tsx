@@ -1,6 +1,7 @@
 import React, { lazy, Suspense, useEffect } from 'react';
 import { Outlet, useSearchParams } from 'react-router-dom';
 import { useEmployeeStore, EmployeeProfile } from '../store/employeeStore';
+import type { OpenService } from '../types/openService';
 
 const EmployeePortfolioMFE = lazy(() => import('mfe_employee_portfolio/App'));
 
@@ -15,7 +16,7 @@ const PROFILES: Record<string, EmployeeProfile> = {
   '1008': { id: '1008', firstName: 'גל', lastName: 'פרידמן', yearsInCompany: 1, unit: 'צוות פיתוח', department: 'IT', role: 'מפתח Backend', email: 'gal.friedman@org.co.il', phone: '050-8901234', image: 'https://i.pravatar.cc/150?img=15', skills: ['Python', 'FastAPI', 'Redis', 'PostgreSQL'] },
 };
 
-const EmployeePortfolioLayout: React.FC = () => {
+const EmployeePortfolioLayout: React.FC<{ openService?: OpenService }> = ({ openService }) => {
   const [searchParams] = useSearchParams();
   const employeeId = searchParams.get('employeeId') ?? '';
 
@@ -34,7 +35,7 @@ const EmployeePortfolioLayout: React.FC = () => {
     <div style={{ display: 'flex', flexDirection: 'row', gap: '24px', alignItems: 'flex-start', direction: 'rtl' }}>
       <div style={{ width: '25%', flexShrink: 0, position: 'sticky', top: '108px' }}>
         <Suspense fallback={<div>טוען פרופיל עובד...</div>}>
-          <EmployeePortfolioMFE />
+          <EmployeePortfolioMFE openService={openService} />
         </Suspense>
       </div>
       <div style={{ flex: 1 }}>

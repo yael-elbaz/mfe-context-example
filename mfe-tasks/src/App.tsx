@@ -31,7 +31,11 @@ async function fetchTasks(unitId: string): Promise<Task[]> {
   return allTasks[unitId] ?? [];
 }
 
-const App: React.FC = () => {
+interface Props {
+  openService?: (meta: Record<string, any>) => void;
+}
+
+const App: React.FC<Props> = () => {
   // ✅ צורך ישירות מהסטור של ה-Shell — אין props, אין drilling
   const user = useUser();
   const selectedUnit = useSelectedUnit();

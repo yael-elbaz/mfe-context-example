@@ -19,7 +19,11 @@ const EMPLOYEES: Employee[] = [
   { id: '1008', name: 'גל פרידמן', department: 'IT', role: 'מפתח Backend' },
 ];
 
-const App: React.FC = () => {
+interface Props {
+  openService?: (meta: Record<string, any>) => void;
+}
+
+const App: React.FC<Props> = ({ openService }) => {
   const user = useUser();
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
@@ -54,9 +58,7 @@ const App: React.FC = () => {
     setSelected(employee);
     setQuery(employee.id);
     setOpen(false);
-    window.dispatchEvent(
-      new CustomEvent('mfe:navigate', { detail: `/employee-portfolio?employeeId=${employee.id}` })
-    );
+    openService?.({ type: 'employee', employee: { id: employee.id } });
   };
 
   return (

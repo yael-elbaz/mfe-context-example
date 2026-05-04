@@ -1,12 +1,16 @@
 import React from 'react';
 import { useEmployee, useEmployeeLoading } from 'shell/employeeStore';
 
-const App: React.FC = () => {
+interface Props {
+  openService?: (meta: Record<string, any>) => void;
+}
+
+const App: React.FC<Props> = ({ openService }) => {
   const employee = useEmployee();
   const loading = useEmployeeLoading();
 
   const handleBack = () => {
-    window.dispatchEvent(new CustomEvent('mfe:navigate', { detail: '/' }));
+    openService?.({ type: 'home', nav: { target: 'home' } });
   };
 
   if (loading) {

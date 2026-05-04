@@ -1,15 +1,15 @@
 declare module 'mfe_tasks/App' {
-  const App: React.ComponentType;
+  const App: React.ComponentType<{ openService?: import('./types/openService').OpenService }>;
   export default App;
 }
 
 declare module 'mfe_search_employee/App' {
-  const App: React.ComponentType;
+  const App: React.ComponentType<{ openService?: import('./types/openService').OpenService }>;
   export default App;
 }
 
 declare module 'mfe_employee_portfolio/App' {
-  const App: React.ComponentType;
+  const App: React.ComponentType<{ openService?: import('./types/openService').OpenService }>;
   export default App;
 }
 
@@ -20,5 +20,21 @@ declare module 'mfe_digital_objects/Preview' {
 
 declare module 'mfe_digital_objects/Full' {
   const Full: React.ComponentType;
+  export default Full;
+}
+
+declare module 'mfe_sherutim/Preview' {
+  const Preview: React.ComponentType<{
+    openService?: import('./types/openService').OpenService;
+    employeeId?: string;
+  }>;
+  export default Preview;
+}
+
+declare module 'mfe_sherutim/Full' {
+  const Full: React.ComponentType<{
+    openService?: import('./types/openService').OpenService;
+    employeeId?: string;
+  }>;
   export default Full;
 }

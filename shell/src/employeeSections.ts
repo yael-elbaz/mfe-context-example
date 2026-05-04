@@ -1,13 +1,20 @@
 import React, { lazy } from 'react';
-import { SherutimPreview, SherutimFull } from './sections/SherutimSection';
+import type { OpenService } from './types/openService';
+
+export interface SectionProps {
+  openService?: OpenService;
+  employeeId?: string;
+}
 
 export interface Section {
   id: string;
   label: string;
-  Preview: React.ComponentType;
-  Full: React.ComponentType;
+  Preview: React.ComponentType<SectionProps>;
+  Full: React.ComponentType<SectionProps>;
 }
 
+const SherutimPreview = lazy(() => import('mfe_sherutim/Preview'));
+const SherutimFull = lazy(() => import('mfe_sherutim/Full'));
 const DigitalObjectsPreview = lazy(() => import('mfe_digital_objects/Preview'));
 const DigitalObjectsFull = lazy(() => import('mfe_digital_objects/Full'));
 
