@@ -57,3 +57,10 @@ export interface DigitalService {
 }
 
 export type OpenService = (meta: Service) => void;
+
+// Set actual numeric values to match the legacy OBJECT_TYPE constants
+export const OBJECT_TYPE = {
+  employee: 1,
+  customer: 2,
+  mishtamesh: 3,
+} as const;
