@@ -20,10 +20,10 @@ const EMPLOYEES: Employee[] = [
 ];
 
 interface Props {
-  openService?: (meta: Record<string, any>) => void;
+  navigate?: (to: string) => void;
 }
 
-const App: React.FC<Props> = ({ openService }) => {
+const App: React.FC<Props> = ({ navigate }) => {
   const user = useUser();
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
@@ -58,7 +58,7 @@ const App: React.FC<Props> = ({ openService }) => {
     setSelected(employee);
     setQuery(employee.id);
     setOpen(false);
-    openService?.({ type: 'employee', employee: { id: employee.id } });
+    navigate?.(`/employee-portfolio?employeeId=${employee.id}`);
   };
 
   return (

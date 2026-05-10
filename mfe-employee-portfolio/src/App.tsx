@@ -2,15 +2,15 @@ import React from 'react';
 import { useEmployee, useEmployeeLoading } from 'shell/employeeStore';
 
 interface Props {
-  openService?: (meta: Record<string, any>) => void;
+  navigate?: (to: string) => void;
 }
 
-const App: React.FC<Props> = ({ openService }) => {
+const App: React.FC<Props> = ({ navigate }) => {
   const employee = useEmployee();
   const loading = useEmployeeLoading();
 
   const handleBack = () => {
-    openService?.({ type: 'home', nav: { target: 'home' } });
+    navigate?.('/');
   };
 
   if (loading) {

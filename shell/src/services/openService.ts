@@ -1,53 +1,63 @@
-import type { ServiceMeta } from '../types/openService';
+import type { Service, ServiceSrc, DigitalService } from '../types/openService';
 
-export function flattenMeta(
-  obj: ServiceMeta,
-  result: Record<string, any> = {}
-): Record<string, any> {
-  for (const [key, value] of Object.entries(obj)) {
-    if (value !== null && typeof value === 'object') {
-      flattenMeta(value as ServiceMeta, result);
-    } else if (key in result) {
-      result[key] = Array.isArray(result[key])
-        ? [...result[key], value]
-        : [result[key], value];
+function toScalar(v: string | string[] | undefined): string | undefined {
+  return Array.isArray(v) ? v[0] : v;
+}
+
+function getSreviceSrcFromSrcParams(
+  meta: Service,
+  scope: string | string[] | undefined,
+  module: string | string[] | undefined
+): ServiceSrc | undefined {
+  if (!scope && !module) return undefined;
+  return {
+    remoteUrl: meta.url ?? '',
+    scope: scope ?? '',
+    module: module ?? '',
+    src: meta.url ?? null,
+  };
+}
+
+export function flattenMeta(meta: Service): DigitalService {
+  const params: Record<string, string | string[]> = {};
+  for (const p of meta.menuParamsList) {
+    if (p.parameterKey in params) {
+      const existing = params[p.parameterKey];
+      params[p.parameterKey] = Array.isArray(existing)
+        ? [...existing, p.parameterValue]
+        : [existing, p.parameterValue];
     } else {
-      result[key] = value;
+      params[p.parameterKey] = p.parameterValue;
     }
   }
-  return result;
+
+  const { scope, module, categories, displaySettings, objectType, ...rest } = params;
+
+  const serviceSrc = getSreviceSrcFromSrcParams(meta, scope, module);
+
+  return {
+    ...rest,
+    serviceSrc,
+    objectType: objectType != null ? +(toScalar(objectType) ?? 0) : null,
+    textMenu: meta.textMenu,
+    textNativ: meta.textNativ,
+    textMenuItem: meta.textMenuItem,
+    idntMaarechet: meta.idntMaarechet,
+    idntMenuItem: meta.idntMenuItem,
+    isTaregtBlank: meta.textMenuTarget === 'blank',
+    isOverlay: toScalar(displaySettings) === 'overlay',
+  } as DigitalService;
 }
 
 export function resolveRoute(flat: Record<string, any>): { url: string; state: Record<string, any> } {
-  switch (flat.type) {
-    case 'sherut':
-      return {
-        url: `/employee-portfolio/sherutim/${flat.idntSheryut}?employeeId=${flat.id ?? ''}`,
-        state: {
-          mfeConfig: {
-            remoteUrl: flat.mfeUrl,
-            scope:     flat.mfeScope,
-            module:    flat.mfeModule,
-          },
-        },
-      };
-
-    case 'employee':
-      return {
-        url: `/employee-portfolio?employeeId=${flat.id ?? ''}`,
-        state: {},
-      };
-
-    case 'section':
-      return {
-        url: `/employee-portfolio/${flat.sectionId}?employeeId=${flat.employeeId ?? ''}`,
-        state: {},
-      };
-
-    case 'home':
-      return { url: '/', state: {} };
-
-    default:
-      throw new Error(`openService: unknown type "${flat.type}"`);
-  }
+  return {
+    url: `/employee-portfolio/sherutim/${flat.idntSheryut}?employeeId=${flat.id ?? ''}`,
+    state: {
+      mfeConfig: {
+        remoteUrl: flat.serviceSrc?.remoteUrl ?? '',
+        scope:     flat.serviceSrc?.scope ?? '',
+        module:    flat.serviceSrc?.module ?? '',
+      },
+    },
+  };
 }

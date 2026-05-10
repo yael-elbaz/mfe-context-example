@@ -4,7 +4,7 @@ declare module 'mfe_tasks/App' {
 }
 
 declare module 'mfe_search_employee/App' {
-  const App: React.ComponentType<{ openService?: import('./types/openService').OpenService }>;
+  const App: React.ComponentType<{ navigate?: (to: string) => void }>;
   export default App;
 }
 

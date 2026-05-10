@@ -2,7 +2,7 @@ export type ServiceMeta = {
   [key: string]: string | number | boolean | ServiceMeta;
 };
 
-export type OpenService = (meta: ServiceMeta) => void;
+export type OpenService = (meta: any) => void;
 
 export interface Sherut {
   id: string;

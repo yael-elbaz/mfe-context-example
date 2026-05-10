@@ -1,5 +1,5 @@
 import React, { useEffect, lazy, Suspense, Component, ReactNode } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
 import { useAppContext } from './store/appContext';
 import { Header } from './components/Header';
 import EmployeePortfolioLayout from './components/EmployeePortfolioLayout';
@@ -7,9 +7,11 @@ import EmployeePortfolioIndex from './components/EmployeePortfolioIndex';
 import SectionFullView from './components/SectionFullView';
 import { SherutDynamicView } from './sections/SherutDynamicView';
 import { useOpenService } from './hooks/useOpenService';
+import SelectEmployeePage from './components/SelectEmployeePage';
 
 const TasksMFE = lazy(() => import('mfe_tasks/App'));
 const SearchEmployeeMFE = lazy(() => import('mfe_search_employee/App'));
+const SherutimPreviewMFE = lazy(() => import('mfe_sherutim/Preview'));
 
 class MFEErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
   state = { error: null };
@@ -61,6 +63,7 @@ async function fetchUserSession() {
 
 const RouterApp: React.FC = () => {
   const { openService } = useOpenService();
+  const navigate = useNavigate();
 
   return (
     <>
@@ -70,10 +73,12 @@ const RouterApp: React.FC = () => {
           <Routes>
             <Route path="/" element={
               <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                {mfe('טוען מודול חיפוש עובד...', SearchEmployeeMFE, { openService })}
+                {mfe('טוען מודול חיפוש עובד...', SearchEmployeeMFE, { navigate })}
                 {mfe('טוען מודול משימות...', TasksMFE, { openService })}
+                {mfe('טוען שירותים...', SherutimPreviewMFE, { openService })}
               </div>
             } />
+            <Route path="/select-employee" element={<SelectEmployeePage />} />
             <Route path="/employee-portfolio" element={<EmployeePortfolioLayout openService={openService} />}>
               <Route index element={<EmployeePortfolioIndex openService={openService} />} />
               <Route path="sherutim/:idntSheryut" element={<SherutDynamicView />} />
