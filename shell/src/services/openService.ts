@@ -38,7 +38,7 @@ export function flattenMeta(meta: Service): DigitalService {
   return {
     ...rest,
     serviceSrc,
-    objectType: objectType != null ? +(toScalar(objectType) ?? 0) : null,
+    objectType: objectType ?? null,
     textMenu: meta.textMenu,
     textNativ: meta.textNativ,
     textMenuItem: meta.textMenuItem,

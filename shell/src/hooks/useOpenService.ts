@@ -13,7 +13,7 @@ export const useOpenService = () => {
 
     const currentEmployee = useEmployeeStore.getState().employee;
     if (!currentEmployee) {
-      navigate('/select-employee', { state: { pendingSherut: flat } });
+      navigate('/select-employee', { state: { pendingSherut: meta } });
       return;
     }
 
@@ -24,6 +24,7 @@ export const useOpenService = () => {
 
     const { url, state } = resolveRoute({ ...flat, id: currentEmployee.id });
     navigate(url, { state });
+    
   }, [navigate]);
 
   return { openService };

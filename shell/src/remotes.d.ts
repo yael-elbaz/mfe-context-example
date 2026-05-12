@@ -4,7 +4,7 @@ declare module 'mfe_tasks/App' {
 }
 
 declare module 'mfe_search_employee/App' {
-  const App: React.ComponentType<{ navigate?: (to: string) => void }>;
+  const App: React.ComponentType<{ onSelected?: (idntEmployee: string) => void }>;
   export default App;
 }
 

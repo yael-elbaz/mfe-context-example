@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { getSherutMfeConfig, type SherutMfeConfig } from '../services/sherutimService';
 import { loadRemoteModule } from '../utils/dynamicFederation';
+import { useEmployee, useEmployeeLoading } from '../store/employeeStore';
 
 type Phase = 'config' | 'module' | 'done' | 'error';
 
@@ -29,13 +30,16 @@ export const SherutDynamicView: React.FC = () => {
   const employeeId = searchParams.get('employeeId') ?? '';
   const navigate = useNavigate();
   const location = useLocation();
-
-  const [phase, setPhase] = useState<Phase>('config');
+  const employee = useEmployee();
+  const loading = useEmployeeLoading();
+const [phase, setPhase] = useState<Phase>('config');
   const [DynamicComponent, setDynamicComponent] = useState<React.ComponentType<any> | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!idntSheryut) return;
+    if (loading || !employee) return;
+
     let cancelled = false;
 
     (async () => {
@@ -67,7 +71,7 @@ export const SherutDynamicView: React.FC = () => {
     })();
 
     return () => { cancelled = true; };
-  }, [idntSheryut]);
+  }, [idntSheryut, employee, loading]);
 
   const handleBack = () => {
     navigate(`/employee-portfolio/sherutim?employeeId=${employeeId}`);

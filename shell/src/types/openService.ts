@@ -37,7 +37,7 @@ export interface Service {
 export interface DigitalService {
   isTargetBlank?: boolean;
   hasPrerequesties?: boolean;
-  objectType?: number | null;
+  objectType?: string | string[] | null;
   serviceSrc?: ServiceSrc;
   isOverlay?: boolean;
   idntMenuItem?: number;

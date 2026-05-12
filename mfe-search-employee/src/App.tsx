@@ -20,10 +20,10 @@ const EMPLOYEES: Employee[] = [
 ];
 
 interface Props {
-  navigate?: (to: string) => void;
+  onSelected?: (idntEmployee: string) => void;
 }
 
-const App: React.FC<Props> = ({ navigate }) => {
+const App: React.FC<Props> = ({ onSelected }) => {
   const user = useUser();
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
@@ -58,7 +58,7 @@ const App: React.FC<Props> = ({ navigate }) => {
     setSelected(employee);
     setQuery(employee.id);
     setOpen(false);
-    navigate?.(`/employee-portfolio?employeeId=${employee.id}`);
+    onSelected?.(employee.id);
   };
 
   return (
