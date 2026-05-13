@@ -1,24 +1,25 @@
 import React, { lazy, Suspense, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import type { Service } from '../types/openService';
+import type { DigitalService } from '../types/openService';
 
 const SearchEmployeeMFE = lazy(() => import('mfe_search_employee/App'));
 
-const SelectEmployeePage: React.FC = () => {
+interface Props {
+  navToServcie?: (flat: DigitalService) => void;
+}
+
+const SelectEmployeePage: React.FC<Props> = ({ navToServcie }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const pendingSherut = location.state?.pendingSherut as Service | undefined;
+  const pendingSherut = location.state?.pendingSherut as DigitalService | undefined;
 
   const onSelected = useCallback((idntEmployee: string) => {
-    if (pendingSherut) {
-      navigate(
-        `/employee-portfolio/sherutim/${pendingSherut.idntMenuItem}?employeeId=${idntEmployee}`,
-        { state: location.state }
-      );
+    if (pendingSherut && navToServcie) {
+      navToServcie(pendingSherut);
     } else {
       navigate(`/employee-portfolio?employeeId=${idntEmployee}`);
     }
-  }, [navigate, pendingSherut, location.state]);
+  }, [navToServcie, pendingSherut, navigate]);
 
   return (
     <div style={{ direction: 'rtl' }}>

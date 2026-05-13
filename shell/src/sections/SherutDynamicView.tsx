@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { getSherutMfeConfig, type SherutMfeConfig } from '../services/sherutimService';
 import { loadRemoteModule } from '../utils/dynamicFederation';
-import { useEmployee, useEmployeeLoading } from '../store/employeeStore';
 
 type Phase = 'config' | 'module' | 'done' | 'error';
 
@@ -25,22 +24,24 @@ const Dot: React.FC<{ state: 'active' | 'done' | 'pending'; label: string }> = (
 );
 
 export const SherutDynamicView: React.FC = () => {
-  const { idntSheryut } = useParams<{ idntSheryut: string }>();
+  const { idntSheryut } = useParams<{ idntSheryut?: string }>();
+  const id = idntSheryut ?? '';
   const [searchParams] = useSearchParams();
   const employeeId = searchParams.get('employeeId') ?? '';
   const navigate = useNavigate();
   const location = useLocation();
-  const employee = useEmployee();
-  const loading = useEmployeeLoading();
-const [phase, setPhase] = useState<Phase>('config');
+
+  const backUrl = employeeId
+    ? `/employee-portfolio?employeeId=${employeeId}`
+    : '/';
+
+
+  const [phase, setPhase] = useState<Phase>('config');
   const [DynamicComponent, setDynamicComponent] = useState<React.ComponentType<any> | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-
-    if (!idntSheryut) return;
-    if (loading || !employee) return;
-
+    if (!id) return;
     let cancelled = false;
 
     (async () => {
@@ -50,12 +51,10 @@ const [phase, setPhase] = useState<Phase>('config');
         let config: SherutMfeConfig;
         if (cached) {
           config = cached;
-          // consume once — prevent stale config surviving F5
-          // window.history.replaceState(null, '');
           setPhase('module');
         } else {
           setPhase('config');
-          config = await getSherutMfeConfig(idntSheryut);
+          config = await getSherutMfeConfig(id);
           if (cancelled) return;
           setPhase('module');
         }
@@ -74,17 +73,13 @@ const [phase, setPhase] = useState<Phase>('config');
     })();
 
     return () => { cancelled = true; };
-  }, [idntSheryut, employee, loading]);
-
-  const handleBack = () => {
-    navigate(`/employee-portfolio/sherutim?employeeId=${employeeId}`);
-  };
+  }, [id]);
 
   if (phase === 'error') {
     return (
       <div style={{ background: '#fff', borderRadius: '12px', padding: '24px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)', direction: 'rtl' }}>
         <button
-          onClick={handleBack}
+          onClick={() => navigate(backUrl)}
           style={{ background: 'none', border: '1px solid #C5CBDD', color: '#00033D', borderRadius: '8px', padding: '4px 12px', cursor: 'pointer', fontSize: '13px', marginBottom: '16px' }}
         >
           ← חזרה
@@ -135,13 +130,13 @@ const [phase, setPhase] = useState<Phase>('config');
     <div style={{ background: '#fff', borderRadius: '12px', padding: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px', direction: 'rtl' }}>
         <button
-          onClick={handleBack}
+          onClick={() => navigate(backUrl)}
           style={{ background: 'none', border: '1px solid #C5CBDD', color: '#00033D', borderRadius: '8px', padding: '4px 12px', cursor: 'pointer', fontSize: '13px' }}
         >
           ← חזרה לרשימת השירותים
         </button>
       </div>
-      <DynamicComponent idntSheryut={idntSheryut} employeeId={employeeId} />
+      <DynamicComponent idntSheryut={id} employeeId={employeeId} />
     </div>
   );
 };

@@ -8,24 +8,29 @@ import { useEmployeeStore } from '../store/employeeStore';
 export const useOpenService = () => {
   const navigate = useNavigate();
 
-  const openService = useCallback((meta: Service) => {
-    const flat = flattenMeta(meta) as DigitalService & Record<string, any>;
-
-    const currentEmployee = useEmployeeStore.getState().employee;
-    if (!currentEmployee) {
-      navigate('/select-employee', { state: { pendingSherut: meta } });
-      return;
-    }
-
+ const navToServcie = useCallback((flat: DigitalService) => {
+   
     if (flat.isTaregtBlank) {
       openInBlank(flat);
       return;
     }
 
-    const { url, state } = resolveRoute({ ...flat, id: currentEmployee.id });
+    const { url, state } = resolveRoute(flat);
     navigate(url, { state });
-    
+   
+ },[navigate])
+
+  const openService = useCallback((meta: Service) => {
+    const flat = flattenMeta(meta) as DigitalService & Record<string, any>;
+
+    const currentEmployee = useEmployeeStore.getState().employee;
+    if (!currentEmployee) {
+      navigate('/select-employee', { state: { pendingSherut: flat } });
+      return;
+    }
+    navToServcie(flat)
+
   }, [navigate]);
 
-  return { openService };
+  return { openService, navToServcie };
 };

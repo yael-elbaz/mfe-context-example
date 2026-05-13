@@ -1,4 +1,5 @@
 import type { Service, ServiceSrc, DigitalService } from '../types/openService';
+import { Helper } from '../utils/urlHelper';
 
 function toScalar(v: string | string[] | undefined): string | undefined {
   return Array.isArray(v) ? v[0] : v;
@@ -50,14 +51,30 @@ export function flattenMeta(meta: Service): DigitalService {
 }
 
 export function resolveRoute(flat: Record<string, any>): { url: string; state: Record<string, any> } {
-  return {
-    url: `/employee-portfolio/sherutim/${flat.idntSheryut}?employeeId=${flat.id ?? ''}`,
-    state: {
-      mfeConfig: {
-        remoteUrl: flat.serviceSrc?.remoteUrl ?? '',
-        scope:     flat.serviceSrc?.scope ?? '',
-        module:    flat.serviceSrc?.module ?? '',
+  const qs = Helper.buildQParam(flat.sherutimUrlParams);
+  if (flat.objectType == null) {
+    return {
+      url: Helper.buildUrl(`sherutim/${flat.idntMenuItem}`, qs),
+      state: {
+        mfeConfig: {
+          remoteUrl: flat.serviceSrc?.remoteUrl ?? '',
+          scope: flat.serviceSrc?.scope ?? '',
+          module: flat.serviceSrc?.module ?? '',
+        },
       },
-    },
-  };
+    };
+  }
+  else {
+    return {
+      url: Helper.buildUrl(`/employee-portfolio/sherutim/${flat.idntSheryut}`, qs),
+      state: {
+        mfeConfig: {
+          remoteUrl: flat.serviceSrc?.remoteUrl ?? '',
+          scope: flat.serviceSrc?.scope ?? '',
+          module: flat.serviceSrc?.module ?? '',
+        },
+      },
+    };
+  }
+
 }
