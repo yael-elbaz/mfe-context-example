@@ -37,6 +37,7 @@ const [phase, setPhase] = useState<Phase>('config');
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+
     if (!idntSheryut) return;
     if (loading || !employee) return;
 
@@ -49,6 +50,8 @@ const [phase, setPhase] = useState<Phase>('config');
         let config: SherutMfeConfig;
         if (cached) {
           config = cached;
+          // consume once — prevent stale config surviving F5
+          // window.history.replaceState(null, '');
           setPhase('module');
         } else {
           setPhase('config');

@@ -6,6 +6,7 @@ import SherutimCard from './SherutimCard';
 interface Props {
   openService?: OpenService;
   employeeId?: string;
+  navigate?: (to: string) => void;
 }
 
 function param(key: string, value: string) {
@@ -23,12 +24,12 @@ function makeCall(params: Record<string, string>, url?: string) {
   };
 }
 
-const Full: React.FC<Props> = ({ openService, employeeId = '' }) => (
+const Full: React.FC<Props> = ({ openService, employeeId = '', navigate }) => (
   <div style={{ background: '#fff', borderRadius: '12px', padding: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', direction: 'rtl' }}>
       <h2 style={{ margin: 0, color: '#1E3BA2', fontSize: '18px' }}>כל השירותים הדיגיטליים</h2>
       <button
-        onClick={() => openService?.(makeCall({ type: 'employee', id: employeeId }))}
+        onClick={() => navigate?.(`/employee-portfolio?employeeId=${employeeId}`)}
         style={{ background: 'none', border: '1px solid #C5CBDD', color: '#00033D', borderRadius: '8px', padding: '4px 12px', cursor: 'pointer', fontSize: '13px' }}
       >
         ← חזרה

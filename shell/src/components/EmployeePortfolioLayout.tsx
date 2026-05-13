@@ -1,6 +1,6 @@
 import React, { lazy, Suspense, useEffect } from 'react';
 import { Outlet, useSearchParams, useNavigate } from 'react-router-dom';
-import { useEmployeeStore, EmployeeProfile } from '../store/employeeStore';
+import { useEmployeeStore, useEmployee, useEmployeeLoading, EmployeeProfile } from '../store/employeeStore';
 import type { OpenService } from '../types/openService';
 
 const EmployeePortfolioMFE = lazy(() => import('mfe_employee_portfolio/App'));
@@ -20,6 +20,8 @@ const EmployeePortfolioLayout: React.FC<{ openService?: OpenService }> = ({ open
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const employeeId = searchParams.get('employeeId') ?? '';
+  const employee = useEmployee();
+  const loading = useEmployeeLoading();
 
   useEffect(() => {
     if (!employeeId) return;
@@ -40,7 +42,13 @@ const EmployeePortfolioLayout: React.FC<{ openService?: OpenService }> = ({ open
         </Suspense>
       </div>
       <div style={{ flex: 1 }}>
-        <Outlet />
+        {loading || !employee ? (
+          <div style={{ padding: '48px', textAlign: 'center', color: '#1E3BA2', direction: 'rtl' }}>
+            ⏳ טוען נתוני עובד...
+          </div>
+        ) : (
+          <Outlet />
+        )}
       </div>
     </div>
   );

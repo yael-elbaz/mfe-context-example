@@ -27,6 +27,7 @@ declare module 'mfe_sherutim/Preview' {
   const Preview: React.ComponentType<{
     openService?: import('./types/openService').OpenService;
     employeeId?: string;
+    navigate?: (to: string) => void;
   }>;
   export default Preview;
 }
@@ -35,6 +36,7 @@ declare module 'mfe_sherutim/Full' {
   const Full: React.ComponentType<{
     openService?: import('./types/openService').OpenService;
     employeeId?: string;
+    navigate?: (to: string) => void;
   }>;
   export default Full;
 }

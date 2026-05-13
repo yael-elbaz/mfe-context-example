@@ -1,11 +1,12 @@
 import React, { Suspense } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { SECTIONS } from '../employeeSections';
 import type { OpenService } from '../types/openService';
 
 const SectionFullView: React.FC<{ openService?: OpenService }> = ({ openService }) => {
   const { section } = useParams<{ section: string }>();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const employeeId = searchParams.get('employeeId') ?? '';
   const match = SECTIONS.find(s => s.id === section);
 
@@ -17,7 +18,7 @@ const SectionFullView: React.FC<{ openService?: OpenService }> = ({ openService 
 
   return (
     <Suspense fallback={<div>טוען...</div>}>
-      <match.Full openService={openService} employeeId={employeeId} />
+      <match.Full openService={openService} employeeId={employeeId} navigate={navigate} />
     </Suspense>
   );
 };
