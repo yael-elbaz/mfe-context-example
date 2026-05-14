@@ -1,24 +1,28 @@
 import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { flattenMeta, resolveRoute } from '../services/openService';
-import { openInBlank } from '../services/openInBlank';
 import type { Service, DigitalService } from '../types/openService';
 import { useEmployeeStore } from '../store/employeeStore';
 
 export const useOpenService = () => {
   const navigate = useNavigate();
 
- const navToServcie = useCallback((flat: DigitalService) => {
-   
-    if (flat.isTaregtBlank) {
-      openInBlank(flat);
-      return;
-    }
+  const navToServcie = useCallback(async (flat: DigitalService) => {
+    const { url, state, openType, setup } = await resolveRoute(flat);
 
-    const { url, state } = resolveRoute(flat);
-    navigate(url, { state });
-   
- },[navigate])
+    switch (openType) {
+      case 'blank':
+        window.open(url, '_blank', setup ?? '');
+        break;
+      case 'overlay':
+        // TODO: open overlay
+        navigate(url, { state });
+        break;
+      case 'navigate':
+        navigate(url, { state });
+        break;
+    }
+  }, [navigate])
 
   const openService = useCallback((meta: Service) => {
     const flat = flattenMeta(meta) as DigitalService & Record<string, any>;

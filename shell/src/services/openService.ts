@@ -1,5 +1,6 @@
-import type { Service, ServiceSrc, DigitalService } from '../types/openService';
+import type { Service, ServiceSrc, DigitalService, ResolvedRoute } from '../types/openService';
 import { Helper } from '../utils/urlHelper';
+import { resolveBlankUrl } from './openInBlank';
 
 function toScalar(v: string | string[] | undefined): string | undefined {
   return Array.isArray(v) ? v[0] : v;
@@ -50,31 +51,25 @@ export function flattenMeta(meta: Service): DigitalService {
   } as DigitalService;
 }
 
-export function resolveRoute(flat: Record<string, any>): { url: string; state: Record<string, any> } {
-  const qs = Helper.buildQParam(flat.sherutimUrlParams);
-  if (flat.objectType == null) {
-    return {
-      url: Helper.buildUrl(`sherutim/${flat.idntMenuItem}`, qs),
-      state: {
-        mfeConfig: {
-          remoteUrl: flat.serviceSrc?.remoteUrl ?? '',
-          scope: flat.serviceSrc?.scope ?? '',
-          module: flat.serviceSrc?.module ?? '',
-        },
-      },
-    };
-  }
-  else {
-    return {
-      url: Helper.buildUrl(`/employee-portfolio/sherutim/${flat.idntSheryut}`, qs),
-      state: {
-        mfeConfig: {
-          remoteUrl: flat.serviceSrc?.remoteUrl ?? '',
-          scope: flat.serviceSrc?.scope ?? '',
-          module: flat.serviceSrc?.module ?? '',
-        },
-      },
-    };
+export async function resolveRoute(flat: DigitalService & Record<string, any>): Promise<ResolvedRoute> {
+  if (flat.isTaregtBlank) {
+    const url = await resolveBlankUrl(flat);
+    return { url, openType: 'blank', setup: String(flat.setup ?? '') };
   }
 
+  const qs = Helper.buildQParam(flat.sherutimUrlParams);
+  const mfeConfig = {
+    remoteUrl: flat.serviceSrc?.remoteUrl ?? '',
+    scope:     flat.serviceSrc?.scope     ?? '',
+    module:    flat.serviceSrc?.module    ?? '',
+  };
+  const url = flat.objectType == null
+    ? Helper.buildUrl(`sherutim/${flat.idntMenuItem}`, qs)
+    : Helper.buildUrl(`/employee-portfolio/sherutim/${flat.idntSheryut}`, qs);
+
+  return {
+    url,
+    state: { mfeConfig },
+    openType: flat.isOverlay ? 'overlay' : 'navigate',
+  };
 }

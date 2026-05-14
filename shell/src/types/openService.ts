@@ -58,6 +58,15 @@ export interface DigitalService {
 
 export type OpenService = (meta: Service) => void;
 
+export type OpenType = 'navigate' | 'blank' | 'overlay';
+
+export interface ResolvedRoute {
+  url: string;
+  state?: Record<string, any>;
+  openType: OpenType;
+  setup?: string;
+}
+
 // Set actual numeric values to match the legacy OBJECT_TYPE constants
 export const OBJECT_TYPE = {
   employee: 1,

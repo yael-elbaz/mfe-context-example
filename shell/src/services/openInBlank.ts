@@ -64,8 +64,12 @@ async function resolveUrlWithParams(flat: DigitalService & Record<string, any>, 
   return baseUrl;
 }
 
-export async function openInBlank(flat: DigitalService): Promise<void> {
+export async function resolveBlankUrl(flat: DigitalService): Promise<string> {
   const baseUrl = buildBaseUrl(String(flat.textNativ ?? ''));
-  const resolvedUrl = await resolveUrlWithParams(flat, baseUrl);
-  window.open(resolvedUrl, '_blank', String(flat.setup ?? ''));
+  return resolveUrlWithParams(flat, baseUrl);
+}
+
+export async function openInBlank(flat: DigitalService): Promise<void> {
+  const url = await resolveBlankUrl(flat);
+  window.open(url, '_blank', String(flat.setup ?? ''));
 }
