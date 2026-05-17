@@ -26,23 +26,58 @@ Problems:
 
 ```
 openService(meta)
-  └─ no employee → pendingFlat.current = flat
-                   setShowSelectPopup(true)
+  └─ no employee → id = await waitForEmployeeSelect(flat)  ← pauses here
                         │
                         ▼
-               <SelectEmployeePopup>  (modal overlay, rendered in RouterApp)
+           <SelectEmployeeGate>  (self-contained, placed once in RouterApp)
+                receives trigger via module signal
+                shows <SelectEmployeePopup />
                     │
-                    └─ <SearchEmployeeMFE onSelected={onEmployeeSelect} />
-                              │
-                              ▼ user picks employee
-                    onEmployeeSelect(idntEmployee)
-                      ├─ setShowSelectPopup(false)
-                      └─ navToServcie(pendingFlat, idntEmployee)
-                              │
-                              ▼
-                    resolveRoute(flat)  → { url, state, openType }
-                    withEmployeeId(url, idntEmployee)  ← appended here
-                    navigate(finalUrl, { state })
+                    └─ <SearchEmployeeMFE onSelected={...} />
+                                │
+                                ▼ user picks employee
+                    resolveEmployeeSelect(idntEmployee)
+                                │
+                        ◀───────┘  Promise resolves
+  └─ id = idntEmployee
+  └─ navToServcie(flat, id)
+          │
+          ▼
+  resolveRoute(flat) → { url, state, openType }
+  withEmployeeId(url, id)
+  navigate(finalUrl, { state })
+```
+
+---
+
+## Architecture: Promise + module-level signal
+
+Two concerns are separated cleanly:
+
+**1. Async gate** — `openService` awaits the employee selection as a Promise.
+   The flow inside the hook reads linearly; all "what happens after" stays in one place.
+
+**2. Rendering** — a module-level signal bridges the trigger to `SelectEmployeeGate`
+   without prop drilling. No Zustand, no Context, no popup state lifted to `App.tsx`.
+
+```ts
+// selectEmployeeSignal.ts
+type Trigger = (flat: DigitalService) => void;
+let _trigger: Trigger | null = null;
+let _resolve: ((id: string | null) => void) | null = null;
+
+export const registerSelectEmployeeGate = (fn: Trigger) => { _trigger = fn; };
+
+export const waitForEmployeeSelect = (flat: DigitalService): Promise<string | null> =>
+  new Promise(resolve => {
+    _resolve = resolve;
+    _trigger?.(flat);
+  });
+
+export const resolveEmployeeSelect = (id: string | null) => {
+  _resolve?.(id);
+  _resolve = null;
+};
 ```
 
 ---
@@ -65,14 +100,29 @@ This is the correct layer because:
 
 ---
 
-## Files changed
+## Files
 
-### 1. `shell/src/hooks/useOpenService.ts`
+### 1. `shell/src/services/selectEmployeeSignal.ts` (new)
 
-New state and refs:
+Module-level signal + Promise bridge. See architecture section above.
+
+### 2. `shell/src/hooks/useOpenService.ts`
+
+`openService` becomes async and awaits the employee selection:
+
 ```ts
-const [showSelectPopup, setShowSelectPopup] = useState(false);
-const pendingFlat = useRef<DigitalService | null>(null);  // useRef — no re-render needed
+const openService = useCallback(async (meta: Service) => {
+  const flat = flattenMeta(meta) as DigitalService;
+
+  const currentEmployee = useEmployeeStore.getState().employee;
+  if (!currentEmployee) {
+    const id = await waitForEmployeeSelect(flat);
+    if (!id) return; // user cancelled
+    navToServcie(flat, id);
+    return;
+  }
+  navToServcie(flat);
+}, [navToServcie]);
 ```
 
 `navToServcie` signature:
@@ -81,33 +131,38 @@ async (flat: DigitalService, employeeId?: string) => void
 // employeeId appended to internal URLs before navigate()
 ```
 
-`openService` change:
+Returns (no popup-related values):
 ```ts
-// before: navigate('/select-employee', { state: { pendingSherut: flat } })
-// after:
-pendingFlat.current = flat;
-setShowSelectPopup(true);
+{ openService, navToServcie }
 ```
 
-Two new callbacks returned:
-```ts
-onEmployeeSelect(idntEmployee: string)
-  // close popup + navToServcie(pendingFlat, idntEmployee)
+### 3. `shell/src/components/SelectEmployeeGate.tsx` (new)
 
-onCloseSelectPopup()
-  // close popup + clear pendingFlat
+Self-contained. Registers itself via the signal on mount. Owns only the `pending` state
+needed to show/hide the popup. Has NO knowledge of `navToServcie` or service logic.
+
+```tsx
+const SelectEmployeeGate: React.FC = () => {
+  const [pending, setPending] = useState<DigitalService | null>(null);
+
+  useEffect(() => {
+    registerSelectEmployeeGate(setPending);
+  }, []);
+
+  if (!pending) return null;
+
+  return (
+    <SelectEmployeePopup
+      onSelected={(id) => { setPending(null); resolveEmployeeSelect(id); }}
+      onClose={() => { setPending(null); resolveEmployeeSelect(null); }}
+    />
+  );
+};
 ```
 
-Returns:
-```ts
-{ openService, navToServcie, showSelectPopup, onEmployeeSelect, onCloseSelectPopup }
-```
+### 4. `shell/src/components/SelectEmployeePopup.tsx`
 
----
-
-### 2. `shell/src/components/SelectEmployeePopup.tsx` (new)
-
-Modal overlay — renders the SearchEmployee MFE with an `onSelected` prop.
+Pure presentational modal overlay — renders the SearchEmployee MFE.
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -137,19 +192,15 @@ interface Props {
 ```
 
 Behaviour:
-- Click on backdrop → `onClose()`
+- Click backdrop → `onClose()`
 - Click inside panel → `stopPropagation`
 - ESC key → `onClose()`
-- Employee selected → `onSelected(idntEmployee)` (popup does NOT close itself — the hook does)
+- Employee selected → `onSelected(idntEmployee)`
 
----
-
-### 3. `shell/src/App.tsx` — RouterApp
-
-Add popup rendering alongside routes:
+### 5. `shell/src/App.tsx` — RouterApp
 
 ```tsx
-const { openService, navToServcie, showSelectPopup, onEmployeeSelect, onCloseSelectPopup } = useOpenService();
+const { openService, navToServcie } = useOpenService();
 
 return (
   <>
@@ -157,13 +208,7 @@ return (
     <main>
       <Routes>...</Routes>
     </main>
-
-    {showSelectPopup && (
-      <SelectEmployeePopup
-        onSelected={onEmployeeSelect}
-        onClose={onCloseSelectPopup}
-      />
-    )}
+    <SelectEmployeeGate />
   </>
 );
 ```
@@ -182,11 +227,10 @@ return (
 
 ## Open questions
 
-1. Should the popup show a "loading" banner that names the pending service
-   (e.g., "בחר עובד לפתיחת: בקשת חופשה")?
-   → The `pendingFlat.textMenu` / `textMenuItem` can be passed as a prop for this.
+1. Should the popup show the pending service name (e.g., "בחר עובד לפתיחת: בקשת חופשה")?
+   → `pending.textMenu` / `textMenuItem` can be passed as a prop to `SelectEmployeePopup`.
 
 2. Should selecting an employee also update the Zustand `employeeStore`
    so the sidebar profile loads immediately?
-   → Suggested: yes — call `useEmployeeStore.getState().setEmployee(...)` in `onEmployeeSelect`
-     after setting the employee ID (requires a `setEmployee` action in the store).
+   → Suggested: yes — call `useEmployeeStore.getState().setEmployee(...)` inside
+     `onSelected` in `SelectEmployeeGate` (requires a `setEmployee` action in the store).
