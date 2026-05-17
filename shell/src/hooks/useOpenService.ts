@@ -4,7 +4,7 @@ import { flattenMeta, resolveRoute } from '../services/openService';
 import type { Service, DigitalService } from '../types/openService';
 import { useEmployeeStore } from '../store/employeeStore';
 
-export const useOpenService = () => {
+export const useOpenService = (waitForEmployee: () => Promise<string | null>) => {
   const navigate = useNavigate();
 
   const navToServcie = useCallback(async (flat: DigitalService) => {
@@ -15,26 +15,34 @@ export const useOpenService = () => {
         window.open(url, '_blank', setup ?? '');
         break;
       case 'overlay':
-        // TODO: open overlay
         navigate(url, { state });
         break;
       case 'navigate':
         navigate(url, { state });
         break;
     }
-  }, [navigate])
+  }, [navigate]);
 
   const openService = useCallback((meta: Service) => {
     const flat = flattenMeta(meta) as DigitalService & Record<string, any>;
 
     const currentEmployee = useEmployeeStore.getState().employee;
     if (!currentEmployee) {
-      navigate('/select-employee', { state: { pendingSherut: flat } });
+      waitForEmployee().then((idntEmployee) => {
+        if (idntEmployee == null) return;
+        const flatWithEmployee = {
+          ...flat,
+          sherutimUrlParams: flat.sherutimUrlParams
+            ? `${flat.sherutimUrlParams}&idntEmployee=${idntEmployee}`
+            : `idntEmployee=${idntEmployee}`,
+        };
+        navToServcie(flatWithEmployee);
+      });
       return;
     }
-    navToServcie(flat)
 
-  }, [navigate]);
+    navToServcie(flat);
+  }, [navigate, waitForEmployee]);
 
   return { openService, navToServcie };
 };

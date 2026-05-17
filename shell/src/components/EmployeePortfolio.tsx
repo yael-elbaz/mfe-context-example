@@ -1,6 +1,7 @@
-import React, { lazy, Suspense, useEffect, Component, ReactNode } from 'react';
+import React, { lazy, Suspense, useEffect, useState, Component, ReactNode } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useEmployeeStore, EmployeeProfile } from '../store/employeeStore';
+import { Helper } from '../utils/urlHelper';
 
 const EmployeePortfolioMFE = lazy(() => import('mfe_employee_portfolio/App'));
 
@@ -88,7 +89,7 @@ class MFEErrorBoundary extends Component<{ children: ReactNode }, { error: Error
 
 const EmployeePortfolio: React.FC = () => {
   const [searchParams] = useSearchParams();
-  const employeeId = searchParams.get('employeeId');
+  const employeeId = Helper.getParam('employeeId', searchParams);
   useEffect(() => {
     if (!employeeId) return;
     const { setEmployee, setLoading } = useEmployeeStore.getState();

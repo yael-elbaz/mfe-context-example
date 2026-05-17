@@ -51,4 +51,13 @@ export class Helper {
   static buildUrl(path: string, queryString: string): string {
     return queryString ? `${path}?${queryString}` : path;
   }
+
+  // reads a param by key — first from plain query params, then from the decoded q param
+  static getParam(key: string, searchParams: URLSearchParams): string | null {
+    const plain = searchParams.get(key);
+    if (plain) return plain;
+    const q = searchParams.get('q');
+    if (!q) return null;
+    return Helper.getQueryParamsAsObject(Helper.decodeQueryString(q))[key] ?? null;
+  }
 }

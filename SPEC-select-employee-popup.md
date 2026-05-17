@@ -1,155 +1,177 @@
-# Spec: Select Employee Popup
+# Spec: Employee Picker Popup (Promise-based)
 
-## Goal
-Replace the navigate-to-page flow for missing employee with an inline popup that renders
-the SearchEmployee MFE. On selection the popup closes and the pending service opens
-with the selected employee's ID in the URL search params.
+## Problem
+
+`openService` currently handles the "no employee" case by navigating to `/select-employee`,
+passing the pending `DigitalService` as router state. This loses the original call context
+and requires `SelectEmployeePage` to receive `navToServcie` as a prop to resume after
+selection — a brittle coupling between routing and business logic.
 
 ---
 
-## Current flow (replaced)
+## Current Flow (replaced)
 
 ```
 openService(meta)
-  └─ no employee → navigate('/select-employee', { state: { pendingSherut } })
-       └─ SelectEmployeePage mounts → user searches → onSelected → navToServcie(flat)
-                                                               ↑ employeeId never in URL
+  └─ no employee in store
+       └─ navigate('/select-employee', { state: { pendingSherut: flat } })
+            └─ SelectEmployeePage renders SearchEmployeeMFE
+                 └─ onSelected(idntEmployee)
+                      └─ if pendingSherut && navToServcie → navToServcie(pendingSherut)
+                         else → navigate('/employee-portfolio?employeeId=...')
 ```
 
 Problems:
-- Full page navigation loses the user's context
-- `employeeId` is never injected into the final sherut URL — the layout can't load the profile
+- `navToServcie` must be prop-drilled through the router to `SelectEmployeePage`
+- Functions cannot be passed as navigation state (structured clone limitation)
+- Full page navigation loses the user's current context
 
 ---
 
-## New flow
+## New Flow (Promise-based popup)
 
 ```
 openService(meta)
-  └─ no employee → pendingFlat.current = flat
-                   setShowSelectPopup(true)
+  └─ no employee in store
+       └─ const idntEmployee = await waitForEmployee()
+                 │
+                 ▼  (popup renders over current page)
+            <EmployeePickerPopup>
+               └─ <SearchEmployeeMFE onSelected={...} />
                         │
-                        ▼
-               <SelectEmployeePopup>  (modal overlay, rendered in RouterApp)
-                    │
-                    └─ <SearchEmployeeMFE onSelected={onEmployeeSelect} />
-                              │
-                              ▼ user picks employee
-                    onEmployeeSelect(idntEmployee)
-                      ├─ setShowSelectPopup(false)
-                      └─ navToServcie(pendingFlat, idntEmployee)
-                              │
-                              ▼
-                    resolveRoute(flat)  → { url, state, openType }
-                    withEmployeeId(url, idntEmployee)  ← appended here
-                    navigate(finalUrl, { state })
+                        ▼  user picks → Promise resolves with idntEmployee
+                           user closes → Promise resolves with null
+       └─ if null → abort (do nothing, stay on current page)
+       └─ navToServcie(flat)    ← resumes exactly where it stopped
 ```
 
 ---
 
-## Where employeeId goes into the URL
+## Components
 
-`navToServcie` receives an optional `employeeId` argument. After `resolveRoute` returns
-the URL, a small helper appends `?employeeId=X` (or `&employeeId=X`) before navigating.
+### `useEmployeePickerPopup` hook
 
-```
-resolveRoute → url = '/employee-portfolio/sherutim/SHR001?mfeConfig=...'
-withEmployeeId  → '/employee-portfolio/sherutim/SHR001?mfeConfig=...&employeeId=1003'
-```
+**Location:** `shell/src/hooks/useEmployeePickerPopup.ts`
 
-This is the correct layer because:
-- `resolveRoute` stays focused on sherut/MFE config (no employee context)
-- The route components (`SherutDynamicView`, `EmployeePortfolioLayout`) read `employeeId`
-  from `useSearchParams()` — the URL is their source of truth
-- `blank` links skip `withEmployeeId` entirely (external URL, no layout needed)
+Owns all popup state. Provides:
+- `waitForEmployee(): Promise<string | null>` — called by `openService`; opens the popup
+  and returns a Promise that resolves when the user picks or dismisses
+- `pickerProps` — passed directly to `<EmployeePickerPopup>`
 
----
-
-## Files changed
-
-### 1. `shell/src/hooks/useOpenService.ts`
-
-New state and refs:
+**Internals:**
 ```ts
-const [showSelectPopup, setShowSelectPopup] = useState(false);
-const pendingFlat = useRef<DigitalService | null>(null);  // useRef — no re-render needed
+const pendingResolve = useRef<((id: string | null) => void) | null>(null);
+const [open, setOpen] = useState(false);
+
+function waitForEmployee(): Promise<string | null> {
+  setOpen(true);
+  return new Promise((resolve) => {
+    pendingResolve.current = resolve;
+  });
+}
+
+function onSelected(idntEmployee: string) {
+  pendingResolve.current?.(idntEmployee);
+  pendingResolve.current = null;
+  setOpen(false);
+}
+
+function onClose() {
+  pendingResolve.current?.(null);
+  pendingResolve.current = null;
+  setOpen(false);
+}
 ```
 
-`navToServcie` signature:
+**Return type:**
 ```ts
-async (flat: DigitalService, employeeId?: string) => void
-// employeeId appended to internal URLs before navigate()
-```
-
-`openService` change:
-```ts
-// before: navigate('/select-employee', { state: { pendingSherut: flat } })
-// after:
-pendingFlat.current = flat;
-setShowSelectPopup(true);
-```
-
-Two new callbacks returned:
-```ts
-onEmployeeSelect(idntEmployee: string)
-  // close popup + navToServcie(pendingFlat, idntEmployee)
-
-onCloseSelectPopup()
-  // close popup + clear pendingFlat
-```
-
-Returns:
-```ts
-{ openService, navToServcie, showSelectPopup, onEmployeeSelect, onCloseSelectPopup }
+interface UseEmployeePickerPopupReturn {
+  waitForEmployee: () => Promise<string | null>;
+  pickerProps: {
+    open: boolean;
+    onSelected: (idntEmployee: string) => void;
+    onClose: () => void;
+  };
+}
 ```
 
 ---
 
-### 2. `shell/src/components/SelectEmployeePopup.tsx` (new)
+### `EmployeePickerPopup` component
 
-Modal overlay — renders the SearchEmployee MFE with an `onSelected` prop.
+**Location:** `shell/src/components/EmployeePickerPopup.tsx`
+
+Modal overlay with a single field — employee search (via `SearchEmployeeMFE`).
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│  backdrop (rgba overlay, click to close)                 │
-│                                                          │
-│   ┌──────────────────────────────────────────────────┐  │
-│   │  [✕]                                             │  │
-│   │                                                  │  │
-│   │  בחר עובד לפתיחת השירות                          │  │
-│   │  ────────────────────────────────────────────    │  │
-│   │  🔍 חיפוש עובד                                   │  │
-│   │  ┌────────────────────────────────────────────┐  │  │
-│   │  │ הכנס מספר עובד או שם...                    │  │  │
-│   │  └────────────────────────────────────────────┘  │  │
-│   │  (autocomplete dropdown on type)                 │  │
-│   │                                                  │  │
-│   └──────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────┐
+│  backdrop (semi-transparent, click → onClose)             │
+│                                                           │
+│   ┌───────────────────────────────────────────────────┐  │
+│   │                                              [✕]  │  │
+│   │  בחר עובד לפתיחת השירות                           │  │
+│   │  ─────────────────────────────────────────────    │  │
+│   │  <SearchEmployeeMFE onSelected={onSelected} />    │  │
+│   └───────────────────────────────────────────────────┘  │
+└──────────────────────────────────────────────────────────┘
 ```
 
 Props:
 ```ts
 interface Props {
+  open: boolean;
   onSelected: (idntEmployee: string) => void;
   onClose: () => void;
 }
 ```
 
 Behaviour:
-- Click on backdrop → `onClose()`
-- Click inside panel → `stopPropagation`
+- Renders `null` when `open === false` (no DOM cost)
+- Click backdrop → `onClose()`
+- Click panel → `stopPropagation`
 - ESC key → `onClose()`
-- Employee selected → `onSelected(idntEmployee)` (popup does NOT close itself — the hook does)
+- Employee selected in MFE → `onSelected(idntEmployee)`
 
 ---
 
-### 3. `shell/src/App.tsx` — RouterApp
+## `useOpenService` changes
 
-Add popup rendering alongside routes:
+`waitForEmployee` is passed in as a parameter (from `App.tsx`):
+
+```ts
+export const useOpenService = (
+  waitForEmployee: () => Promise<string | null>
+) => {
+  const openService = useCallback((meta: Service) => {
+    const flat = flattenMeta(meta);
+    const currentEmployee = useEmployeeStore.getState().employee;
+
+    if (!currentEmployee) {
+      waitForEmployee().then((idntEmployee) => {
+        if (idntEmployee == null) return;   // user dismissed — abort
+        navToServcie(flat);
+      });
+      return;
+    }
+
+    navToServcie(flat);
+  }, [navigate, waitForEmployee]);
+  // ...
+};
+```
+
+`navToServcie` is unchanged.
+
+---
+
+## Mount point — `App.tsx`
+
+The popup is rendered **once at the app root**, above all routes, so it appears regardless
+of the current route.
 
 ```tsx
-const { openService, navToServcie, showSelectPopup, onEmployeeSelect, onCloseSelectPopup } = useOpenService();
+const { waitForEmployee, pickerProps } = useEmployeePickerPopup();
+const { openService, navToServcie }    = useOpenService(waitForEmployee);
 
 return (
   <>
@@ -157,36 +179,29 @@ return (
     <main>
       <Routes>...</Routes>
     </main>
-
-    {showSelectPopup && (
-      <SelectEmployeePopup
-        onSelected={onEmployeeSelect}
-        onClose={onCloseSelectPopup}
-      />
-    )}
+    <EmployeePickerPopup {...pickerProps} />
   </>
 );
 ```
 
 ---
 
-## What does NOT change
+## Files changed
 
-- `resolveRoute` — no employee awareness, stays synchronous after initial async for blank
-- `SelectEmployeePage` — still exists as a standalone page route (`/select-employee`) as
-  fallback; no changes needed
-- `SearchEmployeeMFE` — already has `onSelected` prop, no changes needed
-- `openInBlank` / `openService` service files — no changes
+| File | Change |
+|------|--------|
+| `shell/src/hooks/useEmployeePickerPopup.ts` | **New** — Promise-based popup hook |
+| `shell/src/components/EmployeePickerPopup.tsx` | **New** — modal with `SearchEmployeeMFE` |
+| `shell/src/hooks/useOpenService.ts` | Accept `waitForEmployee` param; replace `navigate('/select-employee')` with `await waitForEmployee()` |
+| `shell/src/App.tsx` | Instantiate hook, render `<EmployeePickerPopup>`, pass `waitForEmployee` to `useOpenService` |
+| `shell/src/components/SelectEmployeePage.tsx` | Remove `navToServcie` prop (no longer needed) |
 
 ---
 
-## Open questions
+## What Does NOT Change
 
-1. Should the popup show a "loading" banner that names the pending service
-   (e.g., "בחר עובד לפתיחת: בקשת חופשה")?
-   → The `pendingFlat.textMenu` / `textMenuItem` can be passed as a prop for this.
-
-2. Should selecting an employee also update the Zustand `employeeStore`
-   so the sidebar profile loads immediately?
-   → Suggested: yes — call `useEmployeeStore.getState().setEmployee(...)` in `onEmployeeSelect`
-     after setting the employee ID (requires a `setEmployee` action in the store).
+- `resolveRoute`, `flattenMeta`, `openInBlank` — untouched
+- `/select-employee` route — can stay as a standalone fallback page; `openService` just no
+  longer navigates to it
+- `SearchEmployeeMFE` — already accepts `onSelected` prop, no changes needed
+- Zustand stores — employee store is still set externally; this hook only reads from it
