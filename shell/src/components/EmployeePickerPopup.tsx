@@ -3,7 +3,7 @@ import type { EmployeePickerPopupProps } from '../hooks/useEmployeePickerPopup';
 
 const SearchEmployeeMFE = lazy(() => import('mfe_search_employee/App'));
 
-const EmployeePickerPopup: React.FC<EmployeePickerPopupProps> = ({ open, onSelected, onClose }) => {
+const EmployeePickerPopup: React.FC<EmployeePickerPopupProps> = ({ open, objectType, onSelected, onClose }) => {
   useEffect(() => {
     if (!open) return;
     const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -52,7 +52,7 @@ const EmployeePickerPopup: React.FC<EmployeePickerPopupProps> = ({ open, onSelec
         </h3>
 
         <Suspense fallback={<div style={{ padding: '16px', color: '#888' }}>טוען חיפוש עובד...</div>}>
-          <SearchEmployeeMFE onSelected={onSelected} />
+          <SearchEmployeeMFE onSelected={onSelected} objectType={objectType} />
         </Suspense>
       </div>
     </div>

@@ -2,20 +2,23 @@ import { useCallback, useRef, useState } from 'react';
 
 export interface EmployeePickerPopupProps {
   open: boolean;
+  objectType?: string | string[] | null;
   onSelected: (idntEmployee: string) => void;
   onClose: () => void;
 }
 
 export interface UseEmployeePickerPopupReturn {
-  waitForEmployee: () => Promise<string | null>;
+  waitForEmployee: (objectType?: string | string[] | null) => Promise<string | null>;
   pickerProps: EmployeePickerPopupProps;
 }
 
 export function useEmployeePickerPopup(): UseEmployeePickerPopupReturn {
   const [open, setOpen] = useState(false);
+  const [objectType, setObjectType] = useState<string | string[] | null | undefined>(undefined);
   const pendingResolve = useRef<((id: string | null) => void) | null>(null);
 
-  const waitForEmployee = useCallback((): Promise<string | null> => {
+  const waitForEmployee = useCallback((objectType?: string | string[] | null): Promise<string | null> => {
+    setObjectType(objectType);
     if (pendingResolve.current) {
       return new Promise((resolve) => { pendingResolve.current = resolve; });
     }
@@ -37,6 +40,6 @@ export function useEmployeePickerPopup(): UseEmployeePickerPopupReturn {
 
   return {
     waitForEmployee,
-    pickerProps: { open, onSelected, onClose },
+    pickerProps: { open, objectType, onSelected, onClose },
   };
 }

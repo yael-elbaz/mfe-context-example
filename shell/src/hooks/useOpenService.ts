@@ -9,7 +9,7 @@ function withEmployeeId(url: string, employeeId: string): string {
   return url.includes('?') ? `${url}&employeeId=${employeeId}` : `${url}?employeeId=${employeeId}`;
 }
 
-export const useOpenService = (waitForEmployee: () => Promise<string | null>) => {
+export const useOpenService = (waitForEmployee: (objectType?: string | string[] | null) => Promise<string | null>) => {
   const navigate = useNavigate();
 
   const navToServcie = useCallback(async (flat: DigitalService, employeeId?: string) => {
@@ -34,7 +34,7 @@ export const useOpenService = (waitForEmployee: () => Promise<string | null>) =>
 
     const currentEmployee = useEmployeeStore.getState().employee;
     if (!currentEmployee) {
-      waitForEmployee().then((idntEmployee) => {
+      waitForEmployee(flat.objectType).then((idntEmployee) => {
         if (idntEmployee == null) return;
         const flatWithEmployee = {
           ...flat,
