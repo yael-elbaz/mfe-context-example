@@ -9,7 +9,7 @@ function withEmployeeId(url: string, employeeId: string): string {
   return url.includes('?') ? `${url}&employeeId=${employeeId}` : `${url}?employeeId=${employeeId}`;
 }
 
-export const useOpenService = () => {
+export const useOpenService = (waitForEmployee: () => Promise<string | null>) => {
   const navigate = useNavigate();
 
   const navToServcie = useCallback(async (flat: DigitalService, employeeId?: string) => {
@@ -20,12 +20,13 @@ export const useOpenService = () => {
         window.open(url, '_blank', setup ?? '');
         break;
       case 'overlay':
-      case 'navigate': {
-        const finalUrl = employeeId ? withEmployeeId(url, employeeId) : url;
-        navigate(finalUrl, { state });
+        navigate(url, { state });
+        break;
+      case 'navigate':
+        navigate(url, { state });
         break;
       }
-    }
+    // }
   }, [navigate]);
 
   const openService = useCallback(async (meta: Service) => {
@@ -33,13 +34,21 @@ export const useOpenService = () => {
 
     const currentEmployee = useEmployeeStore.getState().employee;
     if (!currentEmployee) {
-      const id = await waitForEmployeeSelect(flat);
-      if (!id) return;
-      navToServcie(flat, id);
+      waitForEmployee().then((idntEmployee) => {
+        if (idntEmployee == null) return;
+        const flatWithEmployee = {
+          ...flat,
+          sherutimUrlParams: flat.sherutimUrlParams
+            ? `${flat.sherutimUrlParams}&idntEmployee=${idntEmployee}`
+            : `idntEmployee=${idntEmployee}`,
+        };
+        navToServcie(flatWithEmployee);
+      });
       return;
     }
+
     navToServcie(flat);
-  }, [navToServcie]);
+  }, [navigate, waitForEmployee]);
 
   return { openService, navToServcie };
 };

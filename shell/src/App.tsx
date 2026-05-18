@@ -7,6 +7,8 @@ import EmployeePortfolioIndex from './components/EmployeePortfolioIndex';
 import SectionFullView from './components/SectionFullView';
 import { SherutDynamicView } from './sections/SherutDynamicView';
 import { useOpenService } from './hooks/useOpenService';
+import { useEmployeePickerPopup } from './hooks/useEmployeePickerPopup';
+import EmployeePickerPopup from './components/EmployeePickerPopup';
 import SelectEmployeePage from './components/SelectEmployeePage';
 import SelectEmployeeGate from './components/SelectEmployeeGate';
 
@@ -62,7 +64,8 @@ async function fetchUserSession() {
 }
 
 const RouterApp: React.FC = () => {
-  const { openService } = useOpenService();
+  const { waitForEmployee, pickerProps } = useEmployeePickerPopup();
+  const { openService } = useOpenService(waitForEmployee);
 
   return (
     <>
@@ -87,8 +90,7 @@ const RouterApp: React.FC = () => {
           </Routes>
         </main>
       </div>
-
-      <SelectEmployeeGate />
+      <EmployeePickerPopup {...pickerProps} />
     </>
   );
 };

@@ -1,7 +1,8 @@
-import React, { lazy, Suspense, useEffect } from 'react';
+import React, { lazy, Suspense, useEffect, useState } from 'react';
 import { Outlet, useSearchParams, useNavigate } from 'react-router-dom';
 import { useEmployeeStore, useEmployee, useEmployeeLoading, EmployeeProfile } from '../store/employeeStore';
 import type { OpenService } from '../types/openService';
+import { Helper } from '../utils/urlHelper';
 
 const EmployeePortfolioMFE = lazy(() => import('mfe_employee_portfolio/App'));
 
@@ -19,16 +20,24 @@ const PROFILES: Record<string, EmployeeProfile> = {
 const EmployeePortfolioLayout: React.FC<{ openService?: OpenService }> = ({ openService }) => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const employeeId = searchParams.get('employeeId') ?? '';
+  const employeeId = Helper.getParam('employeeId', searchParams) ?? '';
   const employee = useEmployee();
   const loading = useEmployeeLoading();
+  const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
     if (!employeeId) return;
     const { setEmployee, setLoading } = useEmployeeStore.getState();
     setLoading(true);
+    setNotFound(false);
     setTimeout(() => {
-      setEmployee(PROFILES[employeeId] ?? null);
+      const data = PROFILES[employeeId] ?? null;
+      if (!data) {
+        setLoading(false);
+        setNotFound(true);
+        return;
+      }
+      setEmployee(data);
       setLoading(false);
     }, 400);
     return () => { useEmployeeStore.getState().setEmployee(null); };
@@ -42,7 +51,11 @@ const EmployeePortfolioLayout: React.FC<{ openService?: OpenService }> = ({ open
         </Suspense>
       </div>
       <div style={{ flex: 1 }}>
-        {loading || !employee ? (
+        {notFound ? (
+          <div style={{ padding: '24px', color: '#888', fontSize: '16px', textAlign: 'right' }}>
+            עובד לא נמצא
+          </div>
+        ) : loading || !employee ? (
           <div style={{ padding: '48px', textAlign: 'center', color: '#1E3BA2', direction: 'rtl' }}>
             ⏳ טוען נתוני עובד...
           </div>
