@@ -1,15 +1,15 @@
 import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { flattenMeta, resolveRoute } from '../services/openService';
-import type { Service, DigitalService } from '../types/openService';
+import type { Service, DigitalService, PersonType } from '../types/openService';
+import type { SelectedPerson } from './useEmployeePickerPopup';
 import { useEmployeeStore } from '../store/employeeStore';
-import { waitForEmployeeSelect } from '../services/selectEmployeeSignal';
 
 function withEmployeeId(url: string, employeeId: string): string {
   return url.includes('?') ? `${url}&employeeId=${employeeId}` : `${url}?employeeId=${employeeId}`;
 }
 
-export const useOpenService = (waitForEmployee: (objectType?: string | string[] | null) => Promise<string | null>) => {
+export const useOpenService = (waitForEmployee: (objectType?: PersonType[] | null) => Promise<SelectedPerson | null>) => {
   const navigate = useNavigate();
 
   const navToServcie = useCallback(async (flat: DigitalService, employeeId?: string) => {
@@ -34,15 +34,17 @@ export const useOpenService = (waitForEmployee: (objectType?: string | string[] 
 
     const currentEmployee = useEmployeeStore.getState().employee;
     if (!currentEmployee) {
-      waitForEmployee(flat.objectType).then((idntEmployee) => {
-        if (idntEmployee == null) return;
-        const flatWithEmployee = {
+      waitForEmployee(flat.objectType).then((selected) => {
+        if (selected == null) return;
+        const { idnt, personType } = selected;
+        const personParam = `idnt${personType.charAt(0).toUpperCase() + personType.slice(1)}=${idnt}`;
+        const flatWithPerson = {
           ...flat,
           sherutimUrlParams: flat.sherutimUrlParams
-            ? `${flat.sherutimUrlParams}&idntEmployee=${idntEmployee}`
-            : `idntEmployee=${idntEmployee}`,
+            ? `${flat.sherutimUrlParams}&${personParam}`
+            : personParam,
         };
-        navToServcie(flatWithEmployee);
+        navToServcie(flatWithPerson);
       });
       return;
     }

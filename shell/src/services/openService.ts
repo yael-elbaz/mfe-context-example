@@ -1,3 +1,4 @@
+import { toObjectTypeList } from '../types/openService';
 import type { Service, ServiceSrc, DigitalService, ResolvedRoute } from '../types/openService';
 import { Helper } from '../utils/urlHelper';
 import { resolveBlankUrl } from './openInBlank';
@@ -40,7 +41,7 @@ export function flattenMeta(meta: Service): DigitalService {
   return {
     ...rest,
     serviceSrc,
-    objectType: objectType ?? null,
+    objectType: toObjectTypeList(objectType),
     textMenu: meta.textMenu,
     textNativ: meta.textNativ,
     textMenuItem: meta.textMenuItem,

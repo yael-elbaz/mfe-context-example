@@ -34,10 +34,31 @@ export interface Service {
   Permission?: boolean;
 }
 
+export const OBJECT_TYPE = {
+  employee: 1,
+  customer: 2,
+  mishtamesh: 3,
+} as const;
+
+export type PersonType = 'employee' | 'customer' | 'mishtamesh';
+
+const reverseObjectType = Object.fromEntries(
+  Object.entries(OBJECT_TYPE).map(([k, v]) => [String(v), k as PersonType])
+);
+
+export function toObjectTypeList(objectType: string | string[] | null | undefined): PersonType[] {
+  if (objectType == null) return [];
+  const arr = Array.isArray(objectType) ? objectType : [objectType];
+  return arr.flatMap((s) => {
+    const key = reverseObjectType[s];
+    return key ? [key] : [];
+  });
+}
+
 export interface DigitalService {
   isTargetBlank?: boolean;
   hasPrerequesties?: boolean;
-  objectType?: string | string[] | null;
+  objectType?: PersonType[] | null;
   serviceSrc?: ServiceSrc;
   isOverlay?: boolean;
   idntMenuItem?: number;
@@ -53,7 +74,7 @@ export interface DigitalService {
   activeTab?: string;
   overlayIcon?: string;
   isTaregtBlank: boolean;
-  [key: string]: string | string[] | boolean | number | null | undefined | ServiceSrc;
+  [key: string]: string | string[] | boolean | number | PersonType[] | null | undefined | ServiceSrc;
 }
 
 export type OpenService = (meta: Service) => void;
@@ -67,9 +88,3 @@ export interface ResolvedRoute {
   setup?: string;
 }
 
-// Set actual numeric values to match the legacy OBJECT_TYPE constants
-export const OBJECT_TYPE = {
-  employee: 1,
-  customer: 2,
-  mishtamesh: 3,
-} as const;

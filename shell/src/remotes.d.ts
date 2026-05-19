@@ -5,8 +5,8 @@ declare module 'mfe_tasks/App' {
 
 declare module 'mfe_search_employee/App' {
   const App: React.ComponentType<{
-    onSelected?: (idntEmployee: string) => void;
-    objectType?: string | string[] | null;
+    onSelected?: (idnt: string, personType: import('./types/openService').PersonType) => void;
+    objectType?: import('./types/openService').PersonType[] | null;
   }>;
   export default App;
 }
