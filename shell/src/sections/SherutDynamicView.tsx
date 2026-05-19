@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useParams, useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { getSherutMfeConfig, type SherutMfeConfig } from '../services/sherutimService';
 import { loadRemoteModule } from '../utils/dynamicFederation';
@@ -40,40 +40,42 @@ export const SherutDynamicView: React.FC = () => {
   const [DynamicComponent, setDynamicComponent] = useState<React.ComponentType<any> | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const loadSherut = useCallback(async (signal: { cancelled: boolean }) => {
+    try {
+      const cached = (location.state as { mfeConfig?: SherutMfeConfig } | null)?.mfeConfig;
+
+      let config: SherutMfeConfig;
+      if (cached) {
+        const { mfeConfig: _, ...restState } = window.history.state?.usr ?? {};
+        window.history.replaceState({ ...window.history.state, usr: restState }, '');
+        config = cached;
+        setPhase('module');
+      } else {
+        setPhase('config');
+        config = await getSherutMfeConfig(id);
+        if (signal.cancelled) return;
+        setPhase('module');
+      }
+
+      const Component = await loadRemoteModule(config.remoteUrl, config.module);
+      if (signal.cancelled) return;
+
+      setDynamicComponent(() => Component);
+      setPhase('done');
+    } catch (err) {
+      if (!signal.cancelled) {
+        setError((err as Error).message);
+        setPhase('error');
+      }
+    }
+  }, [id, location.state]);
+
   useEffect(() => {
     if (!id) return;
-    let cancelled = false;
-
-    (async () => {
-      try {
-        const cached = (location.state as { mfeConfig?: SherutMfeConfig } | null)?.mfeConfig;
-
-        let config: SherutMfeConfig;
-        if (cached) {
-          config = cached;
-          setPhase('module');
-        } else {
-          setPhase('config');
-          config = await getSherutMfeConfig(id);
-          if (cancelled) return;
-          setPhase('module');
-        }
-
-        const Component = await loadRemoteModule(config.remoteUrl, config.module);
-        if (cancelled) return;
-
-        setDynamicComponent(() => Component);
-        setPhase('done');
-      } catch (err) {
-        if (!cancelled) {
-          setError((err as Error).message);
-          setPhase('error');
-        }
-      }
-    })();
-
-    return () => { cancelled = true; };
-  }, [id]);
+    const signal = { cancelled: false };
+    loadSherut(signal);
+    return () => { signal.cancelled = true; };
+  }, [loadSherut]);
 
   if (phase === 'error') {
     return (
