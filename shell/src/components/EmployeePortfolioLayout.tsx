@@ -1,5 +1,5 @@
 import React, { lazy, Suspense, useEffect, useState } from 'react';
-import { Outlet, useSearchParams, useNavigate } from 'react-router-dom';
+import { Outlet, useSearchParams } from 'react-router-dom';
 import { useEmployeeStore, useEmployee, useEmployeeLoading, EmployeeProfile } from '../store/employeeStore';
 import type { OpenService } from '../types/openService';
 import { Helper } from '../utils/urlHelper';
@@ -19,7 +19,6 @@ const PROFILES: Record<string, EmployeeProfile> = {
 
 const EmployeePortfolioLayout: React.FC<{ openService?: OpenService }> = ({ openService }) => {
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
   const employeeId = Helper.getParam('employeeId', searchParams) ?? '';
   const employee = useEmployee();
   const loading = useEmployeeLoading();

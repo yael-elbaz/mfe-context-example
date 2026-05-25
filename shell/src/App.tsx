@@ -6,6 +6,7 @@ import EmployeePortfolioLayout from './components/EmployeePortfolioLayout';
 import EmployeePortfolioIndex from './components/EmployeePortfolioIndex';
 import SectionFullView from './components/SectionFullView';
 import { SherutDynamicView } from './sections/SherutDynamicView';
+import SherutimWrapper from './components/SherutimWrapper';
 import { useOpenService } from './hooks/useOpenService';
 import { useEmployeePickerPopup } from './hooks/useEmployeePickerPopup';
 import EmployeePickerPopup from './components/EmployeePickerPopup';
@@ -81,10 +82,14 @@ const RouterApp: React.FC = () => {
               </div>
             } />
             <Route path="/select-employee" element={<SelectEmployeePage />} />
-            <Route path="/sherutim/:idntSheryut" element={<SherutDynamicView />} />
+            <Route path="/sherutim/:idntSheryut" element={<SherutimWrapper />}>
+              <Route index element={<SherutDynamicView />} />
+            </Route>
             <Route path="/employee-portfolio" element={<EmployeePortfolioLayout openService={openService} />}>
               <Route index element={<EmployeePortfolioIndex openService={openService} />} />
-              <Route path="sherutim/:idntSheryut" element={<SherutDynamicView />} />
+              <Route path="sherutim/:idntSheryut" element={<SherutimWrapper />}>
+                <Route index element={<SherutDynamicView />} />
+              </Route>
               <Route path=":section" element={<SectionFullView openService={openService} />} />
             </Route>
           </Routes>
