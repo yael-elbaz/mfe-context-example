@@ -1,9 +1,10 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { useParams, useSearchParams, useNavigate, useLocation } from 'react-router-dom';
-import { getSherutMfeConfig, type SherutMfeConfig } from '../services/sherutimService';
+import { useParams, useSearchParams, useNavigate, useOutletContext } from 'react-router-dom';
+import type { SherutMfeConfig } from '../services/sherutimService';
 import { loadRemoteModule } from '../utils/dynamicFederation';
 
-type Phase = 'config' | 'module' | 'done' | 'error';
+type Phase = 'module' | 'done' | 'error';
+type OutletCtx = { mfeConfig: SherutMfeConfig };
 
 const Dot: React.FC<{ state: 'active' | 'done' | 'pending'; label: string }> = ({ state, label }) => (
   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', direction: 'rtl' }}>
@@ -29,37 +30,21 @@ export const SherutDynamicView: React.FC = () => {
   const [searchParams] = useSearchParams();
   const employeeId = searchParams.get('employeeId') ?? '';
   const navigate = useNavigate();
-  const location = useLocation();
+  const { mfeConfig } = useOutletContext<OutletCtx>();
 
   const backUrl = employeeId
     ? `/employee-portfolio?employeeId=${employeeId}`
     : '/';
 
-
-  const [phase, setPhase] = useState<Phase>('config');
+  const [phase, setPhase] = useState<Phase>('module');
   const [DynamicComponent, setDynamicComponent] = useState<React.ComponentType<any> | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const loadSherut = useCallback(async (signal: { cancelled: boolean }) => {
     try {
-      const cached = (location.state as { mfeConfig?: SherutMfeConfig } | null)?.mfeConfig;
-
-      let config: SherutMfeConfig;
-      if (cached) {
-        const { mfeConfig: _, ...restState } = window.history.state?.usr ?? {};
-        window.history.replaceState({ ...window.history.state, usr: restState }, '');
-        config = cached;
-        setPhase('module');
-      } else {
-        setPhase('config');
-        config = await getSherutMfeConfig(id);
-        if (signal.cancelled) return;
-        setPhase('module');
-      }
-
-      const Component = await loadRemoteModule(config.remoteUrl, config.module);
+      setPhase('module');
+      const Component = await loadRemoteModule(mfeConfig.remoteUrl, mfeConfig.module);
       if (signal.cancelled) return;
-
       setDynamicComponent(() => Component);
       setPhase('done');
     } catch (err) {
@@ -68,7 +53,7 @@ export const SherutDynamicView: React.FC = () => {
         setPhase('error');
       }
     }
-  }, [id, location.state]);
+  }, [mfeConfig]);
 
   useEffect(() => {
     if (!id) return;
@@ -118,11 +103,7 @@ export const SherutDynamicView: React.FC = () => {
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
         <p style={{ color: '#1E3BA2', fontWeight: 600, fontSize: '15px', margin: 0 }}>טוען שירות...</p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignSelf: 'stretch', maxWidth: '280px' }}>
-          <Dot state={phase === 'config' ? 'active' : 'done'} label="מביא הגדרות מהשרת" />
-          <Dot
-            state={phase === 'config' ? 'pending' : phase === 'module' ? 'active' : 'done'}
-            label="טוען מודול MFE"
-          />
+          <Dot state={phase === 'module' ? 'active' : 'done'} label="טוען מודול MFE" />
         </div>
       </div>
     );
