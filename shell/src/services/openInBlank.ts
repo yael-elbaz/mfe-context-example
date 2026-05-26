@@ -1,5 +1,5 @@
 import type { DigitalService } from '../types/openService';
-import { useEmployeeStore } from '../store/employeeStore';
+import { useSelectedPersonStore } from '../store/personStore';
 import { useAppContext } from '../store/appContext';
 
 function buildBaseUrl(textNativ: string): string {
@@ -7,12 +7,12 @@ function buildBaseUrl(textNativ: string): string {
 }
 
 async function fetchUrlWithParams(queryParamsUrl: string): Promise<string> {
-  const employee = useEmployeeStore.getState().employee;
+  const person = useSelectedPersonStore.getState().person;
   const unit = useAppContext.getState().selectedUnit;
 
   const params = new URLSearchParams({
-    employee_id: employee?.id ?? '',
-    employee_name: employee ? `${employee.firstName} ${employee.lastName}` : '',
+    employee_id: person?.id ?? '',
+    employee_name: person ? `${person.firstName} ${person.lastName}` : '',
     unit_id: unit?.id ?? '',
     unit_name: unit?.name ?? '',
   });
@@ -23,9 +23,9 @@ async function fetchUrlWithParams(queryParamsUrl: string): Promise<string> {
 }
 
 async function resolveUrlWithParams(flat: DigitalService & Record<string, any>, baseUrl: string): Promise<string> {
-  const employee = useEmployeeStore.getState().employee;
+  const person = useSelectedPersonStore.getState().person;
   const unit = useAppContext.getState().selectedUnit;
-  const fullName = employee ? `${employee.firstName} ${employee.lastName}` : '';
+  const fullName = person ? `${person.firstName} ${person.lastName}` : '';
 
   const types = flat.objectType ?? [];
   const onlyEmployee = types.length > 0 && types.every((t) => t === 'employee');
@@ -38,7 +38,7 @@ async function resolveUrlWithParams(flat: DigitalService & Record<string, any>, 
 
   if (onlyEmployee) {
     return baseUrl
-      .replace('[asas]', employee?.id ?? '')
+      .replace('[asas]', person?.id ?? '')
       .replace('[ddd]',  fullName)
       .replace('[www]',  unit?.id   ?? '')
       .replace('[aasss]', unit?.name ?? '');
@@ -46,7 +46,7 @@ async function resolveUrlWithParams(flat: DigitalService & Record<string, any>, 
 
   if (onlyCustomer) {
     return baseUrl
-      .replace('[asas]',  employee?.id ?? '')
+      .replace('[asas]',  person?.id ?? '')
       .replace('[ddd]', fullName)
       .replace('[www]', unit?.id   ?? '')
       .replace('[aasss]', unit?.name ?? '');

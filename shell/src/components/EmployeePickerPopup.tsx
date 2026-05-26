@@ -48,7 +48,7 @@ const EmployeePickerPopup: React.FC<EmployeePickerPopupProps> = ({ open, objectT
         </button>
 
         <h3 style={{ margin: '0 0 16px', fontSize: '18px', fontWeight: 600, color: '#1E3BA2' }}>
-          בחר עובד לפתיחת השירות
+          בחר אדם לפתיחת השירות
         </h3>
 
         <Suspense fallback={<div style={{ padding: '16px', color: '#888' }}>טוען חיפוש עובד...</div>}>

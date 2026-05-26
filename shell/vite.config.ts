@@ -18,6 +18,7 @@ export default defineConfig({
       exposes: {
         './store': './src/store/appContext.ts',
         './employeeStore': './src/store/employeeStore.ts',
+        './personStore': './src/store/personStore.ts',
       },
       // מגדירים את ה-remotes גם כאן כדי ש-Rollup יידע שהם חיצוניים
       remotes: {
