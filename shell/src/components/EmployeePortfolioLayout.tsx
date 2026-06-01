@@ -1,5 +1,5 @@
 import React, { lazy, Suspense, useEffect, useState } from 'react';
-import { Outlet, useSearchParams } from 'react-router-dom';
+import { Outlet, useSearchParams, useNavigate } from 'react-router-dom';
 import { useSelectedPersonStore, useCurrentEmployee, type EmployeeProfile } from '../store/personStore';
 import type { OpenService } from '../types/openService';
 import { Helper } from '../utils/urlHelper';
@@ -19,6 +19,7 @@ const PROFILES: Record<string, Omit<EmployeeProfile, 'type'>> = {
 
 const EmployeePortfolioLayout: React.FC<{ openService?: OpenService }> = ({ openService }) => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const employeeId = Helper.getParam('employeeId', searchParams) ?? '';
   const employee = useCurrentEmployee();
   const [loading, setLoading] = useState(false);
@@ -26,21 +27,31 @@ const EmployeePortfolioLayout: React.FC<{ openService?: OpenService }> = ({ open
 
   useEffect(() => {
     if (!employeeId) return;
-    const { setSelectedPerson } = useSelectedPersonStore.getState();
+    const { setSelectedPerson, setIsLoadingPerson } = useSelectedPersonStore.getState();
     setLoading(true);
+    setIsLoadingPerson(true);
     setNotFound(false);
     setTimeout(() => {
       const raw = PROFILES[employeeId] ?? null;
       if (!raw) {
         setLoading(false);
+        setIsLoadingPerson(false);
         setNotFound(true);
         return;
       }
       setSelectedPerson({ type: 'employee', ...raw });
       setLoading(false);
+      setIsLoadingPerson(false);
     }, 400);
-    return () => { useSelectedPersonStore.getState().clearSelectedPerson(); };
   }, [employeeId]);
+
+  // Clear store only when the layout fully unmounts, not on sub-route changes
+  useEffect(() => {
+    return () => {
+      useSelectedPersonStore.getState().clearSelectedPerson();
+      useSelectedPersonStore.getState().setIsLoadingPerson(false);
+    };
+  }, []);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'row', gap: '24px', alignItems: 'flex-start', direction: 'rtl' }}>
@@ -49,7 +60,7 @@ const EmployeePortfolioLayout: React.FC<{ openService?: OpenService }> = ({ open
           <div style={{ padding: '48px', textAlign: 'center', color: '#888' }}>⏳ טוען...</div>
         ) : (
           <Suspense fallback={<div>טוען פרופיל עובד...</div>}>
-            <EmployeePortfolioMFE openService={openService} />
+            <EmployeePortfolioMFE openService={openService} navigate={navigate} />
           </Suspense>
         )}
       </div>

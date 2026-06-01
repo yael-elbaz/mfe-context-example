@@ -82,20 +82,16 @@ const RouterApp: React.FC = () => {
               </div>
             } />
             <Route path="/select-employee" element={<SelectEmployeePage />} />
-            <Route path="/sherutim/:idntSheryut" element={<SherutDynamicView />} />
-
             <Route path="/customer-portfolio" element={<CustomerPortfolioLayout />}>
               <Route index element={<div style={{ padding: '24px', color: '#848282', direction: 'rtl' }}>בחר שירות לקוח</div>} />
             </Route>
-
-
-            <Route path="/sherutim/:idntSheryut" element={<SherutimWrapper />}>
-              <Route index element={<SherutDynamicView />} />
+            <Route path="/sherutim/:idntSheryut/*" element={<SherutimWrapper />}>
+              <Route path="*" element={<SherutDynamicView />} />
             </Route>
             <Route path="/employee-portfolio" element={<EmployeePortfolioLayout openService={openService} />}>
               <Route index element={<EmployeePortfolioIndex openService={openService} />} />
-              <Route path="sherutim/:idntSheryut" element={<SherutimWrapper />}>
-                <Route index element={<SherutDynamicView />} />
+              <Route path="sherutim/:idntSheryut/*" element={<SherutimWrapper />}>
+                <Route path="*" element={<SherutDynamicView />} />
               </Route>
               <Route path=":section" element={<SectionFullView openService={openService} />} />
             </Route>

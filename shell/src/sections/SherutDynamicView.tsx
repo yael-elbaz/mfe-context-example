@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { useParams, useSearchParams, useNavigate, useOutletContext } from 'react-router-dom';
+import { useParams, useNavigate, useOutletContext } from 'react-router-dom';
+import { useSelectedPerson } from '../store/personStore';
 import type { SherutMfeConfig } from '../services/sherutimService';
 import { loadRemoteModule } from '../utils/dynamicFederation';
 
@@ -27,14 +28,10 @@ const Dot: React.FC<{ state: 'active' | 'done' | 'pending'; label: string }> = (
 export const SherutDynamicView: React.FC = () => {
   const { idntSheryut } = useParams<{ idntSheryut?: string }>();
   const id = idntSheryut ?? '';
-  const [searchParams] = useSearchParams();
-  const employeeId = searchParams.get('employeeId') ?? '';
   const navigate = useNavigate();
+  const person = useSelectedPerson();
   const { mfeConfig } = useOutletContext<OutletCtx>();
 
-  const backUrl = employeeId
-    ? `/employee-portfolio?employeeId=${employeeId}`
-    : '/';
 
   const [phase, setPhase] = useState<Phase>('module');
   const [DynamicComponent, setDynamicComponent] = useState<React.ComponentType<any> | null>(null);
@@ -66,7 +63,7 @@ export const SherutDynamicView: React.FC = () => {
     return (
       <div style={{ background: '#fff', borderRadius: '12px', padding: '24px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)', direction: 'rtl' }}>
         <button
-          onClick={() => navigate(backUrl)}
+          onClick={() => navigate(-1)}
           style={{ background: 'none', border: '1px solid #C5CBDD', color: '#00033D', borderRadius: '8px', padding: '4px 12px', cursor: 'pointer', fontSize: '13px', marginBottom: '16px' }}
         >
           ← חזרה
@@ -113,13 +110,13 @@ export const SherutDynamicView: React.FC = () => {
     <div style={{ background: '#fff', borderRadius: '12px', padding: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px', direction: 'rtl' }}>
         <button
-          onClick={() => navigate(backUrl)}
+          onClick={() => navigate(-1)}
           style={{ background: 'none', border: '1px solid #C5CBDD', color: '#00033D', borderRadius: '8px', padding: '4px 12px', cursor: 'pointer', fontSize: '13px' }}
         >
           ← חזרה לרשימת השירותים
         </button>
       </div>
-      <DynamicComponent idntSheryut={id} employeeId={employeeId} />
+      <DynamicComponent idntSheryut={id} employeeId={person?.id ?? ''} />
     </div>
   );
 };

@@ -1,5 +1,8 @@
-// Backward-compatibility re-exports for mfe-employee-portfolio.
-// That MFE imports { useEmployee, useEmployeeLoading, EmployeeProfile } from 'shell/employeeStore'
-// and requires no changes as long as these names are exported here.
+// Backward-compatibility shim for mfe-employee-portfolio.
+// Must contain real function declarations (not just re-export syntax) so the
+// federation plugin emits a proper chunk for shell/employeeStore.
+import { useCurrentEmployee, useIsLoadingPerson } from './personStore';
 export type { EmployeeProfile } from './personStore';
-export { useCurrentEmployee as useEmployee, useIsLoadingPerson as useEmployeeLoading } from './personStore';
+
+export const useEmployee = () => useCurrentEmployee();
+export const useEmployeeLoading = () => useIsLoadingPerson();
