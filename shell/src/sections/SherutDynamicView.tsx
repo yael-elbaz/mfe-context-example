@@ -7,6 +7,33 @@ import { loadRemoteModule } from '../utils/dynamicFederation';
 type Phase = 'module' | 'done' | 'error';
 type OutletCtx = { mfeConfig: SherutMfeConfig };
 
+class MFEErrorBoundary extends React.Component<
+  { children: React.ReactNode; onBack: () => void },
+  { error: Error | null }
+> {
+  state = { error: null };
+  static getDerivedStateFromError(error: Error) { return { error }; }
+  render() {
+    if (this.state.error) {
+      return (
+        <div style={{ padding: '24px', background: '#fff0f0', borderRadius: '8px', direction: 'rtl' }}>
+          <strong>❌ שגיאה בטעינת השירות</strong>
+          <p style={{ fontSize: '13px', marginTop: '8px', color: '#666' }}>
+            המודול החיצוני השתמש ב-async useEffect או נכשל בזמן ריצה.
+          </p>
+          <button
+            onClick={this.props.onBack}
+            style={{ background: 'none', border: '1px solid #C5CBDD', color: '#00033D', borderRadius: '8px', padding: '4px 12px', cursor: 'pointer', fontSize: '13px', marginTop: '12px' }}
+          >
+            ← חזרה
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 const Dot: React.FC<{ state: 'active' | 'done' | 'pending'; label: string }> = ({ state, label }) => (
   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', direction: 'rtl' }}>
     <span style={{
@@ -116,7 +143,9 @@ export const SherutDynamicView: React.FC = () => {
           ← חזרה לרשימת השירותים
         </button>
       </div>
-      <DynamicComponent idntSheryut={id} employeeId={person?.id ?? ''} />
+      <MFEErrorBoundary onBack={() => navigate(-1)}>
+        <DynamicComponent idntSheryut={id} employeeId={person?.id ?? ''} />
+      </MFEErrorBoundary>
     </div>
   );
 };

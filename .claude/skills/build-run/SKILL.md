@@ -8,7 +8,7 @@ description: Build and start the entire mfe-context-example application in the c
 
 # Build & Run — mfe-context-example
 
-You are about to build and start all 6 services for this Vite + Module Federation project.
+You are about to build and start all 7 services for this Vite + Module Federation project.
 Follow the steps below **in order**. Do not skip steps.
 
 ---
@@ -23,6 +23,7 @@ Follow the steps below **in order**. Do not skip steps.
 | mfe-employee-portfolio | `mfe-employee-portfolio/` | 3003 |
 | mfe-digital-objects    | `mfe-digital-objects/`  | 3004 |
 | mfe-sherut-exemplat    | `mfe-sherut-exemplat/`  | 3005 |
+| mfe-sherutim           | `mfe-sherutim/`         | 3006 |
 
 ---
 
@@ -47,7 +48,7 @@ Run these sequentially so output is readable:
 
 ```bash
 cd c:/Users/user1/Desktop/my/mfe-context-example
-for dir in shell mfe-tasks mfe-search-employee mfe-employee-portfolio mfe-digital-objects mfe-sherut-exemplat; do
+for dir in shell mfe-tasks mfe-search-employee mfe-employee-portfolio mfe-digital-objects mfe-sherut-exemplat mfe-sherutim; do
   if [ ! -d "$dir/node_modules" ]; then
     echo "==> Installing $dir..."
     (cd "$dir" && npm install)
@@ -76,7 +77,7 @@ Build each MFE. Run them one by one so errors are clearly attributed:
 
 ```bash
 cd c:/Users/user1/Desktop/my/mfe-context-example
-for dir in mfe-tasks mfe-search-employee mfe-employee-portfolio mfe-digital-objects mfe-sherut-exemplat; do
+for dir in mfe-tasks mfe-search-employee mfe-employee-portfolio mfe-digital-objects mfe-sherut-exemplat mfe-sherutim; do
   echo "==> Building $dir..."
   (cd "$dir" && npm run build)
   echo "✓ $dir built"
@@ -98,12 +99,13 @@ Start in this order (shell first, then MFEs):
 4. `cd mfe-employee-portfolio && npm run preview` → http://localhost:3003
 5. `cd mfe-digital-objects && npm run preview`    → http://localhost:3004
 6. `cd mfe-sherut-exemplat && npm run preview`    → http://localhost:3005
+7. `cd mfe-sherutim && npm run preview`           → http://localhost:3006
 
-After launching all 6 background processes, run a quick health-check:
+After launching all 7 background processes, run a quick health-check:
 
 ```bash
 sleep 3
-for port in 3000 3001 3002 3003 3004 3005; do
+for port in 3000 3001 3002 3003 3004 3005 3006; do
   if curl -s -o /dev/null -w "%{http_code}" http://localhost:$port | grep -q "200\|304"; then
     echo "✓ :$port is up"
   else
@@ -146,7 +148,7 @@ Get-Process -Name node | Where-Object { $_.MainWindowTitle -eq '' } | Stop-Proce
 | Symptom | Likely cause | Fix |
 |---------|-------------|-----|
 | MFE build fails with "Cannot find module 'shell/store'" | Shell not built yet | Run Step 2 first |
-| Blank page or "Failed to fetch dynamically imported module" | Wrong port or CORS | Make sure all 6 preview servers are running |
+| Blank page or "Failed to fetch dynamically imported module" | Wrong port or CORS | Make sure all 7 preview servers are running |
 | Sherut MFE shows error state | `mfe-sherut-exemplat` not running on :3005 | Run `cd mfe-sherut-exemplat && npm run build && npm run preview` |
 | Changes to shell code not reflected | Shell not rebuilt | Re-run Step 2, then Step 3 for affected MFEs |
 | Changes to an MFE not reflected | That MFE not rebuilt | Re-run `npm run build && npm run preview` inside that MFE directory |
