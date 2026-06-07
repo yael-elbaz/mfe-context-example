@@ -6,7 +6,7 @@ import SherutimCard from './SherutimCard';
 interface Props {
   openService?: OpenService;
   employeeId?: string;
-  navigate?: (to: string) => void;
+  onShowAll?: () => void;
 }
 
 function param(key: string, value: string) {
@@ -24,13 +24,13 @@ function makeCall(params: Record<string, string>, url?: string) {
   };
 }
 
-const Preview: React.FC<Props> = ({ openService, employeeId = '', navigate }) => (
+const Preview: React.FC<Props> = ({ openService, employeeId = '', onShowAll }) => (
   <div style={{ background: '#fff', borderRadius: '12px', padding: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', direction: 'rtl' }}>
       <h3 style={{ margin: 0, color: '#1E3BA2', fontSize: '16px' }}>שירותים דיגיטליים</h3>
       {employeeId && (
         <button
-          onClick={() => navigate?.(`/employee-portfolio/sherutim${window.location.search}`)}
+          onClick={() => onShowAll?.()}
           style={{ background: 'none', border: '1px solid #1E3BA2', color: '#1E3BA2', borderRadius: '8px', padding: '4px 12px', cursor: 'pointer', fontSize: '13px' }}
         >
           הצג הכל

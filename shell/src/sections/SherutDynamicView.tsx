@@ -60,6 +60,8 @@ export const SherutDynamicView: React.FC = () => {
   const { mfeConfig } = useOutletContext<OutletCtx>();
 
 
+  const goBack = () => navigate(person?.id ? `/employee-portfolio?employeeId=${person.id}` : '/');
+
   const [phase, setPhase] = useState<Phase>('module');
   const [DynamicComponent, setDynamicComponent] = useState<React.ComponentType<any> | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -90,7 +92,7 @@ export const SherutDynamicView: React.FC = () => {
     return (
       <div style={{ background: '#fff', borderRadius: '12px', padding: '24px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)', direction: 'rtl' }}>
         <button
-          onClick={() => navigate(-1)}
+          onClick={goBack}
           style={{ background: 'none', border: '1px solid #C5CBDD', color: '#00033D', borderRadius: '8px', padding: '4px 12px', cursor: 'pointer', fontSize: '13px', marginBottom: '16px' }}
         >
           ← חזרה
@@ -137,13 +139,13 @@ export const SherutDynamicView: React.FC = () => {
     <div style={{ background: '#fff', borderRadius: '12px', padding: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px', direction: 'rtl' }}>
         <button
-          onClick={() => navigate(-1)}
+          onClick={goBack}
           style={{ background: 'none', border: '1px solid #C5CBDD', color: '#00033D', borderRadius: '8px', padding: '4px 12px', cursor: 'pointer', fontSize: '13px' }}
         >
           ← חזרה לרשימת השירותים
         </button>
       </div>
-      <MFEErrorBoundary onBack={() => navigate(-1)}>
+      <MFEErrorBoundary onBack={goBack}>
         <DynamicComponent idntSheryut={id} employeeId={person?.id ?? ''} />
       </MFEErrorBoundary>
     </div>

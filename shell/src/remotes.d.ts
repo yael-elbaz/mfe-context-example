@@ -15,6 +15,7 @@ declare module 'mfe_employee_portfolio/App' {
   const App: React.ComponentType<{
     openService?: import('./types/openService').OpenService;
     navigate?: (to: string) => void;
+    mfeConfig?: import('./services/sherutimService').SherutMfeConfig | null;
   }>;
   export default App;
 }
@@ -33,7 +34,7 @@ declare module 'mfe_sherutim/Preview' {
   const Preview: React.ComponentType<{
     openService?: import('./types/openService').OpenService;
     employeeId?: string;
-    navigate?: (to: string) => void;
+    onShowAll?: () => void;
   }>;
   export default Preview;
 }

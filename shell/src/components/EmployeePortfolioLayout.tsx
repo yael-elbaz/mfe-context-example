@@ -1,8 +1,9 @@
 import React, { lazy, Suspense, useEffect, useState } from 'react';
-import { Outlet, useSearchParams, useNavigate } from 'react-router-dom';
+import { Outlet, useSearchParams, useNavigate, useMatch } from 'react-router-dom';
 import { useSelectedPersonStore, useCurrentEmployee, type EmployeeProfile } from '../store/personStore';
 import type { OpenService } from '../types/openService';
 import { Helper } from '../utils/urlHelper';
+import { getSherutMfeConfig, type SherutMfeConfig } from '../services/sherutimService';
 
 const EmployeePortfolioMFE = lazy(() => import('mfe_employee_portfolio/App'));
 
@@ -24,6 +25,15 @@ const EmployeePortfolioLayout: React.FC<{ openService?: OpenService }> = ({ open
   const employee = useCurrentEmployee();
   const [loading, setLoading] = useState(false);
   const [notFound, setNotFound] = useState(false);
+
+  const sherutMatch = useMatch('/employee-portfolio/sherutim/:idntSheryut/*');
+  const idntSheryut = sherutMatch?.params.idntSheryut ?? null;
+  const [mfeConfig, setMfeConfig] = useState<SherutMfeConfig | null>(null);
+
+  useEffect(() => {
+    if (!idntSheryut) { setMfeConfig(null); return; }
+    getSherutMfeConfig(idntSheryut).then(setMfeConfig);
+  }, [idntSheryut]);
 
   useEffect(() => {
     if (!employeeId) return;
@@ -60,7 +70,7 @@ const EmployeePortfolioLayout: React.FC<{ openService?: OpenService }> = ({ open
           <div style={{ padding: '48px', textAlign: 'center', color: '#888' }}>⏳ טוען...</div>
         ) : (
           <Suspense fallback={<div>טוען פרופיל עובד...</div>}>
-            <EmployeePortfolioMFE openService={openService} navigate={navigate} />
+            <EmployeePortfolioMFE openService={openService} navigate={navigate} mfeConfig={mfeConfig} />
           </Suspense>
         )}
       </div>
@@ -74,7 +84,7 @@ const EmployeePortfolioLayout: React.FC<{ openService?: OpenService }> = ({ open
             ⏳ טוען נתוני עובד...
           </div>
         ) : (
-          <Outlet />
+          <Outlet context={{ mfeConfig }} />
         )}
       </div>
     </div>
