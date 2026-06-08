@@ -16,6 +16,16 @@ import SelectEmployeePage from './components/SelectEmployeePage';
 const TasksMFE = lazy(() => import('mfe_tasks/App'));
 const SherutimPreviewMFE = lazy(() => import('mfe_sherutim/Preview'));
 
+class SilentErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
+  state = { hasError: false };
+  static getDerivedStateFromError() { return { hasError: true }; }
+  componentDidCatch(error: Error) {
+    console.warn('[Route transition error suppressed]', error.message);
+    setTimeout(() => this.setState({ hasError: false }), 0);
+  }
+  render() { return this.props.children; }
+}
+
 class MFEErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
   state = { error: null };
   static getDerivedStateFromError(error: Error) { return { error }; }
@@ -73,6 +83,7 @@ const RouterApp: React.FC = () => {
       <div style={{ fontFamily: 'Arial, sans-serif', direction: 'rtl' }}>
         <Header />
         <main style={{ padding: '24px' }}>
+          <SilentErrorBoundary>
           <Routes>
             <Route path="/" element={
               <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -82,24 +93,19 @@ const RouterApp: React.FC = () => {
               </div>
             } />
             <Route path="/select-employee" element={<SelectEmployeePage />} />
-            <Route path="/sherutim/:idntSheryut" element={<SherutDynamicView />} />
-
             <Route path="/customer-portfolio" element={<CustomerPortfolioLayout />}>
               <Route index element={<div style={{ padding: '24px', color: '#848282', direction: 'rtl' }}>בחר שירות לקוח</div>} />
             </Route>
-
-
-            <Route path="/sherutim/:idntSheryut" element={<SherutimWrapper />}>
-              <Route index element={<SherutDynamicView />} />
+            <Route path="/sherutim/:idntSheryut/*" element={<SherutimWrapper />}>
+              <Route path="*" element={<SherutDynamicView />} />
             </Route>
             <Route path="/employee-portfolio" element={<EmployeePortfolioLayout openService={openService} />}>
               <Route index element={<EmployeePortfolioIndex openService={openService} />} />
-              <Route path="sherutim/:idntSheryut" element={<SherutimWrapper />}>
-                <Route index element={<SherutDynamicView />} />
-              </Route>
+              <Route path="sherutim/:idntSheryut/*" element={<SherutDynamicView />} />
               <Route path=":section" element={<SectionFullView openService={openService} />} />
             </Route>
           </Routes>
+          </SilentErrorBoundary>
         </main>
       </div>
       <EmployeePickerPopup {...pickerProps} />

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 interface Props {
   idntSheryut?: string;
@@ -91,6 +91,15 @@ const STATUS_STYLE = {
 };
 
 const App: React.FC<Props> = ({ idntSheryut = '', employeeId = '' }) => {
+  const [fetchedTitle, setFetchedTitle] = useState<string | null>(null);
+
+  // ❌ Wrong — async directly in useEffect
+  useEffect(async () => {
+    const res = await fetch(`https://jsonplaceholder.typicode.com/todos/1`);
+    const json = await res.json();
+    setFetchedTitle(json.title);
+  }, [idntSheryut]);
+
   const data: SherutData = SHERUT_DATA[idntSheryut] ?? {
     title: `שירות ${idntSheryut || '—'}`,
     description: 'פרטי השירות לא נמצאו.',
@@ -108,6 +117,9 @@ const App: React.FC<Props> = ({ idntSheryut = '', employeeId = '' }) => {
     if (i === data.currentStepIndex) return 'current';
     return 'pending';
   };
+
+
+  
 
   return (
     <div style={{ direction: 'rtl', fontFamily: 'Rubik, Arial, sans-serif' }}>
@@ -229,6 +241,7 @@ const App: React.FC<Props> = ({ idntSheryut = '', employeeId = '' }) => {
           נטען דינמית: <strong>mfe-sherut-exemplat</strong> @ localhost:3005
           {' · '}idntSheryut: <strong>{idntSheryut || '—'}</strong>
           {employeeId && <>{' · '}employeeId: <strong>{employeeId}</strong></>}
+          {' · '}fetched: <strong>{fetchedTitle ?? '...'}</strong>
         </span>
       </div>
     </div>

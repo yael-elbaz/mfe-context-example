@@ -1,8 +1,10 @@
 import React, { lazy, Suspense, useEffect, useState, useCallback } from 'react';
 import { Outlet, useSearchParams, useLocation, useNavigate } from 'react-router-dom';
+import {useMatch } from 'react-router-dom';
 import { useSelectedPersonStore, useCurrentEmployee, type EmployeeProfile } from '../store/personStore';
 import type { OpenService, PersonType } from '../types/openService';
 import { Helper } from '../utils/urlHelper';
+import { getSherutMfeConfig, type SherutMfeConfig } from '../services/sherutimService';
 
 const EmployeePortfolioMFE = lazy(() => import('mfe_employee_portfolio/App'));
 const SearchPersonMFE = lazy(() => import('mfe_search_employee/App'));
@@ -20,55 +22,60 @@ const PROFILES: Record<string, Omit<EmployeeProfile, 'type'>> = {
 
 const EmployeePortfolioLayout: React.FC<{ openService?: OpenService }> = ({ openService }) => {
   const [searchParams] = useSearchParams();
-  const { pathname } = useLocation();
   const navigate = useNavigate();
   const employeeId = Helper.getParam('employeeId', searchParams) ?? '';
   const employee = useCurrentEmployee();
   const [loading, setLoading] = useState(false);
   const [notFound, setNotFound] = useState(false);
 
-  const onSelected = useCallback((id: string, personType: PersonType) => {
-    if (personType === 'customer') {
-      navigate(`/customer-portfolio?customerId=${id}`);
-      return;
-    }
-    const sherutMatch = pathname.match(/\/sherutim\/([^/?]+)/);
-    if (sherutMatch) {
-      navigate(`/employee-portfolio/sherutim/${sherutMatch[1]}?employeeId=${id}`);
-    } else {
-      navigate(`/employee-portfolio?employeeId=${id}`);
-    }
-  }, [pathname, navigate]);
+  const sherutMatch = useMatch('/employee-portfolio/sherutim/:idntSheryut/*');
+  const idntSheryut = sherutMatch?.params.idntSheryut ?? null;
+  const [mfeConfig, setMfeConfig] = useState<SherutMfeConfig | null>(null);
+
+  useEffect(() => {
+    if (!idntSheryut) { setMfeConfig(null); return; }
+    getSherutMfeConfig(idntSheryut).then(setMfeConfig);
+  }, [idntSheryut]);
 
   useEffect(() => {
     if (!employeeId) return;
-    const { setSelectedPerson } = useSelectedPersonStore.getState();
+    const { setSelectedPerson, setIsLoadingPerson } = useSelectedPersonStore.getState();
     setLoading(true);
+    setIsLoadingPerson(true);
     setNotFound(false);
     setTimeout(() => {
       const raw = PROFILES[employeeId] ?? null;
       if (!raw) {
         setLoading(false);
+        setIsLoadingPerson(false);
         setNotFound(true);
         return;
       }
       setSelectedPerson({ type: 'employee', ...raw });
       setLoading(false);
+      setIsLoadingPerson(false);
     }, 400);
-    return () => { useSelectedPersonStore.getState().clearSelectedPerson(); };
   }, [employeeId]);
+
+  // Clear store only when the layout fully unmounts, not on sub-route changes
+  useEffect(() => {
+    return () => {
+      useSelectedPersonStore.getState().clearSelectedPerson();
+      useSelectedPersonStore.getState().setIsLoadingPerson(false);
+    };
+  }, []);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'row', gap: '24px', alignItems: 'flex-start', direction: 'rtl' }}>
       <div style={{ width: '25%', flexShrink: 0, position: 'sticky', top: '108px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        <Suspense fallback={<div>טוען חיפוש...</div>}>
+        {/* <Suspense fallback={<div>טוען חיפוש...</div>}>
           <SearchPersonMFE onSelected={onSelected} />
-        </Suspense>
+        </Suspense> */}
         {loading ? (
           <div style={{ padding: '48px', textAlign: 'center', color: '#888' }}>⏳ טוען...</div>
         ) : (
           <Suspense fallback={<div>טוען פרופיל עובד...</div>}>
-            <EmployeePortfolioMFE openService={openService} />
+            <EmployeePortfolioMFE openService={openService} navigate={navigate} mfeConfig={mfeConfig} />
           </Suspense>
         )}
       </div>
@@ -82,7 +89,7 @@ const EmployeePortfolioLayout: React.FC<{ openService?: OpenService }> = ({ open
             ⏳ טוען נתוני עובד...
           </div>
         ) : (
-          <Outlet />
+          <Outlet context={{ mfeConfig }} />
         )}
       </div>
     </div>

@@ -79,21 +79,31 @@ const CustomerPortfolioLayout: React.FC = () => {
 
   useEffect(() => {
     if (!customerId) return;
-    const { setSelectedPerson } = useSelectedPersonStore.getState();
+    const { setSelectedPerson, setIsLoadingPerson } = useSelectedPersonStore.getState();
     setLoading(true);
+    setIsLoadingPerson(true);
     setNotFound(false);
     setTimeout(() => {
       const raw = CUSTOMERS[customerId] ?? null;
       if (!raw) {
         setLoading(false);
+        setIsLoadingPerson(false);
         setNotFound(true);
         return;
       }
       setSelectedPerson({ type: 'customer', ...raw });
       setLoading(false);
+      setIsLoadingPerson(false);
     }, 400);
-    return () => { useSelectedPersonStore.getState().clearSelectedPerson(); };
   }, [customerId]);
+
+  // Clear store only when the layout fully unmounts, not on sub-route changes
+  useEffect(() => {
+    return () => {
+      useSelectedPersonStore.getState().clearSelectedPerson();
+      useSelectedPersonStore.getState().setIsLoadingPerson(false);
+    };
+  }, []);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'row', gap: '24px', alignItems: 'flex-start', direction: 'rtl' }}>
