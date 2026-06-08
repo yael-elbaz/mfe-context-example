@@ -1,5 +1,7 @@
-// Backward-compatibility re-exports for mfe-employee-portfolio.
-// That MFE imports { useEmployee, useEmployeeLoading, EmployeeProfile } from 'shell/employeeStore'
-// and requires no changes as long as these names are exported here.
+// Backward-compatibility shim for mfe-employee-portfolio.
+// Uses const assignments (not re-exports) so Rollup creates a real chunk for this module.
+import { useCurrentEmployee, useIsLoadingPerson } from './personStore';
 export type { EmployeeProfile } from './personStore';
-export { useCurrentEmployee as useEmployee, useIsLoadingPerson as useEmployeeLoading } from './personStore';
+
+export const useEmployee = useCurrentEmployee;
+export const useEmployeeLoading = useIsLoadingPerson;
