@@ -1,110 +1,121 @@
-import React from 'react';
+import './index.css';
+import React, { useEffect } from 'react';
 import { useEmployee, useEmployeeLoading } from 'shell/employeeStore';
+import type { MoreDataTab } from './types';
+import { useTabs } from './hooks/useTabs';
+import TabsBar from './components/TabsBar';
+import TabContent from './components/TabContent';
+import EmployeeIdentity from './components/EmployeeIdentity';
 
 interface Props {
   navigate?: (to: string) => void;
+  moreDataTab?: MoreDataTab | null;
+  selectedActiveTab?: number;
 }
 
-const App: React.FC<Props> = ({ navigate }) => {
+const App: React.FC<Props> = ({ navigate, moreDataTab, selectedActiveTab  }) => {
   const employee = useEmployee();
   const loading = useEmployeeLoading();
 
-  const handleBack = () => {
-    navigate?.('/');
+  const {
+    tabs, tabsLoading, tabsError,
+    activeTab, tabData, tabDataLoading, tabDataError,
+    isExpanded, loadTabs, loadTabData, handleTabClick,
+  } = useTabs();
+
+  useEffect(() => {
+    if (!employee?.id) return;
+    return loadTabs(employee.id, moreDataTab, selectedActiveTab);
+  }, [employee?.id, moreDataTab, selectedActiveTab, loadTabs]);
+
+  useEffect(() => {
+    if (!activeTab || !employee?.id) return;
+    return loadTabData(activeTab, employee.id);
+  }, [activeTab, employee?.id, loadTabData]);
+
+  const alerts = tabData ? Object.entries(tabData.hatrraa) : [];
+
+  const renderTabsBar = () => {
+    if (tabsError)   return <div className="px-4 py-2 text-[#cc0000] text-xs border-t border-[#E8EAF0]">שגיאה בטעינת נתונים</div>;
+    if (tabsLoading) return <div className="px-4 py-2 text-[#888888] text-xs border-t border-[#E8EAF0]">⏳ טוען...</div>;
+    return <TabsBar tabs={tabs} activeTabId={activeTab?.id ?? -999} onTabClick={handleTabClick} />;
+  };
+
+  const renderTabContent = () => {
+    if (tabDataError)   return <div className="py-[10px] text-[#cc0000] text-xs">שגיאה בטעינת נתונים</div>;
+    if (tabDataLoading) return <div className="py-[10px] text-[#888888] text-xs">⏳ טוען נתוני טאב...</div>;
+    if (tabData)        return <TabContent key={activeTab?.id} data={tabData} />;
+    return null;
   };
 
   if (loading) {
     return (
-      <div style={{ padding: '48px', textAlign: 'center', color: '#888' }}>
-        ⏳ טוען פרופיל עובד...
+      <div className="p-4 text-center text-[#888888]" style={{ fontFamily: 'Rubik, Arial, sans-serif' }}>
+        ⏳ טוען...
       </div>
     );
   }
 
   if (!employee) {
     return (
-      <div style={{ padding: '48px', textAlign: 'center', color: '#c00' }}>
-        עובד לא נמצא
-        <br />
-        <button onClick={handleBack} style={{ marginTop: '16px', cursor: 'pointer', color: '#1E3BA2', background: 'none', border: 'none' }}>
-          ← חזרה לחיפוש
+      <div className="p-4 text-center text-[#cc0000]" style={{ fontFamily: 'Rubik, Arial, sans-serif' }}>
+        עובד לא נמצא —{' '}
+        <button
+          onClick={() => navigate?.('/')}
+          className="cursor-pointer text-[#1E3BA2] bg-transparent border-0 p-0 font-[inherit]"
+        >
+          חזרה לחיפוש
         </button>
       </div>
     );
   }
 
   return (
-    <div style={{
-      background: 'white',
-      borderRadius: '12px',
-      padding: '24px 20px',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-      direction: 'rtl',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      gap: '16px',
-    }}>
-      <button
-        onClick={handleBack}
-        style={{
-          alignSelf: 'flex-start',
-          background: 'none',
-          border: 'none',
-          cursor: 'pointer',
-          color: '#1E3BA2',
-          fontSize: '13px',
-          padding: 0,
-        }}
-      >
-        ← חזרה לדף הבית
-      </button>
+    <div
+      className="bg-white rounded-xl shadow-[0_2px_12px_rgba(0,0,0,0.10)] overflow-hidden"
+      style={{ fontFamily: 'Rubik, Arial, sans-serif' }}
+      dir="rtl"
+    >
+      {/* ── Identity row ── */}
+      <div className="flex items-center gap-3 px-4 py-1 min-h-[40px]">
 
-      <img
-        src={employee.image}
-        alt={`${employee.firstName} ${employee.lastName}`}
-        style={{ width: '80px', height: '80px', borderRadius: '50%', objectFit: 'cover' }}
-      />
+        <EmployeeIdentity employee={employee} />
 
-      <div style={{ textAlign: 'center' }}>
-        <h2 style={{ margin: '0 0 4px', color: '#1E3BA2', fontSize: '18px' }}>
-          {employee.firstName} {employee.lastName}
-        </h2>
-        <div style={{ color: '#848282', fontSize: '13px' }}>
-          {employee.role} · {employee.department}
+        <div className="flex-1 flex flex-wrap gap-[5px] justify-end">
+          {alerts.map(([label, value]) => (
+            <div
+              key={label}
+              className="flex items-center gap-[5px] bg-[#FFF0CC] border border-[#FFD580] rounded px-2 py-[2px] text-[11px] text-[#7A4F00] whitespace-nowrap"
+            >
+              <span>⚠</span>
+              <span className="font-semibold">{label}:</span>
+              <span>{value}</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="shrink-0">
+          <button
+            onClick={() => navigate?.('/')}
+            className="bg-transparent border-0 cursor-pointer text-[#848282] text-xs p-0 font-[inherit]"
+          >
+            ← חזרה
+          </button>
         </div>
       </div>
 
-      <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        {[
-          { label: 'מספר עובד', value: employee.id },
-          { label: 'יחידה', value: employee.unit },
-          { label: 'ותק בחברה', value: `${employee.yearsInCompany} שנים` },
-          { label: 'מחלקה', value: employee.department },
-          { label: 'אימייל', value: employee.email },
-          { label: 'טלפון', value: employee.phone },
-        ].map(({ label, value }) => (
-          <div key={label} style={{ background: '#F8F9FD', borderRadius: '8px', padding: '8px 12px' }}>
-            <div style={{ fontSize: '10px', color: '#848282', marginBottom: '2px' }}>{label}</div>
-            <div style={{ fontSize: '13px', color: '#00033D', fontWeight: 500, wordBreak: 'break-word' }}>{value}</div>
-          </div>
-        ))}
-      </div>
+      {/* ── Tabs bar ── */}
+      {renderTabsBar()}
 
-      <div style={{ width: '100%' }}>
-        <div style={{ fontSize: '12px', color: '#848282', marginBottom: '8px' }}>כישורים</div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-          {employee.skills.map((skill) => (
-            <span key={skill} style={{
-              background: '#EEF2FF',
-              color: '#1E3BA2',
-              borderRadius: '6px',
-              padding: '3px 8px',
-              fontSize: '12px',
-            }}>
-              {skill}
-            </span>
-          ))}
+      {/* ── Expandable tab content panel ── */}
+      <div
+        className="grid transition-[grid-template-rows] duration-[250ms] ease-in-out"
+        style={{ gridTemplateRows: isExpanded ? '1fr' : '0fr' }}
+      >
+        <div className="overflow-hidden">
+          <div className="px-4 pb-3 border-t border-[#E8EAF0]">
+            {renderTabContent()}
+          </div>
         </div>
       </div>
     </div>

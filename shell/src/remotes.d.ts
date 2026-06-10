@@ -13,9 +13,9 @@ declare module 'mfe_search_employee/App' {
 
 declare module 'mfe_employee_portfolio/App' {
   const App: React.ComponentType<{
-    openService?: import('./types/openService').OpenService;
     navigate?: (to: string) => void;
-    mfeConfig?: import('./services/sherutimService').SherutMfeConfig | null;
+    moreDataTab?: import('./services/sherutimService').MoreDataTab | null;
+    selectedActiveTab?: number;
   }>;
   export default App;
 }

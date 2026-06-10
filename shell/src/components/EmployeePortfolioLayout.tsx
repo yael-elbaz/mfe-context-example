@@ -2,7 +2,6 @@ import React, { lazy, Suspense, useEffect, useState, useCallback } from 'react';
 import { Outlet, useSearchParams, useLocation, useNavigate } from 'react-router-dom';
 import {useMatch } from 'react-router-dom';
 import { useSelectedPersonStore, useCurrentEmployee, type EmployeeProfile } from '../store/personStore';
-import type { OpenService, PersonType } from '../types/openService';
 import { Helper } from '../utils/urlHelper';
 import { getSherutMfeConfig, type SherutMfeConfig } from '../services/sherutimService';
 
@@ -20,7 +19,7 @@ const PROFILES: Record<string, Omit<EmployeeProfile, 'type'>> = {
   '1008': { id: '1008', firstName: 'גל',    lastName: 'פרידמן',  yearsInCompany: 1, unit: 'צוות פיתוח',     department: 'IT',    role: 'מפתח Backend',     email: 'gal.friedman@org.co.il', phone: '050-8901234', image: 'https://i.pravatar.cc/150?img=15', skills: ['Python', 'FastAPI', 'Redis', 'PostgreSQL'] },
 };
 
-const EmployeePortfolioLayout: React.FC<{ openService?: OpenService }> = ({ openService }) => {
+const EmployeePortfolioLayout: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const employeeId = Helper.getParam('employeeId', searchParams) ?? '';
@@ -66,20 +65,21 @@ const EmployeePortfolioLayout: React.FC<{ openService?: OpenService }> = ({ open
   }, []);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'row', gap: '24px', alignItems: 'flex-start', direction: 'rtl' }}>
-      <div style={{ width: '25%', flexShrink: 0, position: 'sticky', top: '108px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        {/* <Suspense fallback={<div>טוען חיפוש...</div>}>
-          <SearchPersonMFE onSelected={onSelected} />
-        </Suspense> */}
+    <div style={{ display: 'flex', flexDirection: 'column', direction: 'rtl' }}>
+      <div style={{ position: 'sticky', top: '96px', zIndex: 10, background: '#F0F2F8', paddingBottom: '8px' }}>
         {loading ? (
-          <div style={{ padding: '48px', textAlign: 'center', color: '#888' }}>⏳ טוען...</div>
+          <div style={{ padding: '20px', textAlign: 'center', color: '#888' }}>⏳ טוען...</div>
         ) : (
-          <Suspense fallback={<div>טוען פרופיל עובד...</div>}>
-            <EmployeePortfolioMFE openService={openService} navigate={navigate} mfeConfig={mfeConfig} />
+          <Suspense fallback={<div style={{ padding: '20px' }}>טוען פרופיל עובד...</div>}>
+            <EmployeePortfolioMFE
+              navigate={navigate}
+              moreDataTab={mfeConfig?.moreDataTab}
+              selectedActiveTab={mfeConfig?.selectedActiveTab}
+            />
           </Suspense>
         )}
       </div>
-      <div style={{ flex: 1 }}>
+      <div style={{ paddingTop: '24px' }}>
         {notFound ? (
           <div style={{ padding: '24px', color: '#888', fontSize: '16px', textAlign: 'right' }}>
             עובד לא נמצא

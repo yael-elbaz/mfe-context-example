@@ -93,11 +93,15 @@ const STATUS_STYLE = {
 const App: React.FC<Props> = ({ idntSheryut = '', employeeId = '' }) => {
   const [fetchedTitle, setFetchedTitle] = useState<string | null>(null);
 
-  // ❌ Wrong — async directly in useEffect
-  useEffect(async () => {
-    const res = await fetch(`https://jsonplaceholder.typicode.com/todos/1`);
-    const json = await res.json();
-    setFetchedTitle(json.title);
+  useEffect(() => {
+    setFetchedTitle(null);
+    let cancelled = false;
+
+    fetch(`https://jsonplaceholder.typicode.com/todos/1`)
+      .then(r => r.json())
+      .then(json => { if (!cancelled) setFetchedTitle(json.title); });
+
+    return () => { cancelled = true; };
   }, [idntSheryut]);
 
   const data: SherutData = SHERUT_DATA[idntSheryut] ?? {

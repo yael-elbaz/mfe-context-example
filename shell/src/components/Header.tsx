@@ -37,6 +37,7 @@ export const Header: React.FC = () => {
     <header
       className="flex items-center justify-between lg:justify-end bg-white h-11 md:h-[66px]"
       style={{
+        position: 'fixed',
         top: 0,
         left: 0,
         right: 0,

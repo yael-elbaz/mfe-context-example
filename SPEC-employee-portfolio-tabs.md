@@ -185,18 +185,97 @@ function resolveActiveTab(tabs: TabConfig[], selectedActiveTab?: number): TabCon
 
 ---
 
-## `SherutMfeConfig` — required addition
-
-Add `selectedActiveTab` to the existing interface:
+## `SherutMfeConfig` — required additions
 
 ```typescript
 // shell/src/services/sherutimService.ts
+
+export interface MoreDataTab {
+  label: string;    // display name for the tab, e.g. "מידע נוסף"
+  dataUrl: string;  // base URL — append employeeId= (same contract as tab.dataUrl)
+  color?: string;   // accent color; defaults to a neutral fallback if omitted
+  order?: number;   // position in the sorted tab list; defaults to last
+  setAsActive?: boolean; // if true, this tab is the initial active tab
+}
+
 export interface SherutMfeConfig {
   remoteUrl: string;
   scope: string;
   module: string;
   objectType: PersonType[] | null;
-  selectedActiveTab?: number;   // IDNT_MENU_ITEM of the tab to open by default
+  selectedActiveTab?: number;  // IDNT_MENU_ITEM of the tab to open by default
+  moreDataTab?: MoreDataTab;   // optional extra tab injected by the sherut
+}
+```
+
+---
+
+## `moreDataTab` — Synthetic Tab Injection
+
+When `mfeConfig.moreDataTab` is present, the MFE appends a synthetic `TabConfig` to the normalized tabs array after fetching the tabs config:
+
+```typescript
+const SYNTHETIC_MORE_DATA_TAB_ID = -1; // reserved ID, never returned by the real API
+
+if (mfeConfig?.moreDataTab) {
+  const { label, dataUrl, color = '#888888', order, setAsActive } = mfeConfig.moreDataTab;
+  tabs.push({
+    id: SYNTHETIC_MORE_DATA_TAB_ID,
+    objectName: 'moreData',
+    displayName: label,
+    title: label,
+    color,
+    order: order ?? Infinity,
+    dataUrl,
+    iconUrl: '',
+    isInternal: false,
+  });
+  tabs.sort((a, b) => a.order - b.order);
+}
+```
+
+The tab is then fetched and rendered identically to any API-driven tab — no special casing in `TabsBar` or `TabContent`.
+
+`EmployeePortfolioLayout` requires **no changes** — it already passes `mfeConfig` through to the MFE.
+
+---
+
+## Active Tab Resolution — Updated Logic
+
+`setAsActive` on `moreDataTab` and `selectedActiveTab` on the config are two independent override signals. The resolution order is:
+
+```
+1. mfeConfig.moreDataTab.setAsActive === true
+      → activate the synthetic "more data" tab (id = SYNTHETIC_MORE_DATA_TAB_ID)
+
+2. mfeConfig.selectedActiveTab != null
+      → find tab where tab.id === selectedActiveTab
+
+3. fallback
+      → tab with lowest order
+```
+
+If both `moreDataTab.setAsActive` and `selectedActiveTab` are set, `setAsActive` wins.
+
+```typescript
+function resolveActiveTab(
+  tabs: TabConfig[],
+  selectedActiveTab?: number,
+  moreDataTab?: MoreDataTab,
+): TabConfig | null {
+  if (!tabs.length) return null;
+
+  if (moreDataTab?.setAsActive) {
+    const synthetic = tabs.find(t => t.id === SYNTHETIC_MORE_DATA_TAB_ID);
+    if (synthetic) return synthetic;
+  }
+
+  if (selectedActiveTab != null) {
+    const match = tabs.find(t => t.id === selectedActiveTab);
+    if (match) return match;
+  }
+
+  return tabs.reduce((min, t) => t.order < min.order ? t : min, tabs[0]);
 }
 ```
 
@@ -213,7 +292,7 @@ interface Props {
 }
 ```
 
-`mfeConfig.selectedActiveTab` is an `IDNT_MENU_ITEM` number, matched against `tab.id` to override the default active tab.
+`mfeConfig.selectedActiveTab` is an `IDNT_MENU_ITEM` number, matched against `tab.id` to override the default active tab. `mfeConfig.moreDataTab.setAsActive` takes priority over `selectedActiveTab`.
 
 ---
 
