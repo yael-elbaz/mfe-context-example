@@ -52,6 +52,13 @@ const App: React.FC<Props> = ({ navigate, extendedTabDataUrl, selectedActiveTab 
     );
   }
 
+  const renderMainRowContent = () => {
+    if (tabsError)   return <div className="flex-1 text-[#cc0000] text-xs">שגיאה בטעינת נתונים</div>;
+    if (tabsLoading) return <div className="flex-1 text-[#888888] text-xs">⏳ טוען...</div>;
+    if (activeTabData) return <BasicDataRow data={activeTabData.basicData} />;
+    return <div className="flex-1 text-[#848282] text-sm">אין נתונים להצגה עבור עובד זה</div>;
+  };
+
   return (
     <div
       className="bg-white rounded-lg shadow-[0_2px_12px_rgba(0,0,0,0.10)] overflow-hidden"
@@ -62,15 +69,7 @@ const App: React.FC<Props> = ({ navigate, extendedTabDataUrl, selectedActiveTab 
       <div className="flex items-center gap-4 p-6 h-[116px]">
         <EmployeeAvatar employee={employee} />
 
-        {tabsError ? (
-          <div className="flex-1 text-[#cc0000] text-xs">שגיאה בטעינת נתונים</div>
-        ) : tabsLoading ? (
-          <div className="flex-1 text-[#888888] text-xs">⏳ טוען...</div>
-        ) : activeTabData ? (
-          <BasicDataRow data={activeTabData.basicData} />
-        ) : (
-          <div className="flex-1" />
-        )}
+        {renderMainRowContent()}
 
         <button
           onClick={() => navigate?.('/')}

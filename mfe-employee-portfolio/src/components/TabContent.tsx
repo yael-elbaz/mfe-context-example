@@ -8,7 +8,7 @@ interface SectionProps {
 }
 
 const Section: React.FC<SectionProps> = ({ title, data, isLinks }) => {
-  const entries = Object.entries(data);
+  const entries = data ? Object.entries(data).filter(([, value]) => value != null && value !== '') : [];
   if (entries.length === 0) return null;
 
   return (
@@ -38,7 +38,7 @@ const Section: React.FC<SectionProps> = ({ title, data, isLinks }) => {
 };
 
 const AlertsSection: React.FC<{ data: Record<string, string> }> = ({ data }) => {
-  const entries = Object.entries(data);
+  const entries = data ? Object.entries(data).filter(([, value]) => value != null && value !== '') : [];
   if (entries.length === 0) return null;
 
   return (
@@ -48,7 +48,7 @@ const AlertsSection: React.FC<{ data: Record<string, string> }> = ({ data }) => 
       </div>
       <div className="flex flex-wrap gap-[5px]">
         {entries.map(([label, value]) => (
-          <div
+            <div
             key={label}
             className="flex items-center gap-[5px] bg-[#FFF0CC] border border-[#FFD580] rounded px-2 py-[2px] text-[11px] text-[#7A4F00] whitespace-nowrap"
           >
