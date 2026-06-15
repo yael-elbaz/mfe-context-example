@@ -24,19 +24,26 @@ employeeId
     Sort by order ASC
     │
     ▼
-[3] Determine active tab
-    If mfeConfig.selectedActiveTab exists
+[3] Prefetch ALL tab data in parallel (Promise.allSettled)
+    For each tab → GET {tab.dataUrl}employeeId={employeeId}
+    │
+    ▼
+[4] Filter tabs
+    Drop any tab whose data fetch rejected OR returned empty
+    (all four sections empty) → that tab is never shown
+    │
+    ▼
+[5] Determine active tab (from the visible tabs only)
+    If extendedTabDataUrl present
+      → the "more data" tab is active
+    Else if selectedActiveTab exists
       → find tab where id === selectedActiveTab (IDNT_MENU_ITEM)
     Else
       → tab with lowest order
     │
     ▼
-[4] Fetch active tab data
-    GET {tab.dataUrl}employeeId={employeeId}
-    │
-    ▼
-[5] Render: tabs bar (each tab styled with its own color) + active tab content
-    On tab click → fetch that tab's dataUrl + set active
+[6] Render: tabs bar (each tab styled with its own color) + active tab content
+    On tab click → data is already cached → switch instantly, no fetch
 ```
 
 ---
@@ -154,16 +161,34 @@ Each section is a flat `{ [label: string]: string }` map — rendered as key/val
 
 ---
 
-## Tab Data Fetch
+## Tab Data Fetch — Prefetch All Up Front
+
+All tab data is fetched **once, in parallel**, immediately after the tabs config loads
+(not lazily on tab click).
 
 ```
-GET {tab.dataUrl}employeeId={employeeId}
+For each tab (in parallel via Promise.allSettled):
+  GET {tab.dataUrl}employeeId={employeeId}
 ```
 
 - `dataUrl` already contains the base path (e.g. `api-emp.il/.../GetDetails?`)
 - Append `employeeId=` directly to the URL
 - `LOGI_PARTIAL_URL` is **ignored** — use the URL as-is
 - Returns: `TabData`
+
+Results are stored in a `Record<tabId, TabData>` map. Clicking a tab just switches the
+active id — the data is already cached, so there is **no per-click fetch** and no per-tab
+loading/error state.
+
+### Hide empty / failed tabs
+
+After the parallel fetch, a tab is **dropped from the bar entirely** when:
+- its data fetch **rejected**, or
+- its data is **empty** — all four sections (`basicData`, `murchavData`, `hatrraa`,
+  `links`) have zero entries.
+
+Only tabs with non-empty data are shown, and the active tab is resolved from that visible
+set.
 
 ---
 
@@ -190,82 +215,83 @@ function resolveActiveTab(tabs: TabConfig[], selectedActiveTab?: number): TabCon
 ```typescript
 // shell/src/services/sherutimService.ts
 
-export interface MoreDataTab {
-  label: string;    // display name for the tab, e.g. "מידע נוסף"
-  dataUrl: string;  // base URL — append employeeId= (same contract as tab.dataUrl)
-  color?: string;   // accent color; defaults to a neutral fallback if omitted
-  order?: number;   // position in the sorted tab list; defaults to last
-  setAsActive?: boolean; // if true, this tab is the initial active tab
-}
-
 export interface SherutMfeConfig {
   remoteUrl: string;
   scope: string;
   module: string;
   objectType: PersonType[] | null;
   selectedActiveTab?: number;  // IDNT_MENU_ITEM of the tab to open by default
-  moreDataTab?: MoreDataTab;   // optional extra tab injected by the sherut
+  extendedTabDataUrl?: string;        // data URL for the "more data" tab (only the URL varies)
 }
 ```
+
+The sherut config passes **only the data URL** for the "more data" tab. Everything else
+about that tab (label, color, order, and the fact that it is always the active tab) is a
+fixed constant inside the MFE — the sherut cannot change it.
 
 ---
 
-## `moreDataTab` — Synthetic Tab Injection
+## "More Data" Tab — Synthetic Tab Injection
 
-When `mfeConfig.moreDataTab` is present, the MFE appends a synthetic `TabConfig` to the normalized tabs array after fetching the tabs config:
+The MFE owns the fixed config for this tab. Only its `dataUrl` is supplied per-sherut via
+`mfeConfig.extendedTabDataUrl`:
 
 ```typescript
+// mfe-employee-portfolio/src/tabsConfig.ts
 const SYNTHETIC_MORE_DATA_TAB_ID = -1; // reserved ID, never returned by the real API
 
-if (mfeConfig?.moreDataTab) {
-  const { label, dataUrl, color = '#888888', order, setAsActive } = mfeConfig.moreDataTab;
-  tabs.push({
+export const MORE_DATA_TAB = {
+  label: 'מידע נוסף',
+  color: '#7B2FBE',
+  order: Infinity, // always rendered last in the bar
+} as const;
+
+export function buildMoreDataTab(dataUrl: string): TabConfig {
+  return {
     id: SYNTHETIC_MORE_DATA_TAB_ID,
     objectName: 'moreData',
-    displayName: label,
-    title: label,
-    color,
-    order: order ?? Infinity,
+    displayName: MORE_DATA_TAB.label,
+    title: MORE_DATA_TAB.label,
+    color: MORE_DATA_TAB.color,
+    order: MORE_DATA_TAB.order,
     dataUrl,
     iconUrl: '',
     isInternal: false,
-  });
-  tabs.sort((a, b) => a.order - b.order);
+  };
 }
 ```
 
-The tab is then fetched and rendered identically to any API-driven tab — no special casing in `TabsBar` or `TabContent`.
-
-`EmployeePortfolioLayout` requires **no changes** — it already passes `mfeConfig` through to the MFE.
+When `extendedTabDataUrl` is present, the MFE appends `buildMoreDataTab(extendedTabDataUrl)` to the
+normalized tabs array after fetching the tabs config, then re-sorts by `order`. The tab is
+fetched and rendered identically to any API-driven tab — no special casing in `TabsBar` or
+`TabContent`.
 
 ---
 
 ## Active Tab Resolution — Updated Logic
 
-`setAsActive` on `moreDataTab` and `selectedActiveTab` on the config are two independent override signals. The resolution order is:
+The "more data" tab, **when present, is always the active tab**. The resolution order is:
 
 ```
-1. mfeConfig.moreDataTab.setAsActive === true
+1. extendedTabDataUrl present
       → activate the synthetic "more data" tab (id = SYNTHETIC_MORE_DATA_TAB_ID)
 
-2. mfeConfig.selectedActiveTab != null
+2. selectedActiveTab != null
       → find tab where tab.id === selectedActiveTab
 
 3. fallback
       → tab with lowest order
 ```
 
-If both `moreDataTab.setAsActive` and `selectedActiveTab` are set, `setAsActive` wins.
-
 ```typescript
 function resolveActiveTab(
   tabs: TabConfig[],
   selectedActiveTab?: number,
-  moreDataTab?: MoreDataTab,
+  hasMoreDataTab?: boolean,
 ): TabConfig | null {
   if (!tabs.length) return null;
 
-  if (moreDataTab?.setAsActive) {
+  if (hasMoreDataTab) {
     const synthetic = tabs.find(t => t.id === SYNTHETIC_MORE_DATA_TAB_ID);
     if (synthetic) return synthetic;
   }
@@ -286,13 +312,50 @@ function resolveActiveTab(
 ```typescript
 // mfe-employee-portfolio/src/App.tsx
 interface Props {
-  openService?: OpenService;
   navigate?: (to: string) => void;
-  mfeConfig?: SherutMfeConfig | null;
+  extendedTabDataUrl?: string | null;   // data URL for the "more data" tab
+  selectedActiveTab?: number;    // IDNT_MENU_ITEM to open by default
 }
 ```
 
-`mfeConfig.selectedActiveTab` is an `IDNT_MENU_ITEM` number, matched against `tab.id` to override the default active tab. `mfeConfig.moreDataTab.setAsActive` takes priority over `selectedActiveTab`.
+The shell flattens `SherutMfeConfig` into individual props (`extendedTabDataUrl`, `selectedActiveTab`) when rendering the MFE — the MFE does not receive the whole config object.
+
+`selectedActiveTab` is an `IDNT_MENU_ITEM` number, matched against `tab.id` to override the default active tab. When `extendedTabDataUrl` is present, the "more data" tab is always active and takes priority over `selectedActiveTab`.
+
+---
+
+## Component Layout (v2 — accordion)
+
+> **Structure implemented with placeholder styling.** The component tree and interaction
+> below are built; final CSS will be supplied separately and dropped into the existing
+> Tailwind classes.
+
+### Collapsed (default)
+
+A single **main row** showing the **active tab's `basicData`**:
+
+```
+[ ←back ]  [ value  value  value  value  …  (active tab basicData, RTL columns) ]  [ avatar ]  [ ⌄ expand ]
+```
+
+- Avatar stays on the right; `←` back button stays.
+- The middle is the active tab's `basicData` rendered as horizontal label-over-value columns
+  (as in the reference screenshot).
+- The tabs bar is **not** shown in this state.
+- An **expand icon** sits at the end of the row.
+
+### Expanded (after clicking the expand icon)
+
+A **horizontal, scrollable strip** of tab cards, with the **selected card's data shown in a
+panel below the strip**.
+
+- Every tab — including the active one — is a card laid out in a **row** (not stacked).
+- When the cards overflow the width, **left/right arrows** appear to scroll the row.
+- Selecting a card shows **all four** sections of that tab's `TabData`
+  (`basicData`, `murchavData`, `hatrraa`, `links`) in the panel beneath.
+- Only one card is selected at a time; the active tab is selected by default when the panel
+  expands.
+- Each card is styled with its tab's own `tab.color`.
 
 ---
 
@@ -300,28 +363,18 @@ interface Props {
 
 | Layer | Responsibility |
 |---|---|
-| `EmployeePortfolioLayout` (shell) | Passes `employeeId`, `mfeConfig` to MFE as props |
-| `App.tsx` (MFE) | Fetches tabs config, normalizes, resolves active tab, fetches tab data, renders UI |
-| `TabsBar` (new component in MFE) | Renders tab list; each tab is always styled with its own `tab.color`; active tab gets a border in that same color to indicate selection |
-| `TabContent` (new component in MFE) | Renders `TabData` — four sections (`basicData`, `murchavData`, `hatrraa`, `links`), each as key/value rows |
-
----
-
-## Tab Visual Behavior
-
-| State    | Styling                                              |
-|----------|------------------------------------------------------|
-| Inactive | Tab label/icon rendered in `tab.color`               |
-| Active   | Tab label/icon in `tab.color` + border in `tab.color` |
-
-The border is the visual indicator of the selected tab — no other background fill change is required.
+| `EmployeePortfolioLayout` (shell) | Flattens `mfeConfig` → passes `navigate`, `extendedTabDataUrl`, `selectedActiveTab` to MFE as props |
+| `App.tsx` (MFE) | Fetches tabs config, normalizes, resolves active tab, prefetches all data, renders main row + accordion |
+| Main row (MFE) | Renders avatar (right) + active tab's `basicData` as horizontal columns + back + expand icon |
+| `TabStrip` (MFE) | Horizontal scrollable row of tab cards; shows left/right scroll arrows on overflow; highlights the selected card in `tab.color` |
+| `TabContent` (MFE) | Renders the selected tab's `TabData` — four sections (`basicData`, `murchavData`, `hatrraa`, `links`), shown in the panel below the strip |
 
 ---
 
 ## Error States
 
 - If the tabs config fetch fails → show `"שגיאה בטעינת נתונים"` on the employee card in place of the tabs
-- If a tab data fetch fails → show `"שגיאה בטעינת נתונים"` in the tab content area
+- If a single tab's data fetch fails → that tab is silently dropped from the bar (same as an empty tab); the rest still render. There is no per-tab error state, since data is prefetched in parallel and tabs are only shown once their data is known.
 
 ---
 

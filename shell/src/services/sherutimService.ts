@@ -1,20 +1,14 @@
 import type { PersonType } from '../types/openService';
 
-export interface MoreDataTab {
-  label: string;
-  dataUrl: string;
-  color?: string;
-  order?: number;
-  setAsActive?: boolean;
-}
-
 export interface SherutMfeConfig {
   remoteUrl: string;
   scope: string;
   module: string;
   objectType: PersonType[] | null;
   selectedActiveTab?: number;
-  moreDataTab?: MoreDataTab;
+  // Only the data URL for the "more data" tab varies per-sherut; the tab's label,
+  // color and active behavior are fixed constants inside mfe-employee-portfolio.
+  extendedTabDataUrl?: string;
 }
 
 // In production this would be a real API call:
@@ -26,12 +20,7 @@ export async function getSherutMfeConfig(_idntSheryut: string): Promise<SherutMf
     scope: 'mfe_sherut_exemplat',
     module: './App',
     objectType: ['employee'],
-    moreDataTab: {
-      label: 'מידע נוסף',
-      dataUrl: 'https://api-sherut.example.il/GetMoreData?',
-      color: '#7B2FBE',
-      setAsActive: false,
-    },
+    extendedTabDataUrl: 'https://api-sherut.example.il/GetMoreData?',
   };
 }
 

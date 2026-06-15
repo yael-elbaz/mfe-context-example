@@ -2,11 +2,35 @@ import type { RawTabConfig, TabConfig, TabData } from './types';
 
 export const SYNTHETIC_MORE_DATA_TAB_ID = -1;
 
+// Fixed config for the "more data" tab. Only its dataUrl varies (provided per-sherut
+// via mfeConfig.extendedTabDataUrl); label, color and order are always these constants and
+// the tab is always rendered as the active one when present.
+export const MORE_DATA_TAB = {
+  label: 'מידע נוסף',
+  color: '#7B2FBE',
+  order: Infinity, // always rendered last in the bar
+  iconUrl: 'https://api.iconify.design/mdi/dots-horizontal-circle-outline.svg',
+} as const;
+
+export function buildMoreDataTab(dataUrl: string): TabConfig {
+  return {
+    id: SYNTHETIC_MORE_DATA_TAB_ID,
+    objectName: 'moreData',
+    displayName: MORE_DATA_TAB.label,
+    title: MORE_DATA_TAB.label,
+    color: MORE_DATA_TAB.color,
+    order: MORE_DATA_TAB.order,
+    dataUrl,
+    iconUrl: MORE_DATA_TAB.iconUrl,
+    isInternal: false,
+  };
+}
+
 const TABS_CONFIG_URL: string = (import.meta.env as Record<string, string>).VITE_TABS_CONFIG_URL ?? '';
 
 const MOCK_TABS: RawTabConfig[] = [
   {
-    CODE_SUG_OBJECT: 1, ICON_URL: '', IDNT_MENU_ITEM: 101, IDNT_MENU_ITEM_AV: '',
+    CODE_SUG_OBJECT: 1, ICON_URL: 'https://api.iconify.design/mdi/account-outline.svg', IDNT_MENU_ITEM: 101, IDNT_MENU_ITEM_AV: '',
     IDNT_OBJECT: '1', LOGI_HTTPS: true, LOGI_PARTIAL_ICON_URL: false, LOGI_PARTIAL_URL: false,
     LOGI_PNIMI: true, LOGI_SUG_OBJECT_MISMACH: false, OPEN_IN_IE: false, ORDER_BY: '1',
     TEXT_MENU: '', TEXT_MENU_ITEM: 'נתונים בסיסיים', TEXT_MENU_TARGET: '', TEXT_NATIV: '',
@@ -19,7 +43,7 @@ const MOCK_TABS: RawTabConfig[] = [
     ],
   },
   {
-    CODE_SUG_OBJECT: 1, ICON_URL: '', IDNT_MENU_ITEM: 102, IDNT_MENU_ITEM_AV: '',
+    CODE_SUG_OBJECT: 1, ICON_URL: 'https://api.iconify.design/mdi/cash.svg', IDNT_MENU_ITEM: 102, IDNT_MENU_ITEM_AV: '',
     IDNT_OBJECT: '1', LOGI_HTTPS: true, LOGI_PARTIAL_ICON_URL: false, LOGI_PARTIAL_URL: false,
     LOGI_PNIMI: false, LOGI_SUG_OBJECT_MISMACH: false, OPEN_IN_IE: false, ORDER_BY: '2',
     TEXT_MENU: '', TEXT_MENU_ITEM: 'שכר', TEXT_MENU_TARGET: '', TEXT_NATIV: '',
@@ -32,7 +56,7 @@ const MOCK_TABS: RawTabConfig[] = [
     ],
   },
   {
-    CODE_SUG_OBJECT: 1, ICON_URL: '', IDNT_MENU_ITEM: 103, IDNT_MENU_ITEM_AV: '',
+    CODE_SUG_OBJECT: 1, ICON_URL: 'https://api.iconify.design/mdi/calendar-check.svg', IDNT_MENU_ITEM: 103, IDNT_MENU_ITEM_AV: '',
     IDNT_OBJECT: '1', LOGI_HTTPS: true, LOGI_PARTIAL_ICON_URL: false, LOGI_PARTIAL_URL: false,
     LOGI_PNIMI: false, LOGI_SUG_OBJECT_MISMACH: false, OPEN_IN_IE: false, ORDER_BY: '3',
     TEXT_MENU: '', TEXT_MENU_ITEM: 'נוכחות', TEXT_MENU_TARGET: '', TEXT_NATIV: '',
@@ -101,7 +125,7 @@ export async function fetchTabsConfig(_employeeId: string): Promise<TabConfig[]>
   return raw.map(normalizeTab);
 }
 
-export async function fetchActiveTabData(dataUrl: string, employeeId: string): Promise<TabData> {
+export async function fetchTabData(dataUrl: string, employeeId: string): Promise<TabData> {
   if (!TABS_CONFIG_URL) {
     await new Promise(r => setTimeout(r, 300));
     const key = Object.keys(MOCK_TAB_DATA).find(k => dataUrl.includes(k)) ?? '';

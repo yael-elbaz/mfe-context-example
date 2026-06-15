@@ -65,27 +65,27 @@ const EmployeePortfolioLayout: React.FC = () => {
   }, []);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', direction: 'rtl' }}>
-      <div style={{ position: 'sticky', top: '96px', zIndex: 10, background: '#F0F2F8', paddingBottom: '8px' }}>
+    <div className="flex flex-col" dir="rtl">
+      <div className="sticky top-24 z-10 bg-[#F0F2F8] pb-2">
         {loading ? (
-          <div style={{ padding: '20px', textAlign: 'center', color: '#888' }}>⏳ טוען...</div>
+          <div className="p-5 text-center text-[#888]">⏳ טוען...</div>
         ) : (
-          <Suspense fallback={<div style={{ padding: '20px' }}>טוען פרופיל עובד...</div>}>
+          <Suspense fallback={<div className="p-5">טוען פרופיל עובד...</div>}>
             <EmployeePortfolioMFE
               navigate={navigate}
-              moreDataTab={mfeConfig?.moreDataTab}
+              extendedTabDataUrl={mfeConfig?.extendedTabDataUrl}
               selectedActiveTab={mfeConfig?.selectedActiveTab}
             />
           </Suspense>
         )}
       </div>
-      <div style={{ paddingTop: '24px' }}>
+      <div className="pt-6">
         {notFound ? (
-          <div style={{ padding: '24px', color: '#888', fontSize: '16px', textAlign: 'right' }}>
+          <div className="p-6 text-base text-right text-[#888]">
             עובד לא נמצא
           </div>
         ) : loading || !employee ? (
-          <div style={{ padding: '48px', textAlign: 'center', color: '#1E3BA2', direction: 'rtl' }}>
+          <div className="p-12 text-center text-[#1E3BA2]" dir="rtl">
             ⏳ טוען נתוני עובד...
           </div>
         ) : (

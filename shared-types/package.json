@@ -1,0 +1,19 @@
+{
+  "name": "@org/shared-types",
+  "version": "1.0.0",
+  "description": "Shared TypeScript types for the MFE platform (shell + MFEs)",
+  "types": "dist/index.d.ts",
+  "main": "dist/index.js",
+  "files": ["dist"],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "publishConfig": {
+    "registry": "<<YOUR_PRIVATE_REGISTRY_URL>>"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0"
+  }
+}

@@ -43,4 +43,3 @@ export interface TabData {
   hatrraa: Record<string, string>;
   links: Record<string, string>;
 }
-

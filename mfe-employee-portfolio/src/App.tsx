@@ -1,52 +1,34 @@
 import './index.css';
 import React, { useEffect } from 'react';
 import { useEmployee, useEmployeeLoading } from 'shell/employeeStore';
-import type { MoreDataTab } from './types';
 import { useTabs } from './hooks/useTabs';
-import TabsBar from './components/TabsBar';
+import TabStrip from './components/TabStrip';
 import TabContent from './components/TabContent';
-import EmployeeIdentity from './components/EmployeeIdentity';
+import BasicDataRow from './components/BasicDataRow';
+import EmployeeAvatar from './components/EmployeeAvatar';
 
 interface Props {
   navigate?: (to: string) => void;
-  moreDataTab?: MoreDataTab | null;
+  extendedTabDataUrl?: string | null;
   selectedActiveTab?: number;
 }
 
-const App: React.FC<Props> = ({ navigate, moreDataTab, selectedActiveTab  }) => {
+const App: React.FC<Props> = ({ navigate, extendedTabDataUrl, selectedActiveTab }) => {
   const employee = useEmployee();
   const loading = useEmployeeLoading();
 
   const {
     tabs, tabsLoading, tabsError,
-    activeTab, tabData, tabDataLoading, tabDataError,
-    isExpanded, loadTabs, loadTabData, handleTabClick,
+    activeTabData, tabDataById,
+    isExpanded, openTabId, loadTabs, toggleExpanded, toggleCard,
   } = useTabs();
 
   useEffect(() => {
     if (!employee?.id) return;
-    return loadTabs(employee.id, moreDataTab, selectedActiveTab);
-  }, [employee?.id, moreDataTab, selectedActiveTab, loadTabs]);
+    return loadTabs(employee.id, extendedTabDataUrl, selectedActiveTab);
+  }, [employee?.id , extendedTabDataUrl, selectedActiveTab, loadTabs]);
 
-  useEffect(() => {
-    if (!activeTab || !employee?.id) return;
-    return loadTabData(activeTab, employee.id);
-  }, [activeTab, employee?.id, loadTabData]);
-
-  const alerts = tabData ? Object.entries(tabData.hatrraa) : [];
-
-  const renderTabsBar = () => {
-    if (tabsError)   return <div className="px-4 py-2 text-[#cc0000] text-xs border-t border-[#E8EAF0]">שגיאה בטעינת נתונים</div>;
-    if (tabsLoading) return <div className="px-4 py-2 text-[#888888] text-xs border-t border-[#E8EAF0]">⏳ טוען...</div>;
-    return <TabsBar tabs={tabs} activeTabId={activeTab?.id ?? -999} onTabClick={handleTabClick} />;
-  };
-
-  const renderTabContent = () => {
-    if (tabDataError)   return <div className="py-[10px] text-[#cc0000] text-xs">שגיאה בטעינת נתונים</div>;
-    if (tabDataLoading) return <div className="py-[10px] text-[#888888] text-xs">⏳ טוען נתוני טאב...</div>;
-    if (tabData)        return <TabContent key={activeTab?.id} data={tabData} />;
-    return null;
-  };
+  const openTab = tabs.find(t => t.id === openTabId) ?? null;
 
   if (loading) {
     return (
@@ -72,49 +54,60 @@ const App: React.FC<Props> = ({ navigate, moreDataTab, selectedActiveTab  }) => 
 
   return (
     <div
-      className="bg-white rounded-xl shadow-[0_2px_12px_rgba(0,0,0,0.10)] overflow-hidden"
+      className="bg-white rounded-lg shadow-[0_2px_12px_rgba(0,0,0,0.10)] overflow-hidden"
       style={{ fontFamily: 'Rubik, Arial, sans-serif' }}
       dir="rtl"
     >
-      {/* ── Identity row ── */}
-      <div className="flex items-center gap-3 px-4 py-1 min-h-[40px]">
+      {/* ── Main row: avatar (right) + active tab's basic data + expand icon ── */}
+      <div className="flex items-center gap-4 p-6 h-[116px]">
+        <EmployeeAvatar employee={employee} />
 
-        <EmployeeIdentity employee={employee} />
+        {tabsError ? (
+          <div className="flex-1 text-[#cc0000] text-xs">שגיאה בטעינת נתונים</div>
+        ) : tabsLoading ? (
+          <div className="flex-1 text-[#888888] text-xs">⏳ טוען...</div>
+        ) : activeTabData ? (
+          <BasicDataRow data={activeTabData.basicData} />
+        ) : (
+          <div className="flex-1" />
+        )}
 
-        <div className="flex-1 flex flex-wrap gap-[5px] justify-end">
-          {alerts.map(([label, value]) => (
-            <div
-              key={label}
-              className="flex items-center gap-[5px] bg-[#FFF0CC] border border-[#FFD580] rounded px-2 py-[2px] text-[11px] text-[#7A4F00] whitespace-nowrap"
-            >
-              <span>⚠</span>
-              <span className="font-semibold">{label}:</span>
-              <span>{value}</span>
-            </div>
-          ))}
-        </div>
+        <button
+          onClick={() => navigate?.('/')}
+          className="shrink-0 bg-transparent border-0 cursor-pointer text-[#848282] text-xs p-0 font-[inherit]"
+        >
+          ← חזרה
+        </button>
 
-        <div className="shrink-0">
+        {tabs.length > 0 && (
           <button
-            onClick={() => navigate?.('/')}
-            className="bg-transparent border-0 cursor-pointer text-[#848282] text-xs p-0 font-[inherit]"
+            onClick={toggleExpanded}
+            aria-label={isExpanded ? 'כווץ' : 'הרחב'}
+            className="shrink-0 w-7 h-7 flex items-center justify-center rounded-full bg-[#F0F2F8] border-0 cursor-pointer text-[#1B2B6B]"
           >
-            ← חזרה
+            <span
+              className="inline-block transition-transform duration-200 text-[11px]"
+              style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}
+            >
+              ▼
+            </span>
           </button>
-        </div>
+        )}
       </div>
 
-      {/* ── Tabs bar ── */}
-      {renderTabsBar()}
-
-      {/* ── Expandable tab content panel ── */}
+      {/* ── Expandable panel: horizontal strip of tab cards + selected card's data ── */}
       <div
         className="grid transition-[grid-template-rows] duration-[250ms] ease-in-out"
         style={{ gridTemplateRows: isExpanded ? '1fr' : '0fr' }}
       >
         <div className="overflow-hidden">
-          <div className="px-4 pb-3 border-t border-[#E8EAF0]">
-            {renderTabContent()}
+          <div className="flex flex-col gap-3 px-4 pb-3 pt-2 border-t border-[#E8EAF0]">
+            <TabStrip tabs={tabs} openTabId={openTabId} onSelect={toggleCard} />
+            {openTab && tabDataById[openTab.id] && (
+              <div className="rounded-lg border border-[#E8EAF0] p-3">
+                <TabContent data={tabDataById[openTab.id]} />
+              </div>
+            )}
           </div>
         </div>
       </div>
