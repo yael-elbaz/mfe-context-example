@@ -1,4 +1,4 @@
-import { create } from 'zustand';
+import { createGlobalStore } from './createGlobalStore';
 
 // ---- טיפוסים ----
 
@@ -29,17 +29,20 @@ interface AppContextState {
 
 // ---- הסטור ----
 
-export const useAppContext = create<AppContextState>((set) => ({
-  user: null,
-  selectedUnit: null,
-  availableUnits: [],
+export const useAppContext = createGlobalStore<AppContextState>(
+  '__mfe_appContextStore__',
+  (set) => ({
+    user: null,
+    selectedUnit: null,
+    availableUnits: [],
 
-  setUser: (user) => set({ user }),
+    setUser: (user) => set({ user }),
 
-  setSelectedUnit: (unit) => set({ selectedUnit: unit }),
+    setSelectedUnit: (unit) => set({ selectedUnit: unit }),
 
-  logout: () => set({ user: null, selectedUnit: null, availableUnits: [] }),
-}));
+    logout: () => set({ user: null, selectedUnit: null, availableUnits: [] }),
+  }),
+);
 
 // ---- Convenience hooks (אופציונלי, נוח לצריכה ב-MFEs) ----
 

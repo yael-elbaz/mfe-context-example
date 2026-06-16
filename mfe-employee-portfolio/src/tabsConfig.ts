@@ -2,7 +2,7 @@ import type { RawTabConfig, TabConfig, TabData } from './types';
 
 export const SYNTHETIC_MORE_DATA_TAB_ID = -1;
 
-const TABS_CONFIG_URL: string = (import.meta.env as Record<string, string>).VITE_TABS_CONFIG_URL ?? '';
+const TABS_CONFIG_URL: string = process.env.VITE_TABS_CONFIG_URL ?? '';
 
 const MOCK_TABS: RawTabConfig[] = [
   {

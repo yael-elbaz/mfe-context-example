@@ -1,4 +1,4 @@
-import { create } from 'zustand';
+import { createGlobalStore } from './createGlobalStore';
 
 export interface EmployeeProfile {
   type: 'employee';
@@ -37,13 +37,16 @@ interface SelectedPersonStore {
   setIsLoadingPerson: (loading: boolean) => void;
 }
 
-export const useSelectedPersonStore = create<SelectedPersonStore>((set) => ({
-  person: null,
-  isLoadingPerson: false,
-  setSelectedPerson: (person) => set({ person }),
-  clearSelectedPerson: () => set({ person: null }),
-  setIsLoadingPerson: (loading) => set({ isLoadingPerson: loading }),
-}));
+export const useSelectedPersonStore = createGlobalStore<SelectedPersonStore>(
+  '__mfe_selectedPersonStore__',
+  (set) => ({
+    person: null,
+    isLoadingPerson: false,
+    setSelectedPerson: (person) => set({ person }),
+    clearSelectedPerson: () => set({ person: null }),
+    setIsLoadingPerson: (loading) => set({ isLoadingPerson: loading }),
+  }),
+);
 
 // debug only
 (window as any).__personStore = useSelectedPersonStore;

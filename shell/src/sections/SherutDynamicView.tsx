@@ -69,7 +69,7 @@ export const SherutDynamicView: React.FC = () => {
   const loadSherut = useCallback(async (signal: { cancelled: boolean }) => {
     try {
       setPhase('module');
-      const Component = await loadRemoteModule(mfeConfig.remoteUrl, mfeConfig.module);
+      const Component = await loadRemoteModule(mfeConfig.remoteUrl, mfeConfig.module, mfeConfig.scope);
       if (signal.cancelled) return;
       setDynamicComponent(() => Component);
       setPhase('done');
