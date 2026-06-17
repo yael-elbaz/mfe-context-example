@@ -38,8 +38,8 @@ const UnitDropdown: React.FC = () => {
 
       {open && (
         <div
-          className="absolute right-0 w-full bg-white rounded-lg shadow-md mt-1 overflow-hidden"
-          style={{ border: '1px solid #C5CBDD', zIndex: 300 }}
+          className="absolute right-0 w-full bg-white rounded-lg shadow-md mt-1"
+          style={{ border: '1px solid #C5CBDD', zIndex: 300, maxHeight: '240px', overflowY: 'auto' }}
         >
           {availableUnits.map((unit) => (
             <button
