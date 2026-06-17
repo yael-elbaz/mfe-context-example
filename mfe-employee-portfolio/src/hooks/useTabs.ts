@@ -34,6 +34,14 @@ export function useTabs() {
 
   const [isExpanded, setIsExpanded] = useState(false);
 
+  const setActiveFromSelection = useCallback((
+    loadedTabs: TabConfig[],
+    selectedActiveTab?: number,
+    moreDataSetAsActive?: boolean,
+  ) => {
+    setActiveTab(resolveActiveTab(loadedTabs, selectedActiveTab, moreDataSetAsActive));
+  }, []);
+
   const loadTabs = useCallback((
     employeeId: string,
     moreDataTab?: MoreDataTab | null,
@@ -44,6 +52,8 @@ export function useTabs() {
     setTabs([]);
     setActiveTab(null);
     setTabData(null);
+    setTabDataLoading(false);
+    setTabDataError(false);
     setIsExpanded(false);
 
     let cancelled = false;
@@ -124,5 +134,6 @@ export function useTabs() {
     loadTabs,
     loadTabData,
     handleTabClick,
+    setActiveFromSelection,
   };
 }

@@ -20,13 +20,18 @@ const App: React.FC<Props> = ({ navigate, moreDataTab, selectedActiveTab  }) => 
   const {
     tabs, tabsLoading, tabsError,
     activeTab, tabData, tabDataLoading, tabDataError,
-    isExpanded, loadTabs, loadTabData, handleTabClick,
+    isExpanded, loadTabs, loadTabData, handleTabClick, setActiveFromSelection,
   } = useTabs();
 
   useEffect(() => {
     if (!employee?.id) return;
     return loadTabs(employee.id, moreDataTab, selectedActiveTab);
-  }, [employee?.id, moreDataTab, selectedActiveTab, loadTabs]);
+  }, [employee?.id, moreDataTab, loadTabs]);
+
+  useEffect(() => {
+    if (!tabs.length) return;
+    setActiveFromSelection(tabs, selectedActiveTab, moreDataTab?.setAsActive);
+  }, [selectedActiveTab, moreDataTab, tabs, setActiveFromSelection]);
 
   useEffect(() => {
     if (!activeTab || !employee?.id) return;
