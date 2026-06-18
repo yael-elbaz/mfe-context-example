@@ -20,13 +20,20 @@ const App: React.FC<Props> = ({ navigate, extendedTabDataUrl, selectedActiveTab 
   const {
     tabs, tabsLoading, tabsError,
     activeTabData, tabDataById,
-    isExpanded, openTabId, loadTabs, toggleExpanded, toggleCard,
-  } = useTabs();
+    isExpanded, openTabId, loadBaseTabs, loadMoreDataTab, toggleExpanded, toggleCard,
+  } = useTabs(selectedActiveTab);
 
+  // Base tabs depend only on the employee — reload when the employee changes.
   useEffect(() => {
     if (!employee?.id) return;
-    return loadTabs(employee.id, extendedTabDataUrl, selectedActiveTab);
-  }, [employee?.id , extendedTabDataUrl, selectedActiveTab, loadTabs]);
+    return loadBaseTabs(employee.id);
+  }, [employee?.id, loadBaseTabs]);
+
+  // The "more data" tab depends on the employee + the extended-data URL, so it loads
+  // (or clears) on its own without re-triggering the base-tabs fetch above.
+  useEffect(() => {
+    return loadMoreDataTab(employee?.id, extendedTabDataUrl);
+  }, [employee?.id, extendedTabDataUrl, loadMoreDataTab]);
 
   const openTab = tabs.find(t => t.id === openTabId) ?? null;
 

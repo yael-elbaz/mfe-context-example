@@ -114,12 +114,31 @@ export function normalizeTab(raw: RawTabConfig): TabConfig {
   };
 }
 
-export async function fetchTabsConfig(_employeeId: string): Promise<TabConfig[]> {
+// The tab menu structure (labels, colors, order, icons) is permanent/global — it's
+// the same for every employee and for the lifetime of the session. Fetch it once and
+// reuse the result so changes to employeeId / extendedTabDataUrl / selectedActiveTab
+// don't trigger a redundant config fetch. Only per-employee tab *data* (fetchTabData)
+// needs to be re-acquired. The cache is cleared on failure so a later mount can retry.
+let tabsConfigCache: Promise<TabConfig[]> | null = null;
+
+export function fetchTabsConfig(): Promise<TabConfig[]> {
+  if (!tabsConfigCache) {
+    tabsConfigCache = loadTabsConfig().catch(err => {
+      tabsConfigCache = null;
+      throw err;
+    });
+  }
+  // Hand callers a fresh array copy — loadTabs pushes/sorts into it, and we must not
+  // mutate the shared cached array.
+  return tabsConfigCache.then(tabs => [...tabs]);
+}
+
+async function loadTabsConfig(): Promise<TabConfig[]> {
   if (!TABS_CONFIG_URL) {
     await new Promise(r => setTimeout(r, 400));
     return MOCK_TABS.map(normalizeTab);
   }
-  const res = await fetch(`${TABS_CONFIG_URL}?employeeId=${_employeeId}`);
+  const res = await fetch(TABS_CONFIG_URL);
   if (!res.ok) throw new Error('tabs config fetch failed');
   const raw: RawTabConfig[] = await res.json();
   return raw.map(normalizeTab);
