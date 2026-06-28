@@ -5,7 +5,7 @@ import { Header } from './components/Header';
 import EmployeePortfolioLayout from './components/EmployeePortfolioLayout';
 import EmployeePortfolioIndex from './components/EmployeePortfolioIndex';
 import CustomerPortfolioLayout from './components/CustomerPortfolioLayout';
-import SectionFullView from './components/SectionFullView';
+import LegacySectionRedirect from './components/LegacySectionRedirect';
 import { SherutDynamicView } from './sections/SherutDynamicView';
 import SherutimWrapper from './components/SherutimWrapper';
 import { useOpenService } from './hooks/useOpenService';
@@ -102,7 +102,7 @@ const RouterApp: React.FC = () => {
             <Route path="/employee-portfolio" element={<EmployeePortfolioLayout openService={openService} />}>
               <Route index element={<EmployeePortfolioIndex openService={openService} />} />
               <Route path="sherutim/:idntSheryut/*" element={<SherutDynamicView />} />
-              <Route path=":section" element={<SectionFullView openService={openService} />} />
+              <Route path=":section" element={<LegacySectionRedirect openService={openService} />} />
             </Route>
           </Routes>
           </SilentErrorBoundary>
