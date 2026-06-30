@@ -66,7 +66,7 @@ const EmployeePortfolioLayout: React.FC = () => {
 
   return (
     <div className="flex flex-col" dir="rtl">
-      <div className="sticky top-24 z-10 bg-[#F0F2F8] pb-2">
+      <div className="sticky top-24 z-10 bg-[#F0F2F8] pb-2 mt-[72px]">
         {loading ? (
           <div className="p-5 text-center text-[#888]">⏳ טוען...</div>
         ) : (
