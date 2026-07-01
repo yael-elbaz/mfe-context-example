@@ -1,4 +1,5 @@
 import React from 'react';
+import './index.css';
 import type { OpenService } from './types';
 import { MOCK_SHERUTIM } from './mockData';
 import SherutimCard from './SherutimCard';

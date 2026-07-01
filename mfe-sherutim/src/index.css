@@ -1,0 +1,49 @@
+@import "tailwindcss";
+
+/* ===== גופן Rubik (לפי הנחיות העיצוב של הפרויקט) ===== */
+@font-face {
+  font-family: 'Rubik';
+  src: url('http://repo/font/rubik.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Rubik Bold';
+  src: url('http://repo/font/rubik-bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@layer base {
+  * {
+    font-family: 'Rubik', sans-serif;
+  }
+}
+
+/* ===== טוקנים של העיצוב (mfe-sherutim) ===== */
+@theme {
+  --font-sans: 'Rubik', sans-serif;
+
+  /* צבעים מה-Figma */
+  --color-navy: #00033D;          /* BLOUE-COLOR — טקסט ראשי */
+  --color-navy-dark: #1C2B5E;     /* אייקונים */
+  --color-blue-2: #1E3BA2;        /* כותרות / שם משתמש בפופאפ */
+  --color-blue-active: #4395FF;   /* כפתור נבחר (active) */
+  --color-blue-border: #01278C;   /* גבול כפתור active */
+  --color-border: #C5CBDD;        /* גבול dropdown / כפתור רגיל */
+  --color-hover: #F8F9FD;         /* רקע HOVER / חלק תחתון בפופאפ */
+  --color-search-bg: #F8F8F8;     /* רקע שדה חיפוש */
+  --color-muted: #848282;         /* טקסט משני (מס׳ עובד וכו') */
+
+  /* --- עיצוב Full (מסך "כל השירותים") מה-Figma --- */
+  --color-primary: #2B7FFF;       /* כחול ראשי — pill active / אייקונים / badge */
+  --color-surface: #F0F6FD;       /* רקע תכלת בהיר — עיגול אייקון / badge */
+  --color-card-border: #E2E8F0;   /* גבול כרטיס */
+  --color-title: #111138;         /* כותרת כרטיס */
+  --color-pill-border: #A0AEC0;   /* גבול pill לא-פעיל */
+  --color-grad-from: #C5DFFF;     /* רקע gradient — התחלה */
+  --color-grad-to: #EDF4FD;       /* רקע gradient — סוף */
+}
