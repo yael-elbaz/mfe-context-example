@@ -3,9 +3,10 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { useAppContext } from './store/appContext';
 import { Header } from './components/Header';
 import EmployeePortfolioLayout from './components/EmployeePortfolioLayout';
-import EmployeePortfolioIndex from './components/EmployeePortfolioIndex';
 import CustomerPortfolioLayout from './components/CustomerPortfolioLayout';
+import EmployeePortfolioIndex from './components/EmployeePortfolioIndex';
 import LegacySectionRedirect from './components/LegacySectionRedirect';
+import EmployeePortfolioExternalRedirect from './components/EmployeePortfolioExternalRedirect';
 import { SherutDynamicView } from './sections/SherutDynamicView';
 import SherutimWrapper from './components/SherutimWrapper';
 import { useOpenService } from './hooks/useOpenService';
@@ -99,10 +100,12 @@ const RouterApp: React.FC = () => {
             <Route path="/sherutim/:idntSheryut/*" element={<SherutimWrapper />}>
               <Route path="*" element={<SherutDynamicView />} />
             </Route>
-            <Route path="/employee-portfolio" element={<EmployeePortfolioLayout openService={openService} />}>
-              <Route index element={<EmployeePortfolioIndex openService={openService} />} />
-              <Route path="sherutim/:idntSheryut/*" element={<SherutDynamicView />} />
-              <Route path=":section" element={<LegacySectionRedirect openService={openService} />} />
+            <Route path="/employee-portfolio" element={<EmployeePortfolioExternalRedirect />}>
+              <Route element={<EmployeePortfolioLayout openService={openService} />}>
+                <Route index element={<EmployeePortfolioIndex openService={openService} />} />
+                <Route path="sherutim/:idntSheryut/*" element={<SherutDynamicView />} />
+                <Route path=":section" element={<LegacySectionRedirect openService={openService} />} />
+              </Route>
             </Route>
           </Routes>
           </SilentErrorBoundary>
