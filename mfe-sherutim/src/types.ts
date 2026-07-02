@@ -4,7 +4,8 @@ export type ServiceMeta = {
 
 export type OpenService = (meta: any) => void;
 
-// קטגוריה בתפריט (type: 'self') מקבצת שירותים רגילים (type: 'new') לפי idntObjectAv === idntObject
+// כל הפריטים מגיעים מהשרת ברשימה אחת; מבדילים לפי type:
+// 'self' = קטגוריה, 'object' = שירות רגיל. קטגוריה מקבצת שירותים לפי idntObjectAv === idntObject
 export interface SherutCategory {
   type: 'self';
   id: string;
@@ -14,7 +15,7 @@ export interface SherutCategory {
 }
 
 export interface Sherut {
-  type: 'new';
+  type: 'object';
   id: string;
   idntSheryut: string;
   title: string;

@@ -1,8 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import './index.css';
-import type { OpenService, Sherut, SherutCategory } from './types';
-import { MOCK_SHERUTIM, SHERUTIM_CATEGORIES } from './mockData';
-import { getFavoriteSherutim } from './services/favoriteService';
+import type { OpenService, SherutCategory } from './types';
+import { useSherutim } from './hooks/useSherutim';
 
 interface Props {
   openService?: OpenService;
@@ -156,37 +155,20 @@ const EmptyFavorites: React.FC = () => (
 const Full: React.FC<Props> = ({ openService, employeeId = '', navigate }) => {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>(FAVORITES_ID);
   const [searchQuery, setSearchQuery] = useState('');
-  const [favorites, setFavorites] = useState<Sherut[]>([]);
-  const [favoritesLoading, setFavoritesLoading] = useState(true);
 
-  useEffect(() => {
-    let cancelled = false;
-    getFavoriteSherutim().then(items => {
-      if (cancelled) return;
-      setFavorites(items.slice(0, 5));
-      setFavoritesLoading(false);
-    });
-    return () => { cancelled = true; };
-  }, []);
+  // ה-hook מפריד את הרשימה המעורבת לקטגוריות + שירותים, מצרף isFavorite לכל שירות,
+  // ומחזיר את רשימת המועדפים ואת כל השירותים בצורה שטוחה
+  const { categories, sherutim, favorites, loading: favoritesLoading } = useSherutim();
 
   const trimmedQuery = searchQuery.trim();
   const isSearching = trimmedQuery.length > 0;
 
-  const favoriteIds = useMemo(() => new Set(favorites.map(f => f.id)), [favorites]);
-
   // מיפוי idntObject -> קטגוריה, כדי למצוא את אייקון הקטגוריה של כל שירות
   const categoryByIdnt = useMemo(() => {
     const m = new Map<number, SherutCategory>();
-    SHERUTIM_CATEGORIES.forEach(c => m.set(c.idntObject, c));
+    categories.forEach(({ category }) => m.set(category.idntObject, category));
     return m;
-  }, []);
-
-  // מספר השירותים בכל קטגוריה (לפי idntObjectAv === idntObject)
-  const countByIdnt = useMemo(() => {
-    const counts: Record<number, number> = {};
-    MOCK_SHERUTIM.forEach(s => { counts[s.idntObjectAv] = (counts[s.idntObjectAv] ?? 0) + 1; });
-    return counts;
-  }, []);
+  }, [categories]);
 
   // שורת הקטגוריות: כברירת מחדל שורה אחת; אם יש גלישה ליותר משורה — מציגים חץ להרחבה
   const pillsRef = useRef<HTMLDivElement>(null);
@@ -201,18 +183,17 @@ const Full: React.FC<Props> = ({ openService, employeeId = '', navigate }) => {
     const ro = new ResizeObserver(check);
     ro.observe(el);
     return () => ro.disconnect();
-  }, [favorites.length]);
+  }, [categories.length]);
 
   const visibleSherutim = useMemo(() => {
     if (isSearching) {
-      return MOCK_SHERUTIM.filter(s => s.title.includes(trimmedQuery));
+      return sherutim.filter(s => s.title.includes(trimmedQuery));
     }
     if (selectedCategoryId === FAVORITES_ID) {
       return favorites;
     }
-    const category = SHERUTIM_CATEGORIES.find(c => c.id === selectedCategoryId);
-    return category ? MOCK_SHERUTIM.filter(s => s.idntObjectAv === category.idntObject) : [];
-  }, [isSearching, trimmedQuery, selectedCategoryId, favorites]);
+    return categories.find(c => c.category.id === selectedCategoryId)?.sherutim ?? [];
+  }, [isSearching, trimmedQuery, selectedCategoryId, favorites, categories, sherutim]);
 
   const isLoadingFavorites = !isSearching && selectedCategoryId === FAVORITES_ID && favoritesLoading;
 
@@ -268,15 +249,15 @@ const Full: React.FC<Props> = ({ openService, employeeId = '', navigate }) => {
             dimmed={isSearching}
             onClick={() => selectCategory(FAVORITES_ID)}
           />
-          {SHERUTIM_CATEGORIES.map(cat => (
+          {categories.map(({ category, sherutim }) => (
             <CategoryPill
-              key={cat.id}
-              label={cat.title}
-              count={countByIdnt[cat.idntObject] ?? 0}
-              iconUrl={cat.iconUrl}
-              active={!isSearching && selectedCategoryId === cat.id}
+              key={category.id}
+              label={category.title}
+              count={sherutim.length}
+              iconUrl={category.iconUrl}
+              active={!isSearching && selectedCategoryId === category.id}
               dimmed={isSearching}
-              onClick={() => selectCategory(cat.id)}
+              onClick={() => selectCategory(category.id)}
             />
           ))}
         </div>
@@ -315,7 +296,7 @@ const Full: React.FC<Props> = ({ openService, employeeId = '', navigate }) => {
                 key={s.id}
                 title={s.title}
                 status={s.status}
-                favorite={favoriteIds.has(s.id)}
+                favorite={s.isFavorite}
                 categoryIconUrl={showCategoryIconOnCards ? categoryByIdnt.get(s.idntObjectAv)?.iconUrl : undefined}
                 onClick={() => openService?.(makeCall(
                   { type: 'sherut', id: employeeId, idntSheryut: s.idntSheryut, scope: s.mfeScope, module: s.mfeModule },

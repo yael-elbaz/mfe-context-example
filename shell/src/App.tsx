@@ -100,13 +100,13 @@ const RouterApp: React.FC = () => {
             <Route path="/sherutim/:idntSheryut/*" element={<SherutimWrapper />}>
               <Route path="*" element={<SherutDynamicView />} />
             </Route>
-            <Route path="/employee-portfolio" element={<EmployeePortfolioExternalRedirect />}>
-              <Route element={<EmployeePortfolioLayout openService={openService} />}>
+            {/* <Route path="/employee-portfolio" element={<EmployeePortfolioExternalRedirect />}> */}
+              <Route  path="/employee-portfolio" element={<EmployeePortfolioLayout openService={openService} />}>
                 <Route index element={<EmployeePortfolioIndex openService={openService} />} />
                 <Route path="sherutim/:idntSheryut/*" element={<SherutDynamicView />} />
                 <Route path=":section" element={<LegacySectionRedirect openService={openService} />} />
               </Route>
-            </Route>
+            {/* </Route> */}
           </Routes>
           </SilentErrorBoundary>
         </main>
