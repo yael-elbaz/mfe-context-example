@@ -85,6 +85,52 @@ const CategoryPill: React.FC<{
   </button>
 );
 
+/* ===================== כותרת עם tooltip רק בגלישה ===================== */
+// ה-tooltip (title) מוצג רק כאשר הטקסט באמת נחתך (יש "שלוש נקודות"),
+// כלומר כשרוחב התוכן גדול מהרוחב הזמין.
+const CardTitle: React.FC<{ title: string }> = ({ title }) => {
+  const ref = useRef<HTMLSpanElement>(null);
+  const [truncated, setTruncated] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const check = () => setTruncated(el.scrollWidth > el.clientWidth);
+    check();
+    const ro = new ResizeObserver(check);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [title]);
+
+  return (
+    <div className="group relative w-full">
+      <span
+        ref={ref}
+        className="block w-full text-[#111138] text-[13px] font-medium text-center leading-snug truncate"
+      >
+        {title}
+      </span>
+
+      {/* tooltip מעוצב — מוצג רק כשהטקסט נחתך, ורק ב-hover */}
+      {truncated && (
+        <div
+          role="tooltip"
+          className="pointer-events-none absolute bottom-full right-1/2 translate-x-1/2 mb-2 z-20
+                     w-max max-w-[200px] px-3 py-2 rounded-lg
+                     bg-[#00033D] text-white text-[12px] leading-snug text-center whitespace-normal
+                     shadow-[0_6px_20px_rgba(0,3,61,0.35)]
+                     opacity-0 translate-y-1 transition-all duration-150
+                     group-hover:opacity-100 group-hover:translate-y-0"
+        >
+          {title}
+          {/* חץ קטן שמצביע כלפי מטה אל הכותרת */}
+          <span className="absolute top-full right-1/2 translate-x-1/2 -mt-1 w-2 h-2 rotate-45 bg-[#00033D]" />
+        </div>
+      )}
+    </div>
+  );
+};
+
 /* ===================== Card (כרטיס שירות) ===================== */
 
 const SherutCard: React.FC<{
@@ -108,9 +154,7 @@ const SherutCard: React.FC<{
       </span>
     )}
 
-    <span className="text-[#111138] text-[13px] font-medium text-center leading-snug line-clamp-2">
-      {title}
-    </span>
+    <CardTitle title={title} />
 
     <span className="px-3 py-0.5 rounded-full bg-[#F0F6FD] text-[#2B7FFF] text-[11px] font-medium">
       {status}
@@ -264,9 +308,10 @@ const Full: React.FC<Props> = ({ openService, employeeId = '', navigate }) => {
         {pillsOverflow && (
           <button
             onClick={() => setPillsExpanded(v => !v)}
-            aria-label={pillsExpanded ? 'הצג פחות' : 'הצג עוד'}
-            className="shrink-0 flex items-center justify-center w-[42px] h-[42px] rounded-full bg-white border border-[#A0AEC0] text-[#00033D] hover:border-[#2B7FFF] transition-colors"
+            aria-label={pillsExpanded ? 'הצג פחות' : 'עוד קטגוריות'}
+            className="shrink-0 flex items-center justify-center gap-1.5 h-[42px] px-4 rounded-full whitespace-nowrap text-[15px] bg-white border border-[#A0AEC0] text-[#00033D] hover:border-[#2B7FFF] transition-colors"
           >
+            <span>{pillsExpanded ? 'הצג פחות' : 'עוד קטגוריות'}</span>
             <IconChevron className={'w-5 h-5 transition-transform duration-300 ' + (pillsExpanded ? 'rotate-180' : '')} />
           </button>
         )}
