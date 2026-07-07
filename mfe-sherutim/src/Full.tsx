@@ -229,6 +229,28 @@ const Full: React.FC<Props> = ({ openService, employeeId = '', navigate }) => {
     return () => ro.disconnect();
   }, [categories.length]);
 
+  // גובה העמוד: ממלא בדיוק מהמקום שבו הרכיב מתחיל ועד תחתית ה-viewport,
+  // כך שהעמוד עצמו לא גולל — רק הפאנל הלבן גולל בתוכו כשיש הרבה שירותים.
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [rootHeight, setRootHeight] = useState<number | undefined>(undefined);
+
+  useEffect(() => {
+    const el = rootRef.current;
+    if (!el) return;
+    const measure = () => {
+      const top = el.getBoundingClientRect().top;
+      setRootHeight(window.innerHeight - top);
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    const ro = new ResizeObserver(measure);
+    ro.observe(document.body);
+    return () => {
+      window.removeEventListener('resize', measure);
+      ro.disconnect();
+    };
+  }, []);
+
   const visibleSherutim = useMemo(() => {
     if (isSearching) {
       return sherutim.filter(s => s.title.includes(trimmedQuery));
@@ -252,9 +274,13 @@ const Full: React.FC<Props> = ({ openService, employeeId = '', navigate }) => {
 
   return (
     <div
+      ref={rootRef}
       dir="rtl"
-      className="flex flex-col gap-[25px] p-10 rounded-2xl min-h-[860px]"
-      style={{ background: 'radial-gradient(48.71% 103.18% at 115.76% 75.51%, #C5DFFF 0%, #EDF4FD 100%)' }}
+      className="flex flex-col gap-[25px] p-10 rounded-2xl overflow-hidden"
+      style={{
+        height: rootHeight,
+        background: 'radial-gradient(48.71% 103.18% at 115.76% 75.51%, #C5DFFF 0%, #EDF4FD 100%)',
+      }}
     >
       {/* שורה עליונה: חיפוש חופשי + חזרה */}
       <div className="flex items-center justify-between">
@@ -317,40 +343,42 @@ const Full: React.FC<Props> = ({ openService, employeeId = '', navigate }) => {
         )}
       </div>
 
-      {/* פאנל לבן */}
-      <div className="bg-white rounded-2xl shadow-[0_2px_6px_rgba(6,77,173,0.08)] p-8 flex-1">
+      {/* פאנל לבן — עמודת flex עם אזור כרטיסים שגולל בפנים */}
+      <div className="bg-white rounded-2xl shadow-[0_2px_6px_rgba(6,77,173,0.08)] p-8 flex-1 min-h-0 flex flex-col">
         {/* כותרת */}
-        <div className="flex items-center gap-3 mb-6">
+        <div className="flex items-center gap-3 mb-6 shrink-0">
           <span className="flex items-center justify-center w-12 h-12 rounded-full bg-[#F0F6FD] text-[#2B7FFF]">
             <IconSparkle className="w-7 h-7" />
           </span>
           <h2 className="m-0 text-[#00033D] text-[20px] font-semibold">שירותים דיגיטליים</h2>
         </div>
 
-        {/* כרטיסים */}
-        {isLoadingFavorites ? (
-          <div className="text-[#848282] text-[14px]">⏳ טוען מועדפים...</div>
-        ) : visibleSherutim.length === 0 ? (
-          !isSearching && selectedCategoryId === FAVORITES_ID
-            ? <EmptyFavorites />
-            : <div className="text-[#848282] text-[14px]">לא נמצאו שירותים</div>
-        ) : (
-          <div className="flex flex-wrap gap-5">
-            {visibleSherutim.map(s => (
-              <SherutCard
-                key={s.id}
-                title={s.title}
-                status={s.status}
-                favorite={s.isFavorite}
-                categoryIconUrl={showCategoryIconOnCards ? categoryByIdnt.get(s.idntObjectAv)?.iconUrl : undefined}
-                onClick={() => openService?.(makeCall(
-                  { type: 'sherut', id: employeeId, idntSheryut: s.idntSheryut, scope: s.mfeScope, module: s.mfeModule },
-                  s.mfeUrl
-                ))}
-              />
-            ))}
-          </div>
-        )}
+        {/* כרטיסים — אזור גלילה פנימי כשיש הרבה שירותים */}
+        <div className="flex-1 min-h-0 overflow-y-auto -mr-2 pr-2">
+          {isLoadingFavorites ? (
+            <div className="text-[#848282] text-[14px]">⏳ טוען מועדפים...</div>
+          ) : visibleSherutim.length === 0 ? (
+            !isSearching && selectedCategoryId === FAVORITES_ID
+              ? <EmptyFavorites />
+              : <div className="text-[#848282] text-[14px]">לא נמצאו שירותים</div>
+          ) : (
+            <div className="flex flex-wrap gap-5">
+              {visibleSherutim.map(s => (
+                <SherutCard
+                  key={s.id}
+                  title={s.title}
+                  status={s.status}
+                  favorite={s.isFavorite}
+                  categoryIconUrl={showCategoryIconOnCards ? categoryByIdnt.get(s.idntObjectAv)?.iconUrl : undefined}
+                  onClick={() => openService?.(makeCall(
+                    { type: 'sherut', id: employeeId, idntSheryut: s.idntSheryut, scope: s.mfeScope, module: s.mfeModule },
+                    s.mfeUrl
+                  ))}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

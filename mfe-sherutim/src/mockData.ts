@@ -53,6 +53,16 @@ export const MOCK_SHERUTIM: Sherut[] = [
   { type: 'object', id: 's17', idntSheryut: 'SHR017', title: 'בקשת קידום',           status: 'ממתין', idntObjectAv: 8, ...EXEMPLAT_MFE },
   { type: 'object', id: 's18', idntSheryut: 'SHR018', title: 'תיאום בדיקה רפואית',    status: 'הושלם', idntObjectAv: 9, ...EXEMPLAT_MFE },
   { type: 'object', id: 's19', idntSheryut: 'SHR019', title: 'בקשת ייעוץ רווחה',      status: 'פתוח',  idntObjectAv: 9, ...EXEMPLAT_MFE },
+  // שירותי מילוי לבדיקת גלילה בקטגוריית "חופשות ונוכחות" (idntObjectAv: 1)
+  ...Array.from({ length: 24 }, (_, i) => ({
+    type: 'object' as const,
+    id: `sfill${i + 1}`,
+    idntSheryut: `SHR1${String(i + 1).padStart(2, '0')}`,
+    title: `שירות לדוגמה מספר ${i + 1}`,
+    status: 'פתוח' as const,
+    idntObjectAv: 1,
+    ...EXEMPLAT_MFE,
+  })),
 ];
 
 // כפי שזה מגיע מהשרת בפועל: רשימה אחת מעורבת של קטגוריות (type: 'self') ושירותים (type: 'object').
