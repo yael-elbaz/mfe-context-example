@@ -137,9 +137,10 @@ const SherutCard: React.FC<{
   title: string;
   status: string;
   favorite: boolean;
-  categoryIconUrl?: string; // מוצג רק כשרואים "מועדפים"/חיפוש — אייקון הקטגוריה של השירות
+  showIcon: boolean;        // האם לשריין מקום לאייקון (מועדפים/חיפוש) — גם אם אין אייקון בפועל
+  categoryIconUrl?: string; // אייקון הקטגוריה של השירות (עשוי להיות חסר)
   onClick: () => void;
-}> = ({ title, status, favorite, categoryIconUrl, onClick }) => (
+}> = ({ title, status, favorite, showIcon, categoryIconUrl, onClick }) => (
   <button
     onClick={onClick}
     className="relative w-[149px] h-[193px] bg-white rounded-lg border border-[#E2E8F0] shadow-[0_1px_3px_rgba(6,77,173,0.08),0_1px_2px_rgba(6,77,173,0.06)] flex flex-col items-center justify-center gap-3 px-3 hover:border-[#2B7FFF] transition-colors"
@@ -148,9 +149,18 @@ const SherutCard: React.FC<{
       <IconStar filled={favorite} className="w-[18px] h-[18px]" />
     </span>
 
-    {categoryIconUrl && (
-      <span className="flex items-center justify-center w-[58px] h-[58px] rounded-2xl bg-[#F0F6FD]">
-        <img src={categoryIconUrl} alt="" className="w-[30px] h-[30px]" />
+    {/* משריינים את משבצת האייקון בכל מצב "אייקון" — כך שהכותרת והסטטוס נשארים באותו מקום
+        גם כשלשירות מסוים אין אייקון או שהאייקון נכשל בטעינה */}
+    {showIcon && (
+      <span className="flex items-center justify-center w-[58px] h-[58px] rounded-2xl bg-[#F0F6FD] shrink-0">
+        {categoryIconUrl && (
+          <img
+            src={categoryIconUrl}
+            alt=""
+            className="w-[30px] h-[30px]"
+            onError={e => { e.currentTarget.style.visibility = 'hidden'; }}
+          />
+        )}
       </span>
     )}
 
@@ -369,7 +379,8 @@ const Full: React.FC<Props> = ({ openService, employeeId = '', navigate }) => {
                   title={s.title}
                   status={s.status}
                   favorite={s.isFavorite}
-                  categoryIconUrl={showCategoryIconOnCards ? categoryByIdnt.get(s.idntObjectAv)?.iconUrl : undefined}
+                  showIcon={showCategoryIconOnCards}
+                  categoryIconUrl={categoryByIdnt.get(s.idntObjectAv)?.iconUrl}
                   onClick={() => openService?.(makeCall(
                     { type: 'sherut', id: employeeId, idntSheryut: s.idntSheryut, scope: s.mfeScope, module: s.mfeModule },
                     s.mfeUrl
