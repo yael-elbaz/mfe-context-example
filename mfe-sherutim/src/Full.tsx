@@ -29,8 +29,11 @@ function makeCall(params: Record<string, string>, url?: string) {
 /* ===================== אייקונים (inline SVG מה-Figma) ===================== */
 
 const IconStar: React.FC<{ filled?: boolean; className?: string }> = ({ filled, className }) => (
-  <svg viewBox="0 0 20 20" className={className} fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M10 1.7l2.32 4.7 5.18.75-3.75 3.65.88 5.16L10 13.5l-4.63 2.44.88-5.16L2.5 7.15l5.18-.75L10 1.7z" />
+  <svg viewBox="0 0 22 21" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+    {filled
+      ? <path d="M10.7952 15.7853L4.08359 20.6326L6.72918 12.7491L-0.000220925 7.88405H8.23842L10.7952 0.000531316L13.3521 7.88405H21.5907L14.8613 12.7491L17.5069 20.6326L10.7952 15.7853Z" fill="currentColor" />
+      : <path d="M10.7952 15.7853L4.08359 20.6326L6.72918 12.7491L-0.000220925 7.88405H8.23842L10.7952 0.000531316L13.3521 7.88405H21.5907L14.8613 12.7491L17.5069 20.6326L10.7952 15.7853ZM10.7952 13.5836L14.0623 15.9451L12.7661 12.0744L16.1042 9.65962H12.0736L10.7952 5.75337L9.53458 9.65962H5.48628L8.82435 12.0744L7.52819 15.9451L10.7952 13.5836Z" fill="currentColor" />
+    }
   </svg>
 );
 
@@ -145,7 +148,7 @@ const SherutCard: React.FC<{
     onClick={onClick}
     className="relative w-[149px] h-[193px] bg-white rounded-lg border border-[#E2E8F0] shadow-[0_1px_3px_rgba(6,77,173,0.08),0_1px_2px_rgba(6,77,173,0.06)] flex flex-col items-center justify-center gap-3 px-3 hover:border-[#2B7FFF] transition-colors"
   >
-    <span className={favorite ? 'absolute top-3 left-3 text-[#F97316]' : 'absolute top-3 left-3 text-[#A0AEC0]'}>
+    <span className="absolute top-3 left-3 text-[#2B7FFF]">
       <IconStar filled={favorite} className="w-[18px] h-[18px]" />
     </span>
 
