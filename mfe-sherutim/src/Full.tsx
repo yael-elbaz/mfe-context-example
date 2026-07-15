@@ -94,11 +94,12 @@ const SherutCard: React.FC<{
   favorite: boolean;
   showIcon: boolean;        // האם לשריין מקום לאייקון (מועדפים/חיפוש) — גם אם אין אייקון בפועל
   categoryIconUrl?: string; // אייקון הקטגוריה של השירות (עשוי להיות חסר)
+  fullWidthOnMobile?: boolean; // כשיש שירות יחיד בתצוגה — במובייל הכרטיס נמתח לרוחב מלא
   onClick: () => void;
-}> = ({ title, status, favorite, showIcon, categoryIconUrl, onClick }) => (
+}> = ({ title, status, favorite, showIcon, categoryIconUrl, fullWidthOnMobile, onClick }) => (
   <button
     onClick={onClick}
-    className="relative w-[149px] h-[193px] bg-white rounded-lg border border-[#E2E8F0] shadow-[0_1px_3px_rgba(6,77,173,0.08),0_1px_2px_rgba(6,77,173,0.06)] flex flex-col items-center justify-center gap-3 px-3 hover:border-[#2B7FFF] transition-colors"
+    className={`relative ${fullWidthOnMobile ? 'w-full sm:w-[149px]' : 'w-[149px]'} h-[193px] bg-white rounded-lg border border-[#E2E8F0] shadow-[0_1px_3px_rgba(6,77,173,0.08),0_1px_2px_rgba(6,77,173,0.06)] flex flex-col items-center justify-center gap-3 px-3 hover:border-[#2B7FFF] transition-colors`}
   >
     <span className="absolute top-3 left-3 text-[#2B7FFF]">
       <IconStar filled={favorite} className="w-[18px] h-[18px]" />
@@ -226,15 +227,15 @@ const Full: React.FC<Props> = ({ openService, employeeId = '', navigate }) => {
     <div
       ref={rootRef}
       dir="rtl"
-      className="flex flex-col gap-[25px] p-10 rounded-2xl overflow-hidden"
+      className="flex flex-col gap-[25px] p-10 rounded-2xl overflow-visible sm:overflow-hidden sm:h-[var(--rh)]"
       style={{
-        height: rootHeight,
+        ['--rh' as string]: rootHeight ? `${rootHeight}px` : undefined,
         background: 'radial-gradient(48.71% 103.18% at 115.76% 75.51%, #C5DFFF 0%, #EDF4FD 100%)',
-      }}
+      } as React.CSSProperties}
     >
       {/* שורה עליונה: חיפוש חופשי + חזרה */}
       <div className="flex items-center justify-between">
-        <div className="relative">
+        <div className="relative w-full sm:w-auto">
           <span className="absolute top-1/2 -translate-y-1/2 left-4 text-[#00033D]">
             <IconSearch className="w-6 h-6" />
           </span>
@@ -243,12 +244,12 @@ const Full: React.FC<Props> = ({ openService, employeeId = '', navigate }) => {
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             placeholder="חפש שירות"
-            className="w-[350px] h-[47px] bg-white border border-[#A0AEC0] rounded-lg pl-12 pr-4 text-[15px] text-[#00033D] text-right outline-none placeholder:text-[#8E929F] focus:border-[#2B7FFF]"
+            className="w-full sm:w-[350px] h-[47px] bg-white border border-[#A0AEC0] rounded-lg pl-12 pr-4 text-[15px] text-[#00033D] text-right outline-none placeholder:text-[#8E929F] focus:border-[#2B7FFF]"
           />
         </div>
         <button
           onClick={() => navigate?.(`/employee-portfolio?employeeId=${employeeId}`)}
-          className="h-[41px] px-5 rounded-full bg-white border border-[#A0AEC0] text-[#00033D] text-[14px] hover:border-[#2B7FFF] transition-colors"
+          className="hidden sm:block h-[41px] px-5 rounded-full bg-white border border-[#A0AEC0] text-[#00033D] text-[14px] hover:border-[#2B7FFF] transition-colors"
         >
           ← חזרה
         </button>
@@ -264,7 +265,7 @@ const Full: React.FC<Props> = ({ openService, employeeId = '', navigate }) => {
       />
 
       {/* פאנל לבן — עמודת flex עם אזור כרטיסים שגולל בפנים */}
-      <div className="bg-white rounded-2xl shadow-[0_2px_6px_rgba(6,77,173,0.08)] p-8 flex-1 min-h-0 flex flex-col">
+      <div className="bg-white rounded-2xl shadow-[0_2px_6px_rgba(6,77,173,0.08)] p-8 flex flex-col sm:flex-1 sm:min-h-0">
         {/* כותרת */}
         <div className="flex items-center gap-3 mb-6 shrink-0">
           <span className="flex items-center justify-center w-12 h-12 rounded-full bg-[#F0F6FD] text-[#2B7FFF]">
@@ -274,7 +275,7 @@ const Full: React.FC<Props> = ({ openService, employeeId = '', navigate }) => {
         </div>
 
         {/* כרטיסים — אזור גלילה פנימי כשיש הרבה שירותים */}
-        <div className="flex-1 min-h-0 overflow-y-auto -mr-2 pr-2">
+        <div className="sm:flex-1 sm:min-h-0 sm:overflow-y-auto -mr-2 pr-2">
           {isLoadingFavorites ? (
             <div className="text-[#848282] text-[14px]">⏳ טוען מועדפים...</div>
           ) : visibleSherutim.length === 0 ? (
@@ -282,7 +283,7 @@ const Full: React.FC<Props> = ({ openService, employeeId = '', navigate }) => {
               ? <EmptyFavorites />
               : <div className="text-[#848282] text-[14px]">לא נמצאו שירותים</div>
           ) : (
-            <div className="flex flex-wrap gap-5">
+            <div className="flex flex-wrap gap-5 justify-center sm:justify-start">
               {visibleSherutim.map(s => (
                 <SherutCard
                   key={s.id}
@@ -290,6 +291,7 @@ const Full: React.FC<Props> = ({ openService, employeeId = '', navigate }) => {
                   status={s.status}
                   favorite={s.isFavorite}
                   showIcon={showCategoryIconOnCards}
+                  fullWidthOnMobile={visibleSherutim.length === 1}
                   categoryIconUrl={categoryByIdnt.get(s.idntObjectAv)?.iconUrl}
                   onClick={() => openService?.(makeCall(
                     { type: 'sherut', id: employeeId, idntSheryut: s.idntSheryut, scope: s.mfeScope, module: s.mfeModule },
