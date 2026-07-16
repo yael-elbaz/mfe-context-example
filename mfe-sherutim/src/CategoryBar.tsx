@@ -32,11 +32,13 @@ const CategoryPill: React.FC<{
   onClick: () => void;
   iconUrl?: string;     // אייקון הקטגוריה (מגיע מאובייקט ה-self)
   isFavorite?: boolean; // לטאב "מועדפים" אין קטגוריה — מציגים כוכב
-}> = ({ label, count, active, dimmed, onClick, iconUrl, isFavorite }) => (
+  fluid?: boolean;      // רוחב אוטומטי לפי התוכן (לפאנל המובייל) במקום רוחב קבוע
+}> = ({ label, count, active, dimmed, onClick, iconUrl, isFavorite, fluid }) => (
   <button
     onClick={onClick}
     className={[
-      'flex items-center justify-center gap-1.5 w-[176px] h-[42px] px-3 rounded-[32px] whitespace-nowrap shrink-0',
+      'flex items-center justify-center gap-1.5 h-[42px] px-3 rounded-[32px] whitespace-nowrap shrink-0',
+      fluid ? 'w-auto' : 'w-[176px]',
       'text-[15px] transition-colors',
       active
         ? 'bg-[#2B7FFF] border border-[#2B7FFF] text-white'
@@ -117,16 +119,28 @@ const CategoryBar: React.FC<CategoryBarProps> = ({
     el.scrollBy({ left: amount, behavior: 'smooth' });
   };
 
-  // רשימת ה-pills (מועדפים + קטגוריות) — משותפת לתצוגת הדסקטופ ולתצוגת הטאבלט הגוללת
-  const categoryPills = [
+  // תצוגת המובייל (<640px): כפתור בודד מתחת לחיפוש שפותח פאנל עם כל הקטגוריות
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  // מספר השירותים בקטגוריה הנבחרת — מוצג בכפתור המובייל לצד התווית הקבועה
+  const selectedCount = isSearching
+    ? 0
+    : selectedCategoryId === FAVORITES_ID
+      ? favorites.length
+      : categories.find(c => c.category.id === selectedCategoryId)?.sherutim.length ?? 0;
+
+  // רשימת ה-pills (מועדפים + קטגוריות) — משותפת לכל התצוגות.
+  // fluid=true נותן רוחב אוטומטי (לפאנל המובייל); onPick נסגר את הפאנל אחרי בחירה.
+  const renderCategoryPills = (fluid = false, onPick?: () => void) => [
     <CategoryPill
       key={FAVORITES_ID}
       label="מועדפים"
       count={favorites.length}
       isFavorite
+      fluid={fluid}
       active={!isSearching && selectedCategoryId === FAVORITES_ID}
       dimmed={isSearching}
-      onClick={() => onSelect(FAVORITES_ID)}
+      onClick={() => { onSelect(FAVORITES_ID); onPick?.(); }}
     />,
     ...categories.map(({ category, sherutim }) => (
       <CategoryPill
@@ -134,12 +148,15 @@ const CategoryBar: React.FC<CategoryBarProps> = ({
         label={category.title}
         count={sherutim.length}
         iconUrl={category.iconUrl}
+        fluid={fluid}
         active={!isSearching && selectedCategoryId === category.id}
         dimmed={isSearching}
-        onClick={() => onSelect(category.id)}
+        onClick={() => { onSelect(category.id); onPick?.(); }}
       />
     )),
   ];
+
+  const categoryPills = renderCategoryPills();
 
   return (
     <>
@@ -164,10 +181,10 @@ const CategoryBar: React.FC<CategoryBarProps> = ({
         )}
       </div>
 
-      {/* שורת קטגוריות — טאבלט/מובייל (<1024px): שורה אחת שגוללת אופקית, עם חיצי גלילה בקצוות.
+      {/* שורת קטגוריות — טאבלט (640px–1024px): שורה אחת שגוללת אופקית, עם חיצי גלילה בקצוות.
           הקונטיינר הוא dir="rtl", ולכן ב-flex הילד הראשון ב-DOM מוצג מימין והאחרון משמאל —
           חץ ה"המשך גלילה שמאלה" חייב להיות אחרון ב-DOM כדי שיוצג בצד שמאל, ולהפך. */}
-      <div className="flex lg:hidden items-center gap-2">
+      <div className="hidden sm:flex lg:hidden items-center gap-2">
         {canScrollRight && (
           <button
             onClick={() => scrollTabletPills('start')}
@@ -191,6 +208,33 @@ const CategoryBar: React.FC<CategoryBarProps> = ({
           >
             <IconChevron className="w-5 h-5 rotate-90" />
           </button>
+        )}
+      </div>
+
+      {/* שורת קטגוריות — מובייל (<640px): כפתור בודד מתחת לחיפוש שפותח פאנל צף
+          עם כל הקטגוריות. הקונטיינר relative כדי שהפאנל (absolute) יופיע מתחתיו
+          ויכסה את ראש רשימת השירותים. */}
+      <div className="flex sm:hidden relative">
+        <button
+          onClick={() => setMobileOpen(v => !v)}
+          aria-expanded={mobileOpen}
+          className="w-full flex items-center justify-center gap-1.5 h-[47px] px-4 rounded-lg bg-[#DCE9FF] border border-[#2B7FFF] text-[#00033D] text-[15px] font-medium transition-colors"
+        >
+          <span>לכל התחומים</span>
+          <span className="text-[#5B6B8C]">({selectedCount})</span>
+          <IconChevron className={'w-5 h-5 transition-transform duration-300 ' + (mobileOpen ? 'rotate-180' : '')} />
+        </button>
+
+        {mobileOpen && (
+          <>
+            {/* שכבת לחיצה-מחוץ לסגירת הפאנל */}
+            <div className="fixed inset-0 z-30" onClick={() => setMobileOpen(false)} />
+            <div className="absolute top-full inset-x-0 mt-2 z-40 bg-white rounded-2xl shadow-[0_8px_24px_rgba(6,77,173,0.18)] p-4 max-h-[60vh] overflow-y-auto">
+              <div className="flex flex-wrap gap-2 justify-center">
+                {renderCategoryPills(true, () => setMobileOpen(false))}
+              </div>
+            </div>
+          </>
         )}
       </div>
     </>
