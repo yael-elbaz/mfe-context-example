@@ -1,5 +1,5 @@
 import React, { useEffect, lazy, Suspense, Component, ReactNode } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
 import { useAppContext } from './store/appContext';
 import { Header } from './components/Header';
 import EmployeePortfolioLayout from './components/EmployeePortfolioLayout';
@@ -16,6 +16,7 @@ import SelectEmployeePage from './components/SelectEmployeePage';
 
 const TasksMFE = lazy(() => import('mfe_tasks/App'));
 const SherutimPreviewMFE = lazy(() => import('mfe_sherutim/Preview'));
+const SherutimFullMFE = lazy(() => import('mfe_sherutim/Full'));
 
 class SilentErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
   state = { hasError: false };
@@ -79,6 +80,7 @@ async function fetchUserSession() {
 const RouterApp: React.FC = () => {
   const { waitForEmployee, pickerProps } = useEmployeePickerPopup();
   const { openService } = useOpenService(waitForEmployee);
+  const navigate = useNavigate();
 
   return (
     <>
@@ -91,13 +93,16 @@ const RouterApp: React.FC = () => {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                 <SelectEmployeePage />
                 {mfe('טוען מודול משימות...', TasksMFE, { openService })}
-                {mfe('טוען שירותים...', SherutimPreviewMFE, { openService })}
+                {mfe('טוען שירותים...', SherutimPreviewMFE, { openService, onShowAll: () => navigate('/sherutim') })}
               </div>
             } />
             <Route path="/select-employee" element={<SelectEmployeePage />} />
             <Route path="/customer-portfolio" element={<CustomerPortfolioLayout />}>
               <Route index element={<div style={{ padding: '24px', color: '#848282', direction: 'rtl' }}>בחר שירות לקוח</div>} />
             </Route>
+            <Route path="/sherutim" element={
+              mfe('טוען שירותים...', SherutimFullMFE, { openService, navigate })
+            } />
             <Route path="/sherutim/:idntSheryut/*" element={<SherutimWrapper />}>
               <Route path="*" element={<SherutDynamicView />} />
             </Route>

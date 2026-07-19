@@ -309,7 +309,7 @@ const Full: React.FC<Props> = ({ openService, employeeId = '', navigate }) => {
           />
         </div>
         <button
-          onClick={() => navigate?.(`/employee-portfolio?employeeId=${employeeId}`)}
+          onClick={() => navigate?.(employeeId ? `/employee-portfolio?employeeId=${employeeId}` : '/')}
           className="h-[41px] px-5 rounded-full bg-white border border-[#A0AEC0] text-[#00033D] text-[14px] hover:border-[#2B7FFF] transition-colors"
         >
           ← חזרה

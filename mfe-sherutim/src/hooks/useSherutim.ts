@@ -1,7 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import type { Sherut, SherutCategory } from '../types';
-import { SHERUTIM_ITEMS } from '../mockData';
-import { getFavoriteSherutim } from '../services/favoriteService';
+import { useSherutimStore } from '../store/sherutimStore';
 
 // שירות עם דגל האם הוא מסומן כמועדף
 export interface SherutWithFavorite extends Sherut {
@@ -21,42 +20,41 @@ export interface UseSherutimResult {
   sherutim: SherutWithFavorite[];
   // רשימת כל המועדפים (כל שירות עם isFavorite: true)
   favorites: SherutWithFavorite[];
-  // האם רשימת המועדפים עדיין נטענת
+  // האם הנתונים עדיין נטענים
   loading: boolean;
 }
 
 /**
- * בונה מפה של קטגוריות -> שירותים, כאשר לכל שירות מצורף isFavorite,
- * ובנוסף מחזיר את רשימת המועדפים בנפרד.
+ * קורא את השירותים הגלובליים מתוך ה-store המשותף (fetch פעם אחת לכל הסשן),
+ * בונה מפה של קטגוריות -> שירותים כאשר לכל שירות מצורף isFavorite,
+ * ומחזיר בנוסף את רשימת המועדפים בנפרד.
  */
 export function useSherutim(): UseSherutimResult {
-  const [favorites, setFavorites] = useState<Sherut[]>([]);
-  const [loading, setLoading] = useState(true);
+  const status = useSherutimStore(s => s.status);
+  const items = useSherutimStore(s => s.items);
+  const favoriteIds = useSherutimStore(s => s.favoriteIds);
+  const fetchOnce = useSherutimStore(s => s.fetchOnce);
 
+  // מפעיל fetch פעם אחת; אידמפוטנטי — בטוח גם כששני התצוגות (Preview/Full)
+  // עולות יחד, כי ה-store מאחד את הבקשה.
   useEffect(() => {
-    let cancelled = false;
-    getFavoriteSherutim().then(items => {
-      if (cancelled) return;
-      setFavorites(items);
-      setLoading(false);
-    });
-    return () => { cancelled = true; };
-  }, []);
+    fetchOnce();
+  }, [fetchOnce]);
 
-  const favoriteIds = useMemo(() => new Set(favorites.map(f => f.id)), [favorites]);
+  const favoriteIdSet = useMemo(() => new Set(favoriteIds), [favoriteIds]);
 
   // הפריטים מגיעים ברשימה אחת מעורבת — מפרידים לפי type:
   // 'self' = קטגוריה, 'object' = שירות רגיל.
   const categoryList = useMemo(
-    () => SHERUTIM_ITEMS.filter((i): i is SherutCategory => i.type === 'self'),
-    [],
+    () => items.filter((i): i is SherutCategory => i.type === 'self'),
+    [items],
   );
 
   const withFavorite = useMemo<SherutWithFavorite[]>(
-    () => SHERUTIM_ITEMS
+    () => items
       .filter((i): i is Sherut => i.type === 'object')
-      .map(s => ({ ...s, isFavorite: favoriteIds.has(s.id) })),
-    [favoriteIds],
+      .map(s => ({ ...s, isFavorite: favoriteIdSet.has(s.id) })),
+    [items, favoriteIdSet],
   );
 
   const categories = useMemo<CategoryWithSherutim[]>(
@@ -72,5 +70,10 @@ export function useSherutim(): UseSherutimResult {
     [withFavorite],
   );
 
-  return { categories, sherutim: withFavorite, favorites: favoriteList, loading };
+  return {
+    categories,
+    sherutim: withFavorite,
+    favorites: favoriteList,
+    loading: status !== 'loaded',
+  };
 }
