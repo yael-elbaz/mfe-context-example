@@ -41,6 +41,7 @@ class MFEErrorBoundary extends Component<{ children: ReactNode }, { error: Error
         </div>
       );
     }
+    
     return this.props.children;
   }
 }
