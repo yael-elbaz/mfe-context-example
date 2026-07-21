@@ -229,7 +229,7 @@ const CategoryBar: React.FC<CategoryBarProps> = ({
           <>
             {/* שכבת לחיצה-מחוץ לסגירת הפאנל */}
             <div className="fixed inset-0 z-30" onClick={() => setMobileOpen(false)} />
-            <div className="absolute top-full inset-x-0 mt-2 z-40 bg-white rounded-2xl shadow-[0_8px_24px_rgba(6,77,173,0.18)] p-4 max-h-[60vh] overflow-y-auto">
+            <div className="absolute top-full inset-x-0 -mx-2 mt-2 z-40 bg-white rounded-2xl shadow-[0_8px_24px_rgba(6,77,173,0.18)] p-4 max-h-[60vh] overflow-y-auto">
               <div className="flex flex-wrap gap-2 justify-center">
                 {renderCategoryPills(true, () => setMobileOpen(false))}
               </div>
