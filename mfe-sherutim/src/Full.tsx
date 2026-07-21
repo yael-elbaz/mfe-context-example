@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import './index.css';
 import type { OpenService, SherutCategory } from './types';
 import { useSherutim } from './hooks/useSherutim';
+import ErrorBoundary from './ErrorBoundary';
 import CategoryBar, { FAVORITES_ID, IconStar } from './CategoryBar';
 
 interface Props {
@@ -154,7 +155,8 @@ const EmptyFavoritesIllustration: React.FC<{ className?: string }> = ({ classNam
 
 const EmptyFavorites: React.FC = () => (
   <div className="flex flex-col items-center justify-center text-center py-10">
-    <EmptyFavoritesIllustration className="w-[260px] h-auto mb-6" />
+    {/* רוחב האיור לפי גודל מסך: בסיס (קטן) → sm → md → lg */}
+    <EmptyFavoritesIllustration className="w-[180px] sm:w-[220px] md:w-[260px] lg:w-[320px] h-auto mb-6" />
     <h3 className="m-0 text-[#1A1E27] text-[18px] font-semibold">אין לך עדיין שירותים מועדפים</h3>
     <p className="mt-2 mb-0 text-[#4A5568] text-[14px]">סמנו שירות בכוכב כדי להוסיף אותו למועדפים ולמצוא אותו כאן בקלות</p>
   </div>
@@ -248,8 +250,8 @@ const Full: React.FC<Props> = ({ openService, employeeId = '', navigate }) => {
           />
         </div>
         <button
-          onClick={() => navigate?.(`/employee-portfolio?employeeId=${employeeId}`)}
-          className="hidden sm:block h-[41px] px-5 rounded-full bg-white border border-[#A0AEC0] text-[#00033D] text-[14px] hover:border-[#2B7FFF] transition-colors"
+          onClick={() => navigate?.(employeeId ? `/employee-portfolio?employeeId=${employeeId}` : '/')}
+          className="h-[41px] px-5 rounded-full bg-white border border-[#A0AEC0] text-[#00033D] text-[14px] hover:border-[#2B7FFF] transition-colors"
         >
           ← חזרה
         </button>
@@ -307,4 +309,12 @@ const Full: React.FC<Props> = ({ openService, employeeId = '', navigate }) => {
   );
 };
 
-export default Full;
+// עוטפים את הרכיב שנחשף דרך Module Federation בגבול שגיאות, כך שכל כשל
+// (render שנזרק או fetch שנכשל בלי catch) יוצג כהודעה בתוך ה-MFE במקום להפיל את השֶׁל.
+const FullWithBoundary: React.FC<Props> = (props) => (
+  <ErrorBoundary>
+    <Full {...props} />
+  </ErrorBoundary>
+);
+
+export default FullWithBoundary;
