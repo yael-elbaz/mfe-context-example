@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import './index.css';
 import type { OpenService, SherutCategory } from './types';
 import { useSherutim } from './hooks/useSherutim';
+import { useSherutimStore } from './store/sherutimStore';
 import ErrorBoundary from './ErrorBoundary';
 
 interface Props {
@@ -141,12 +142,20 @@ const SherutCard: React.FC<{
   showIcon: boolean;        // האם לשריין מקום לאייקון (מועדפים/חיפוש) — גם אם אין אייקון בפועל
   categoryIconUrl?: string; // אייקון הקטגוריה של השירות (עשוי להיות חסר)
   onClick: () => void;
-}> = ({ title, status, favorite, showIcon, categoryIconUrl, onClick }) => (
+  onToggleFavorite: () => void;
+}> = ({ title, status, favorite, showIcon, categoryIconUrl, onClick, onToggleFavorite }) => (
   <button
     onClick={onClick}
     className="relative w-[149px] h-[193px] bg-white rounded-lg border border-[#E2E8F0] shadow-[0_1px_3px_rgba(6,77,173,0.08),0_1px_2px_rgba(6,77,173,0.06)] flex flex-col items-center justify-center gap-3 px-3 hover:border-[#2B7FFF] transition-colors"
   >
-    <span className={favorite ? 'absolute top-3 left-3 text-[#F97316]' : 'absolute top-3 left-3 text-[#A0AEC0]'}>
+    {/* הכוכב הוא span אינטראקטיבי (לא button) כדי לא לקנן button בתוך button.
+        stopPropagation מונע מהלחיצה להפעיל גם את onClick של הכרטיס (openService). */}
+    <span
+      role="button"
+      aria-label={favorite ? 'הסר ממועדפים' : 'הוסף למועדפים'}
+      onClick={(e) => { e.stopPropagation(); onToggleFavorite(); }}
+      className={(favorite ? 'text-[#F97316]' : 'text-[#A0AEC0]') + ' absolute top-3 left-3 cursor-pointer hover:scale-110 transition-transform'}
+    >
       <IconStar filled={favorite} className="w-[18px] h-[18px]" />
     </span>
 
@@ -215,6 +224,7 @@ const Full: React.FC<Props> = ({ openService, employeeId = '', navigate }) => {
   // ה-hook מפריד את הרשימה המעורבת לקטגוריות + שירותים, מצרף isFavorite לכל שירות,
   // ומחזיר את רשימת המועדפים ואת כל השירותים בצורה שטוחה
   const { categories, sherutim, favorites, loading: favoritesLoading } = useSherutim();
+  const toggleFavorite = useSherutimStore(s => s.toggleFavorite);
 
   const trimmedQuery = searchQuery.trim();
   const isSearching = trimmedQuery.length > 0;
@@ -387,6 +397,7 @@ const Full: React.FC<Props> = ({ openService, employeeId = '', navigate }) => {
                     { type: 'sherut', id: employeeId, idntSheryut: s.idntSheryut, scope: s.mfeScope, module: s.mfeModule },
                     s.mfeUrl
                   ))}
+                  onToggleFavorite={() => toggleFavorite(s.id)}
                 />
               ))}
             </div>

@@ -27,3 +27,11 @@ export interface Sherut {
 }
 
 export type SherutimItem = SherutCategory | Sherut;
+
+// שירות עם דגל האם הוא מסומן כמועדף — isFavorite נצרב על הפריט בזמן הטעינה ב-store
+export interface SherutWithFavorite extends Sherut {
+  isFavorite: boolean;
+}
+
+// פריט כפי שהוא נשמר ב-store: קטגוריה כמו שהיא, שירות עם isFavorite צרוב
+export type SherutimStoredItem = SherutCategory | SherutWithFavorite;
