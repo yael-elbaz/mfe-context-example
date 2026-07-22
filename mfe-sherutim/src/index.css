@@ -23,6 +23,15 @@
   }
 }
 
+/* ===== הסתרת פס גלילה (רצועת הקטגוריות בטאבלט) ===== */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 /* ===== טוקנים של העיצוב (mfe-sherutim) ===== */
 @theme {
   --font-sans: 'Rubik', sans-serif;
