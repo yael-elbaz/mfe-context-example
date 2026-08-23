@@ -2,15 +2,15 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import './index.css';
 import type { OpenService, SherutCategory } from './types';
 import { useSherutim } from './hooks/useSherutim';
-import SherutCard, { IconStar } from './SherutCard';
+import { useSherutimStore } from './store/sherutimStore';
+import ErrorBoundary from './ErrorBoundary';
+import CategoryBar, { FAVORITES_ID, IconStar } from './CategoryBar';
 
 interface Props {
   openService?: OpenService;
   employeeId?: string;
   navigate?: (to: string) => void;
 }
-
-const FAVORITES_ID = 'favorites';
 
 function param(key: string, value: string) {
   return { codeSugParameter: '', parameterKey: key, parameterValue: value };
@@ -42,41 +42,99 @@ const IconSearch: React.FC<{ className?: string }> = ({ className }) => (
   </svg>
 );
 
-const IconChevron: React.FC<{ className?: string }> = ({ className }) => (
-  <svg viewBox="0 0 20 20" className={className} fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M6 8l4 4 4-4" />
-  </svg>
-);
+/* ===================== כותרת עם tooltip רק בגלישה ===================== */
+// ה-tooltip (title) מוצג רק כאשר הטקסט באמת נחתך (יש "שלוש נקודות"),
+// כלומר כשרוחב התוכן גדול מהרוחב הזמין.
+const CardTitle: React.FC<{ title: string }> = ({ title }) => {
+  const ref = useRef<HTMLSpanElement>(null);
+  const [truncated, setTruncated] = useState(false);
 
-/* ===================== Pill (כפתור קטגוריה) ===================== */
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const check = () => setTruncated(el.scrollWidth > el.clientWidth);
+    check();
+    const ro = new ResizeObserver(check);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [title]);
 
-const CategoryPill: React.FC<{
-  label: string;
-  count: number;        // מספר השירותים בקטגוריה
-  active: boolean;
-  dimmed: boolean;
+  return (
+    <div className="group relative w-full">
+      <span
+        ref={ref}
+        className="block w-full text-[#111138] text-[13px] font-medium text-center leading-snug truncate"
+      >
+        {title}
+      </span>
+
+      {/* tooltip מעוצב — מוצג רק כשהטקסט נחתך, ורק ב-hover */}
+      {truncated && (
+        <div
+          role="tooltip"
+          className="pointer-events-none absolute bottom-full right-1/2 translate-x-1/2 mb-2 z-20
+                     w-max max-w-[200px] px-3 py-2 rounded-lg
+                     bg-[#00033D] text-white text-[12px] leading-snug text-center whitespace-normal
+                     shadow-[0_6px_20px_rgba(0,3,61,0.35)]
+                     opacity-0 translate-y-1 transition-all duration-150
+                     group-hover:opacity-100 group-hover:translate-y-0"
+        >
+          {title}
+          {/* חץ קטן שמצביע כלפי מטה אל הכותרת */}
+          <span className="absolute top-full right-1/2 translate-x-1/2 -mt-1 w-2 h-2 rotate-45 bg-[#00033D]" />
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* ===================== Card (כרטיס שירות) ===================== */
+
+const SherutCard: React.FC<{
+  title: string;
+  status: string;
+  favorite: boolean;
+  showIcon: boolean;        // האם לשריין מקום לאייקון (מועדפים/חיפוש) — גם אם אין אייקון בפועל
+  categoryIconUrl?: string; // אייקון הקטגוריה של השירות (עשוי להיות חסר)
+  fullWidthOnMobile?: boolean; // כשיש שירות יחיד בתצוגה — במובייל הכרטיס נמתח לרוחב מלא
   onClick: () => void;
-  iconUrl?: string;     // אייקון הקטגוריה (מגיע מאובייקט ה-self)
-  isFavorite?: boolean; // לטאב "מועדפים" אין קטגוריה — מציגים כוכב
-}> = ({ label, count, active, dimmed, onClick, iconUrl, isFavorite }) => (
+  onToggleFavorite: () => void;
+}> = ({ title, status, favorite, showIcon, categoryIconUrl, fullWidthOnMobile, onClick, onToggleFavorite }) => (
   <button
     onClick={onClick}
-    className={[
-      'flex items-center justify-center gap-1.5 w-[176px] h-[42px] px-3 rounded-[32px] whitespace-nowrap',
-      'text-[15px] transition-colors',
-      active
-        ? 'bg-[#2B7FFF] border border-[#2B7FFF] text-white'
-        : 'bg-white border border-[#A0AEC0] text-[#00033D] hover:border-[#2B7FFF]',
-      dimmed ? 'opacity-50' : 'opacity-100',
-    ].join(' ')}
+    className={`relative ${fullWidthOnMobile ? 'w-full sm:w-[149px]' : 'w-[149px]'} h-[193px] bg-white rounded-lg border border-[#E2E8F0] shadow-[0_1px_3px_rgba(6,77,173,0.08),0_1px_2px_rgba(6,77,173,0.06)] flex flex-col items-center justify-center gap-3 px-3 hover:border-[#2B7FFF] transition-colors`}
   >
-    <span className="flex items-center justify-center w-[26px] h-[26px] rounded-full bg-[#F0F6FD] text-[#00033D] shrink-0">
-      {isFavorite
-        ? <IconStar filled className="w-[15px] h-[15px]" />
-        : <img src={iconUrl} alt="" className="w-[15px] h-[15px]" />}
+    {/* הכוכב הוא span אינטראקטיבי (לא button) כדי לא לקנן button בתוך button.
+        stopPropagation מונע מהלחיצה להפעיל גם את onClick של הכרטיס (openService). */}
+    <span
+      role="button"
+      aria-label={favorite ? 'הסר ממועדפים' : 'הוסף למועדפים'}
+      onClick={(e) => { e.stopPropagation(); onToggleFavorite(); }}
+      className={(favorite ? 'text-[#F97316]' : 'text-[#A0AEC0]') + ' absolute top-3 left-3 cursor-pointer hover:scale-110 transition-transform'}
+    >
+      <IconStar filled={favorite} className="w-[18px] h-[18px]" />
     </span>
-    <span>{label}</span>
-    <span className={active ? 'text-white/75' : 'text-[#8E929F]'}>({count})</span>
+
+    {/* משריינים את משבצת האייקון בכל מצב "אייקון" — כך שהכותרת והסטטוס נשארים באותו מקום
+        גם כשלשירות מסוים אין אייקון או שהאייקון נכשל בטעינה */}
+    {showIcon && (
+      <span className="flex items-center justify-center w-[58px] h-[58px] rounded-2xl bg-[#F0F6FD] shrink-0">
+        {categoryIconUrl && (
+          <img
+            src={categoryIconUrl}
+            alt=""
+            className="w-[30px] h-[30px]"
+            onError={e => { e.currentTarget.style.visibility = 'hidden'; }}
+          />
+        )}
+      </span>
+    )}
+
+    <CardTitle title={title} />
+
+    <span className="px-3 py-0.5 rounded-full bg-[#F0F6FD] text-[#2B7FFF] text-[11px] font-medium">
+      {status}
+    </span>
   </button>
 );
 
@@ -106,7 +164,8 @@ const EmptyFavoritesIllustration: React.FC<{ className?: string }> = ({ classNam
 
 const EmptyFavorites: React.FC = () => (
   <div className="flex flex-col items-center justify-center text-center py-10">
-    <EmptyFavoritesIllustration className="w-[260px] h-auto mb-6" />
+    {/* רוחב האיור לפי גודל מסך: בסיס (קטן) → sm → md → lg */}
+    <EmptyFavoritesIllustration className="w-[180px] sm:w-[220px] md:w-[260px] lg:w-[320px] h-auto mb-6" />
     <h3 className="m-0 text-[#1A1E27] text-[18px] font-semibold">אין לך עדיין שירותים מועדפים</h3>
     <p className="mt-2 mb-0 text-[#4A5568] text-[14px]">סמנו שירות בכוכב כדי להוסיף אותו למועדפים ולמצוא אותו כאן בקלות</p>
   </div>
@@ -121,6 +180,7 @@ const Full: React.FC<Props> = ({ openService, employeeId = '', navigate }) => {
   // ה-hook מפריד את הרשימה המעורבת לקטגוריות + שירותים, מצרף isFavorite לכל שירות,
   // ומחזיר את רשימת המועדפים ואת כל השירותים בצורה שטוחה
   const { categories, sherutim, favorites, loading: favoritesLoading } = useSherutim();
+  const toggleFavorite = useSherutimStore(s => s.toggleFavorite);
 
   const trimmedQuery = searchQuery.trim();
   const isSearching = trimmedQuery.length > 0;
@@ -132,20 +192,27 @@ const Full: React.FC<Props> = ({ openService, employeeId = '', navigate }) => {
     return m;
   }, [categories]);
 
-  // שורת הקטגוריות: כברירת מחדל שורה אחת; אם יש גלישה ליותר משורה — מציגים חץ להרחבה
-  const pillsRef = useRef<HTMLDivElement>(null);
-  const [pillsExpanded, setPillsExpanded] = useState(false);
-  const [pillsOverflow, setPillsOverflow] = useState(false);
+  // גובה העמוד: ממלא בדיוק מהמקום שבו הרכיב מתחיל ועד תחתית ה-viewport,
+  // כך שהעמוד עצמו לא גולל — רק הפאנל הלבן גולל בתוכו כשיש הרבה שירותים.
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [rootHeight, setRootHeight] = useState<number | undefined>(undefined);
 
   useEffect(() => {
-    const el = pillsRef.current;
+    const el = rootRef.current;
     if (!el) return;
-    const check = () => setPillsOverflow(el.scrollHeight > 50); // שורה אחת ≈ 41px
-    check();
-    const ro = new ResizeObserver(check);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [categories.length]);
+    const measure = () => {
+      const top = el.getBoundingClientRect().top;
+      setRootHeight(window.innerHeight - top);
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    const ro = new ResizeObserver(measure);
+    ro.observe(document.body);
+    return () => {
+      window.removeEventListener('resize', measure);
+      ro.disconnect();
+    };
+  }, []);
 
   const visibleSherutim = useMemo(() => {
     if (isSearching) {
@@ -170,13 +237,17 @@ const Full: React.FC<Props> = ({ openService, employeeId = '', navigate }) => {
 
   return (
     <div
+      ref={rootRef}
       dir="rtl"
-      className="flex flex-col gap-[25px] p-10 rounded-2xl min-h-[860px]"
-      style={{ background: 'radial-gradient(48.71% 103.18% at 115.76% 75.51%, #C5DFFF 0%, #EDF4FD 100%)' }}
+      className="flex flex-col gap-[25px] p-10 rounded-2xl overflow-visible sm:overflow-hidden sm:h-[var(--rh)]"
+      style={{
+        ['--rh' as string]: rootHeight ? `${rootHeight}px` : undefined,
+        background: 'radial-gradient(48.71% 103.18% at 115.76% 75.51%, #C5DFFF 0%, #EDF4FD 100%)',
+      } as React.CSSProperties}
     >
       {/* שורה עליונה: חיפוש חופשי + חזרה */}
       <div className="flex items-center justify-between">
-        <div className="relative">
+        <div className="relative w-full sm:w-auto">
           <span className="absolute top-1/2 -translate-y-1/2 left-4 text-[#00033D]">
             <IconSearch className="w-6 h-6" />
           </span>
@@ -185,92 +256,76 @@ const Full: React.FC<Props> = ({ openService, employeeId = '', navigate }) => {
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             placeholder="חפש שירות"
-            className="w-[350px] h-[47px] bg-white border border-[#A0AEC0] rounded-lg pl-12 pr-4 text-[15px] text-[#00033D] text-right outline-none placeholder:text-[#8E929F] focus:border-[#2B7FFF]"
+            className="w-full sm:w-[350px] h-[47px] bg-white border border-[#A0AEC0] rounded-lg pl-12 pr-4 text-[15px] text-[#00033D] text-right outline-none placeholder:text-[#8E929F] focus:border-[#2B7FFF]"
           />
         </div>
         <button
-          onClick={() => navigate?.(`/employee-portfolio?employeeId=${employeeId}`)}
+          onClick={() => navigate?.(employeeId ? `/employee-portfolio?employeeId=${employeeId}` : '/')}
           className="h-[41px] px-5 rounded-full bg-white border border-[#A0AEC0] text-[#00033D] text-[14px] hover:border-[#2B7FFF] transition-colors"
         >
           ← חזרה
         </button>
       </div>
 
-      {/* שורת קטגוריות (pills) — שורה אחת כברירת מחדל, חץ פותח שורות נוספות */}
-      <div className="flex items-start gap-[12px]">
-        <div
-          ref={pillsRef}
-          className="flex flex-wrap gap-x-[17px] gap-y-[12px] flex-1 overflow-hidden transition-[max-height] duration-300"
-          style={{ maxHeight: pillsExpanded ? 500 : 42 }}
-        >
-          <CategoryPill
-            label="מועדפים"
-            count={favorites.length}
-            isFavorite
-            active={!isSearching && selectedCategoryId === FAVORITES_ID}
-            dimmed={isSearching}
-            onClick={() => selectCategory(FAVORITES_ID)}
-          />
-          {categories.map(({ category, sherutim }) => (
-            <CategoryPill
-              key={category.id}
-              label={category.title}
-              count={sherutim.length}
-              iconUrl={category.iconUrl}
-              active={!isSearching && selectedCategoryId === category.id}
-              dimmed={isSearching}
-              onClick={() => selectCategory(category.id)}
-            />
-          ))}
-        </div>
-        {pillsOverflow && (
-          <button
-            onClick={() => setPillsExpanded(v => !v)}
-            aria-label={pillsExpanded ? 'הצג פחות' : 'הצג עוד'}
-            className="shrink-0 flex items-center justify-center w-[42px] h-[42px] rounded-full bg-white border border-[#A0AEC0] text-[#00033D] hover:border-[#2B7FFF] transition-colors"
-          >
-            <IconChevron className={'w-5 h-5 transition-transform duration-300 ' + (pillsExpanded ? 'rotate-180' : '')} />
-          </button>
-        )}
-      </div>
+      {/* שורת הקטגוריות — כל הלוגיקה והתצוגה (דסקטופ + טאבלט) מרוכזת ברכיב CategoryBar */}
+      <CategoryBar
+        categories={categories}
+        favorites={favorites}
+        selectedCategoryId={selectedCategoryId}
+        isSearching={isSearching}
+        onSelect={selectCategory}
+      />
 
-      {/* פאנל לבן */}
-      <div className="bg-white rounded-2xl shadow-[0_2px_6px_rgba(6,77,173,0.08)] p-8 flex-1">
+      {/* פאנל לבן — עמודת flex עם אזור כרטיסים שגולל בפנים */}
+      <div className="bg-white rounded-2xl shadow-[0_2px_6px_rgba(6,77,173,0.08)] p-8 flex flex-col sm:flex-1 sm:min-h-0">
         {/* כותרת */}
-        <div className="flex items-center gap-3 mb-6">
+        <div className="flex items-center gap-3 mb-6 shrink-0">
           <span className="flex items-center justify-center w-12 h-12 rounded-full bg-[#F0F6FD] text-[#2B7FFF]">
             <IconSparkle className="w-7 h-7" />
           </span>
           <h2 className="m-0 text-[#00033D] text-[20px] font-semibold">שירותים דיגיטליים</h2>
         </div>
 
-        {/* כרטיסים */}
-        {isLoadingFavorites ? (
-          <div className="text-[#848282] text-[14px]">⏳ טוען מועדפים...</div>
-        ) : visibleSherutim.length === 0 ? (
-          !isSearching && selectedCategoryId === FAVORITES_ID
-            ? <EmptyFavorites />
-            : <div className="text-[#848282] text-[14px]">לא נמצאו שירותים</div>
-        ) : (
-          <div className="flex flex-wrap gap-5">
-            {visibleSherutim.map(s => (
-              <SherutCard
-                key={s.id}
-                title={s.title}
-                status={s.status}
-                favorite={s.isFavorite}
-                categoryIconUrl={showCategoryIconOnCards ? categoryByIdnt.get(s.idntObjectAv)?.iconUrl : undefined}
-                onClick={() => openService?.(makeCall(
-                  { type: 'sherut', id: employeeId, idntSheryut: s.idntSheryut, scope: s.mfeScope, module: s.mfeModule },
-                  s.mfeUrl
-                ))}
-              />
-            ))}
-          </div>
-        )}
+        {/* כרטיסים — אזור גלילה פנימי כשיש הרבה שירותים */}
+        <div className="sm:flex-1 sm:min-h-0 sm:overflow-y-auto -mr-2 pr-2">
+          {isLoadingFavorites ? (
+            <div className="text-[#848282] text-[14px]">⏳ טוען מועדפים...</div>
+          ) : visibleSherutim.length === 0 ? (
+            !isSearching && selectedCategoryId === FAVORITES_ID
+              ? <EmptyFavorites />
+              : <div className="text-[#848282] text-[14px]">לא נמצאו שירותים</div>
+          ) : (
+            <div className="flex flex-wrap gap-5 justify-center sm:justify-start">
+              {visibleSherutim.map(s => (
+                <SherutCard
+                  key={s.id}
+                  title={s.title}
+                  status={s.status}
+                  favorite={s.isFavorite}
+                  showIcon={showCategoryIconOnCards}
+                  fullWidthOnMobile={visibleSherutim.length === 1}
+                  categoryIconUrl={categoryByIdnt.get(s.idntObjectAv)?.iconUrl}
+                  onClick={() => openService?.(makeCall(
+                    { type: 'sherut', id: employeeId, idntSheryut: s.idntSheryut, scope: s.mfeScope, module: s.mfeModule },
+                    s.mfeUrl
+                  ))}
+                  onToggleFavorite={() => toggleFavorite(s.id)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
 };
 
-export default Full;
+// עוטפים את הרכיב שנחשף דרך Module Federation בגבול שגיאות, כך שכל כשל
+// (render שנזרק או fetch שנכשל בלי catch) יוצג כהודעה בתוך ה-MFE במקום להפיל את השֶׁל.
+const FullWithBoundary: React.FC<Props> = (props) => (
+  <ErrorBoundary>
+    <Full {...props} />
+  </ErrorBoundary>
+);
+
+export default FullWithBoundary;
