@@ -1,16 +1,30 @@
 import React, { useState } from 'react';
 import { useEmployee } from 'shell/employeeStore';
 import { MOCK_OBJECTS, STATUS_STYLE, DigitalObject } from './shared';
+import { useIframeFocusEvent } from './useIframeFocusEvent';
 
-const navigate = (path: string) =>
-  window.dispatchEvent(new CustomEvent('mfe:navigate', { detail: path }));
+// דמו בלבד: מייצר URL שניתן להטמעה ב-iframe מקומית, במקום ה-URL האמיתי
+// שיגיע מאירוע ה-iframe בסביבה האמיתית.
+const demoUrl = (obj: DigitalObject) =>
+  'data:text/html;charset=utf-8,' +
+  encodeURIComponent(
+    `<html dir="rtl"><body style="font-family:sans-serif;padding:24px;color:#00033D">` +
+      `<h2>${obj.name}</h2><p>תצוגת iframe חיצונית לדוגמה · ${obj.type}</p>` +
+      `<p style="color:#848282">${obj.details}</p></body></html>`
+  );
 
-const ObjectRow: React.FC<{ obj: DigitalObject }> = ({ obj }) => {
+interface Props {
+  employeeId?: string;
+  onShowAll?: () => void;
+  onFocusItem?: (id: string, iframeUrl?: string) => void;
+}
+
+const ObjectRow: React.FC<{ obj: DigitalObject; onFocus?: () => void }> = ({ obj, onFocus }) => {
   const s = STATUS_STYLE[obj.status];
   return (
     <div style={{
       display: 'grid',
-      gridTemplateColumns: '1fr auto auto',
+      gridTemplateColumns: '1fr auto auto auto',
       alignItems: 'center',
       gap: '12px',
       padding: '10px 12px',
@@ -31,13 +45,22 @@ const ObjectRow: React.FC<{ obj: DigitalObject }> = ({ obj }) => {
         color: s.color,
         whiteSpace: 'nowrap',
       }}>{obj.status}</span>
+      <button
+        onClick={onFocus}
+        style={{ background: 'none', border: '1px solid #1E3BA2', color: '#1E3BA2', borderRadius: '6px', padding: '3px 10px', cursor: 'pointer', fontSize: '12px', whiteSpace: 'nowrap' }}
+      >
+        התמקד
+      </button>
     </div>
   );
 };
 
-const Preview: React.FC = () => {
+const Preview: React.FC<Props> = ({ onShowAll, onFocusItem }) => {
   const employee = useEmployee();
   const [search, setSearch] = useState('');
+
+  // בסביבה האמיתית: ה-URL מגיע מאירוע ה-iframe ונשלח הלאה אל ה-Detail.
+  useIframeFocusEvent(onFocusItem);
 
   if (!employee) return null;
 
@@ -51,7 +74,7 @@ const Preview: React.FC = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', direction: 'rtl' }}>
         <h3 style={{ margin: 0, color: '#1E3BA2', fontSize: '16px' }}>אובייקטים דיגיטליים</h3>
         <button
-          onClick={() => navigate(`/employee-portfolio/digital-objects?employeeId=${employee.id}`)}
+          onClick={() => onShowAll?.()}
           style={{ background: 'none', border: '1px solid #1E3BA2', color: '#1E3BA2', borderRadius: '8px', padding: '4px 12px', cursor: 'pointer', fontSize: '13px' }}
         >
           הצג הכל
@@ -80,7 +103,7 @@ const Preview: React.FC = () => {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
         {preview.length === 0
           ? <div style={{ textAlign: 'center', color: '#848282', fontSize: '13px', padding: '12px' }}>לא נמצאו תוצאות</div>
-          : preview.map(obj => <ObjectRow key={obj.id} obj={obj} />)
+          : preview.map(obj => <ObjectRow key={obj.id} obj={obj} onFocus={() => onFocusItem?.(obj.id, demoUrl(obj))} />)
         }
       </div>
 

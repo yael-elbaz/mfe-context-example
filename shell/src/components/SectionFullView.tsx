@@ -16,9 +16,16 @@ const SectionFullView: React.FC<{ openService?: OpenService }> = ({ openService 
     </div>
   );
 
+  const search = searchParams.toString() ? `?${searchParams.toString()}` : '';
+
   return (
     <Suspense fallback={<div>טוען...</div>}>
-      <match.Full openService={openService} employeeId={employeeId} navigate={navigate} />
+      <match.Full
+        openService={openService}
+        employeeId={employeeId}
+        navigate={navigate}
+        onFocusItem={(itemId, iframeUrl) => navigate(`/employee-portfolio/${match.id}/${itemId}${search}`, { state: { iframeUrl } })}
+      />
     </Suspense>
   );
 };

@@ -5,6 +5,7 @@ import { Header } from './components/Header';
 import EmployeePortfolioLayout from './components/EmployeePortfolioLayout';
 import CustomerPortfolioLayout from './components/CustomerPortfolioLayout';
 import EmployeePortfolioIndex from './components/EmployeePortfolioIndex';
+import ExternalIframeView from './components/ExternalIframeView';
 import LegacySectionRedirect from './components/LegacySectionRedirect';
 import EmployeePortfolioExternalRedirect from './components/EmployeePortfolioExternalRedirect';
 import { SherutDynamicView } from './sections/SherutDynamicView';
@@ -104,6 +105,7 @@ const RouterApp: React.FC = () => {
               <Route  path="/employee-portfolio" element={<EmployeePortfolioLayout openService={openService} />}>
                 <Route index element={<EmployeePortfolioIndex openService={openService} />} />
                 <Route path="sherutim/:idntSheryut/*" element={<SherutDynamicView />} />
+                <Route path=":section/:itemId" element={<ExternalIframeView />} />
                 <Route path=":section" element={<LegacySectionRedirect openService={openService} />} />
               </Route>
             {/* </Route> */}

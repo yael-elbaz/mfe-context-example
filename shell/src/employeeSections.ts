@@ -4,7 +4,9 @@ import type { OpenService } from './types/openService';
 export interface SectionProps {
   openService?: OpenService;
   employeeId?: string;
+  navigate?: (to: string) => void;
   onShowAll?: () => void;
+  onFocusItem?: (id: string, iframeUrl?: string) => void;
 }
 
 export interface Section {

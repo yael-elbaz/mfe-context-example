@@ -21,12 +21,22 @@ declare module 'mfe_employee_portfolio/App' {
 }
 
 declare module 'mfe_digital_objects/Preview' {
-  const Preview: React.ComponentType;
+  const Preview: React.ComponentType<{
+    openService?: import('./types/openService').OpenService;
+    employeeId?: string;
+    onShowAll?: () => void;
+    onFocusItem?: (id: string, iframeUrl?: string) => void;
+  }>;
   export default Preview;
 }
 
 declare module 'mfe_digital_objects/Full' {
-  const Full: React.ComponentType;
+  const Full: React.ComponentType<{
+    openService?: import('./types/openService').OpenService;
+    employeeId?: string;
+    navigate?: (to: string) => void;
+    onFocusItem?: (id: string, iframeUrl?: string) => void;
+  }>;
   export default Full;
 }
 

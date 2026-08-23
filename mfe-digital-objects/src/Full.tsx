@@ -1,18 +1,31 @@
 import React, { useState } from 'react';
 import { useEmployee } from 'shell/employeeStore';
 import { MOCK_OBJECTS, STATUS_STYLE, DigitalObject, ObjectType } from './shared';
+import { useIframeFocusEvent } from './useIframeFocusEvent';
 
-const navigate = (path: string) =>
-  window.dispatchEvent(new CustomEvent('mfe:navigate', { detail: path }));
+interface Props {
+  employeeId?: string;
+  navigate?: (to: string) => void;
+  onFocusItem?: (id: string, iframeUrl?: string) => void;
+}
+
+// דמו בלבד: URL להטמעה מקומית ב-iframe, במקום ה-URL האמיתי מאירוע ה-iframe.
+const demoUrl = (obj: DigitalObject) =>
+  'data:text/html;charset=utf-8,' +
+  encodeURIComponent(
+    `<html dir="rtl"><body style="font-family:sans-serif;padding:24px;color:#00033D">` +
+      `<h2>${obj.name}</h2><p>תצוגת iframe חיצונית לדוגמה · ${obj.type}</p>` +
+      `<p style="color:#848282">${obj.details}</p></body></html>`
+  );
 
 const TYPE_FILTERS: Array<ObjectType | 'הכל'> = ['הכל', 'ציוד', 'רישיון תוכנה', 'הרשאת מערכת'];
 
-const ObjectRow: React.FC<{ obj: DigitalObject }> = ({ obj }) => {
+const ObjectRow: React.FC<{ obj: DigitalObject; onFocus?: () => void }> = ({ obj, onFocus }) => {
   const s = STATUS_STYLE[obj.status];
   return (
     <div style={{
       display: 'grid',
-      gridTemplateColumns: '1fr 140px 120px 90px',
+      gridTemplateColumns: '1fr 140px 120px 90px auto',
       alignItems: 'center',
       gap: '12px',
       padding: '12px 16px',
@@ -34,12 +47,21 @@ const ObjectRow: React.FC<{ obj: DigitalObject }> = ({ obj }) => {
         color: s.color,
         textAlign: 'center',
       }}>{obj.status}</span>
+      <button
+        onClick={onFocus}
+        style={{ background: 'none', border: '1px solid #1E3BA2', color: '#1E3BA2', borderRadius: '6px', padding: '4px 12px', cursor: 'pointer', fontSize: '12px', whiteSpace: 'nowrap' }}
+      >
+        התמקד
+      </button>
     </div>
   );
 };
 
-const Full: React.FC = () => {
+const Full: React.FC<Props> = ({ employeeId, navigate, onFocusItem }) => {
   const employee = useEmployee();
+
+  // בסביבה האמיתית: ה-URL מגיע מאירוע ה-iframe ונשלח הלאה אל ה-Detail.
+  useIframeFocusEvent(onFocusItem);
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState<ObjectType | 'הכל'>('הכל');
 
@@ -58,7 +80,7 @@ const Full: React.FC = () => {
           אובייקטים דיגיטליים — {employee.firstName} {employee.lastName}
         </h2>
         <button
-          onClick={() => navigate(`/employee-portfolio?employeeId=${employee.id}`)}
+          onClick={() => navigate?.(`/employee-portfolio?employeeId=${employeeId ?? employee.id}`)}
           style={{ background: 'none', border: '1px solid #C5CBDD', color: '#00033D', borderRadius: '8px', padding: '4px 12px', cursor: 'pointer', fontSize: '13px' }}
         >
           ← חזרה
@@ -106,7 +128,7 @@ const Full: React.FC = () => {
 
       <div style={{
         display: 'grid',
-        gridTemplateColumns: '1fr 140px 120px 90px',
+        gridTemplateColumns: '1fr 140px 120px 90px auto',
         padding: '6px 16px',
         fontSize: '11px',
         color: '#848282',
@@ -117,12 +139,13 @@ const Full: React.FC = () => {
         <span>סוג</span>
         <span>תאריך הקצאה</span>
         <span>סטטוס</span>
+        <span />
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
         {filtered.length === 0
           ? <div style={{ textAlign: 'center', color: '#848282', fontSize: '14px', padding: '32px' }}>לא נמצאו פריטים</div>
-          : filtered.map(obj => <ObjectRow key={obj.id} obj={obj} />)
+          : filtered.map(obj => <ObjectRow key={obj.id} obj={obj} onFocus={() => onFocusItem?.(obj.id, demoUrl(obj))} />)
         }
       </div>
 
