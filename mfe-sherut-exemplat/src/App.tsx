@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { http } from './services/http';
 
 interface Props {
   idntSheryut?: string;
@@ -97,9 +98,10 @@ const App: React.FC<Props> = ({ idntSheryut = '', employeeId = '' }) => {
     setFetchedTitle(null);
     let cancelled = false;
 
-    fetch(`https://jsonplaceholder.typicode.com/todos/1`)
-      .then(r => r.json())
-      .then(json => { if (!cancelled) setFetchedTitle(json.title); });
+    // API ציבורי חיצוני — לא שולח cookies, ולכן מבטלים כאן את withCredentials
+    http.get<{ title: string }>('https://jsonplaceholder.typicode.com/todos/1', { withCredentials: false })
+      .then(({ data }) => { if (!cancelled) setFetchedTitle(data.title); })
+      .catch(() => { if (!cancelled) setFetchedTitle(null); });
 
     return () => { cancelled = true; };
   }, [idntSheryut]);

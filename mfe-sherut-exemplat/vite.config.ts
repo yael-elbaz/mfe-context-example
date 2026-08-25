@@ -10,6 +10,10 @@ export default defineConfig({
       exposes: {
         './App': './src/App.tsx',
       },
+      // נדרש עבור shell/mfeUsage — מנגנון דירוג השימוש ב-MFE
+      remotes: {
+        shell: 'http://localhost:3000/assets/remoteEntry.js',
+      },
       shared: {
         react: { singleton: true, eager: false },
         'react-dom': { singleton: true, eager: false },

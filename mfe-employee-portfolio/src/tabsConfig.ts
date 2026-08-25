@@ -1,4 +1,5 @@
 import type { RawTabConfig, TabConfig, TabData } from './types';
+import { http } from './services/http';
 
 export const SYNTHETIC_MORE_DATA_TAB_ID = -1;
 
@@ -138,10 +139,8 @@ async function loadTabsConfig(): Promise<TabConfig[]> {
     await new Promise(r => setTimeout(r, 400));
     return MOCK_TABS.map(normalizeTab);
   }
-  const res = await fetch(TABS_CONFIG_URL);
-  if (!res.ok) throw new Error('tabs config fetch failed');
-  const raw: RawTabConfig[] = await res.json();
-  return raw.map(normalizeTab);
+  const { data } = await http.get<RawTabConfig[]>(TABS_CONFIG_URL);
+  return data.map(normalizeTab);
 }
 
 export async function fetchTabData(dataUrl: string, employeeId: string): Promise<TabData> {
@@ -150,7 +149,6 @@ export async function fetchTabData(dataUrl: string, employeeId: string): Promise
     const key = Object.keys(MOCK_TAB_DATA).find(k => dataUrl.includes(k)) ?? '';
     return MOCK_TAB_DATA[key] ?? { basicData: {}, murchavData: {}, hatrraa: {}, links: {} };
   }
-  const res = await fetch(`${dataUrl}employeeId=${employeeId}`);
-  if (!res.ok) throw new Error('tab data fetch failed');
-  return res.json();
+  const { data } = await http.get<TabData>(`${dataUrl}employeeId=${employeeId}`);
+  return data;
 }
