@@ -32,3 +32,23 @@
   --color-search-bg:   #F8F8F8;   /* רקע שדה חיפוש */
   --color-active:      #4395FF;   /* כפתור נבחר */
 }
+
+/* סרגל גלילה דק (2px) לרשימות בדף הבית — לפי Group 794 בעיצוב */
+.home-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #2B7FFF #EDF2F7;
+}
+
+.home-scroll::-webkit-scrollbar {
+  width: 2px;
+}
+
+.home-scroll::-webkit-scrollbar-track {
+  background: #EDF2F7;
+  border-radius: 999px;
+}
+
+.home-scroll::-webkit-scrollbar-thumb {
+  background: #2B7FFF;
+  border-radius: 999px;
+}

@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import './index.css';
 import type { OpenService, SherutCategory } from './types';
 import SherutCard from './SherutCard';
+import SectionCard, { OptionsButton } from 'shell/SectionCard';
 import { useSherutim } from './hooks/useSherutim';
 
 interface Props {
@@ -10,10 +11,10 @@ interface Props {
   onShowAll?: () => void;
 }
 
-// רוחב הכרטיס (SherutCard = 149px) והמרווח ביניהם (gap-5 = 20px ב-Full) —
-// משמשים לחישוב כמה כרטיסים נכנסים בשורה אחת.
-const CARD_WIDTH = 149;
-const CARD_GAP = 20;
+// רוחב מינימלי של כרטיס שירות והמרווח ביניהם (לפי העיצוב: 6 כרטיסים ברוחב 905) —
+// משמשים לחישוב כמה כרטיסים נכנסים בשורה אחת. הכרטיסים עצמם נמתחים (flex-1).
+const CARD_WIDTH = 137.5;
+const CARD_GAP = 16;
 
 function param(key: string, value: string) {
   return { codeSugParameter: '', parameterKey: key, parameterValue: value };
@@ -83,34 +84,32 @@ const Preview: React.FC<Props> = ({ openService, employeeId = '', onShowAll }) =
   }, [favorites, sherutim, visibleCount]);
 
   return (
-    <div dir="rtl" style={{ background: '#fff', borderRadius: '12px', padding: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-        <h3 style={{ margin: 0, color: '#1E3BA2', fontSize: '16px' }}>שירותים דיגיטליים</h3>
-        {employeeId && (
-          <button
-            onClick={() => onShowAll?.()}
-            style={{ background: 'none', border: '1px solid #1E3BA2', color: '#1E3BA2', borderRadius: '8px', padding: '4px 12px', cursor: 'pointer', fontSize: '13px' }}
-          >
-            הצג הכל
-          </button>
-        )}
-      </div>
-      {/* שורה אחת בלבד — מספר הכרטיסים נגזר מרוחב המסך. flexWrap מושבת כדי למנוע גלישה */}
-      <div ref={rowRef} style={{ display: 'flex', flexWrap: 'nowrap', gap: `${CARD_GAP}px`, overflow: 'hidden' }}>
-        {visibleSherutim.map(s => (
-          <SherutCard
-            key={s.id}
-            title={s.title}
-            status={s.status}
-            favorite={s.isFavorite}
-            categoryIconUrl={categoryByIdnt.get(s.idntObjectAv)?.iconUrl}
-            onClick={() => openService?.(makeCall(
-              { type: 'sherut', id: employeeId, idntSheryut: s.idntSheryut, scope: s.mfeScope, module: s.mfeModule },
-              s.mfeUrl
-            ))}
-          />
-        ))}
-      </div>
+    <div dir="rtl">
+      <SectionCard
+        title="שרותים"
+        linkLabel="לכל המטלות"
+        count={visibleSherutim.length}
+        countLabel="מספר מטלות ממתניות"
+        actions={<OptionsButton />}
+        onLinkClick={() => onShowAll?.()}
+      >
+        {/* שורה אחת בלבד — מספר הכרטיסים נגזר מרוחב המסך. flexWrap מושבת כדי למנוע גלישה */}
+        <div ref={rowRef} className="flex w-full items-start justify-end gap-4 overflow-hidden">
+          {visibleSherutim.map(s => (
+            <SherutCard
+              key={s.id}
+              title={s.title}
+              status={s.status}
+              favorite={s.isFavorite}
+              categoryIconUrl={categoryByIdnt.get(s.idntObjectAv)?.iconUrl}
+              onClick={() => openService?.(makeCall(
+                { type: 'sherut', id: employeeId, idntSheryut: s.idntSheryut, scope: s.mfeScope, module: s.mfeModule },
+                s.mfeUrl
+              ))}
+            />
+          ))}
+        </div>
+      </SectionCard>
     </div>
   );
 };

@@ -1,40 +1,39 @@
 import React from 'react';
+import { SherutBubbleGraphic, SherutStarIcon } from './sectionIcons';
 
-/* כוכב מועדפים — משמש גם בכרטיס וגם בטאב "מועדפים" */
-export const IconStar: React.FC<{ filled?: boolean; className?: string }> = ({ filled, className }) => (
-  <svg viewBox="0 0 20 20" className={className} fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M10 1.7l2.32 4.7 5.18.75-3.75 3.65.88 5.16L10 13.5l-4.63 2.44.88-5.16L2.5 7.15l5.18-.75L10 1.7z" />
-  </svg>
-);
-
-/* כרטיס שירות — משותף לתצוגת Full ולתצוגת Preview */
+/* כרטיס שירות — Figma "SERVES" (17:11016).
+   ברירת המחדל היא כרטיס גמיש בגובה 184 כפי שהוא מופיע בשורת השירותים בדף הבית. */
 const SherutCard: React.FC<{
   title: string;
   status: string;
   favorite: boolean;
-  categoryIconUrl?: string; // אייקון הקטגוריה של השירות
+  categoryIconUrl?: string; // אייקון הקטגוריה של השירות (עשוי להיות חסר)
+  className?: string;
   onClick: () => void;
-}> = ({ title, status, favorite, categoryIconUrl, onClick }) => (
+}> = ({ title, status, favorite, categoryIconUrl, className, onClick }) => (
   <button
     onClick={onClick}
-    className="relative w-[149px] h-[193px] bg-white rounded-lg border border-[#E2E8F0] shadow-[0_1px_3px_rgba(6,77,173,0.08),0_1px_2px_rgba(6,77,173,0.06)] flex flex-col items-center justify-center gap-3 px-3 hover:border-[#2B7FFF] transition-colors"
+    className={`relative flex h-[184px] min-w-0 flex-col items-center justify-center gap-[19px] rounded-lg border border-[#E2E8F0] bg-white p-4 transition-colors hover:border-[#2B7FFF] ${className ?? 'flex-1'}`}
   >
-    <span className={favorite ? 'absolute top-3 left-3 text-[#F97316]' : 'absolute top-3 left-3 text-[#A0AEC0]'}>
-      <IconStar filled={favorite} className="w-[18px] h-[18px]" />
+    {/* כוכב מועדפים — פינה שמאלית עליונה (RTL) */}
+    <span className={`absolute top-[11px] left-[10px] ${favorite ? 'text-[#F97316]' : 'text-black'}`}>
+      <SherutStarIcon filled={favorite} />
     </span>
 
-    {categoryIconUrl && (
-      <span className="flex items-center justify-center w-[58px] h-[58px] rounded-2xl bg-[#F0F6FD]">
-        <img src={categoryIconUrl} alt="" className="w-[30px] h-[30px]" />
+    {/* Bubble — 50×50, radius 8, רקע #F5F7FA */}
+    <span className="flex size-[50px] shrink-0 items-center justify-center rounded-lg bg-[#F5F7FA]">
+      {categoryIconUrl
+        ? <img src={categoryIconUrl} alt="" className="h-[30px] w-[30px]" />
+        : <SherutBubbleGraphic />}
+    </span>
+
+    <span className="flex w-full flex-col items-center gap-2">
+      <span className="line-clamp-1 w-full text-center text-[16px] font-normal leading-6 text-[#111138]">
+        {title}
       </span>
-    )}
-
-    <span className="text-[#111138] text-[13px] font-medium text-center leading-snug line-clamp-2">
-      {title}
-    </span>
-
-    <span className="px-3 py-0.5 rounded-full bg-[#F0F6FD] text-[#2B7FFF] text-[11px] font-medium">
-      {status}
+      <span className="flex items-center justify-center rounded-lg bg-[#F0F6FD] px-1.5 text-center text-[12px] font-medium leading-4 tracking-[0.1px] whitespace-nowrap text-[#2B7FFF]">
+        {status}
+      </span>
     </span>
   </button>
 );

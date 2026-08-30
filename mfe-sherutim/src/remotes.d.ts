@@ -38,3 +38,24 @@ declare module 'shell/mfeUsage' {
   /** מחבר את מנגנון הדירוג ל-axios instance. יש לקרוא פעם אחת ביצירת ה-instance. */
   export function attachMfeUsageInterceptor(instance: AxiosInstance, idntMfe: string): void;
 }
+
+declare module 'shell/SectionCard' {
+  import type * as React from 'react';
+
+  /** כפתור ה-options הסטנדרטי של הדר הסקשן — מוזרם ל-prop `actions`. */
+  export const OptionsButton: React.FC<{ onClick?: () => void }>;
+
+  export interface SectionCardProps {
+    title: string;
+    linkLabel: string;
+    count: number;
+    countLabel: string;
+    /** סלוט פעולות בהדר — פילטר, options, או כל שילוב. */
+    actions?: React.ReactNode;
+    onLinkClick?: () => void;
+    children: React.ReactNode;
+  }
+
+  const SectionCard: React.FC<SectionCardProps>;
+  export default SectionCard;
+}

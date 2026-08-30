@@ -1,4 +1,7 @@
 @import "tailwindcss";
+/* הקומפוננטה מגיעה מה-shell דרך Module Federation — סורקים אותה
+   כדי שה-classes שלה ייכללו גם ב-CSS של ה-MFE כשהוא רץ עצמאית. */
+@source "../../shell/src/components/SectionCard.tsx";
 
 @font-face {
   font-family: 'Rubik';

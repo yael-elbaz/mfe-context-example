@@ -1,4 +1,4 @@
-import React, { useEffect, lazy, Suspense, Component, ReactNode } from 'react';
+import React, { useEffect, lazy, Component, ReactNode } from 'react';
 import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
 import { useAppContext } from './store/appContext';
 import { Header } from './components/Header';
@@ -14,9 +14,9 @@ import { useOpenService } from './hooks/useOpenService';
 import { useEmployeePickerPopup } from './hooks/useEmployeePickerPopup';
 import EmployeePickerPopup from './components/EmployeePickerPopup';
 import SelectEmployeePage from './components/SelectEmployeePage';
+import HomePage from './components/home/HomePage';
+import { mfe } from './components/MfeSlot';
 
-const TasksMFE = lazy(() => import('mfe_tasks/App'));
-const SherutimPreviewMFE = lazy(() => import('mfe_sherutim/Preview'));
 const SherutimFullMFE = lazy(() => import('mfe_sherutim/Full'));
 
 class SilentErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
@@ -28,37 +28,6 @@ class SilentErrorBoundary extends Component<{ children: ReactNode }, { hasError:
   }
   render() { return this.props.children; }
 }
-
-class MFEErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
-  state = { error: null };
-  static getDerivedStateFromError(error: Error) { return { error }; }
-  render() {
-    if (this.state.error) {
-      return (
-        <div style={{ padding: '24px', color: '#c00', background: '#fff0f0', borderRadius: '8px' }}>
-          <strong>שגיאה בטעינת מודול</strong>
-          <pre style={{ fontSize: '12px', marginTop: '8px' }}>
-            {(this.state.error as Error).message}
-          </pre>
-        </div>
-      );
-    }
-    
-    return this.props.children;
-  }
-}
-
-const mfe = (
-  fallback: string,
-  Comp: React.LazyExoticComponent<React.ComponentType<any>>,
-  props?: Record<string, any>
-) => (
-  <MFEErrorBoundary>
-    <Suspense fallback={<div>{fallback}</div>}>
-      <Comp {...props} />
-    </Suspense>
-  </MFEErrorBoundary>
-);
 
 async function fetchUserSession() {
   await new Promise((r) => setTimeout(r, 600));
@@ -78,6 +47,11 @@ async function fetchUserSession() {
   };
 }
 
+/** ריפוד ברירת המחדל של מסכים שאינם דף הבית (דף הבית מנהל את הריפוד שלו) */
+const Padded: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <div style={{ padding: '24px' }}>{children}</div>
+);
+
 const RouterApp: React.FC = () => {
   const { waitForEmployee, pickerProps } = useEmployeePickerPopup();
   const { openService } = useOpenService(waitForEmployee);
@@ -87,28 +61,22 @@ const RouterApp: React.FC = () => {
     <>
       <div style={{ fontFamily: 'Arial, sans-serif', direction: 'rtl' }}>
         <Header />
-        <main style={{ padding: '24px' }}>
+        <main>
           <SilentErrorBoundary>
           <Routes>
-            <Route path="/" element={
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                <SelectEmployeePage />
-                {mfe('טוען מודול משימות...', TasksMFE, { openService })}
-                {mfe('טוען שירותים...', SherutimPreviewMFE, { openService, onShowAll: () => navigate('/sherutim') })}
-              </div>
-            } />
-            <Route path="/select-employee" element={<SelectEmployeePage />} />
-            <Route path="/customer-portfolio" element={<CustomerPortfolioLayout />}>
+            <Route path="/" element={<HomePage openService={openService} />} />
+            <Route path="/select-employee" element={<Padded><SelectEmployeePage /></Padded>} />
+            <Route path="/customer-portfolio" element={<Padded><CustomerPortfolioLayout /></Padded>}>
               <Route index element={<div style={{ padding: '24px', color: '#848282', direction: 'rtl' }}>בחר שירות לקוח</div>} />
             </Route>
             <Route path="/sherutim" element={
-              mfe('טוען שירותים...', SherutimFullMFE, { openService, navigate })
+              <Padded>{mfe('טוען שירותים...', SherutimFullMFE, { openService, navigate })}</Padded>
             } />
-            <Route path="/sherutim/:idntSheryut/*" element={<SherutimWrapper />}>
+            <Route path="/sherutim/:idntSheryut/*" element={<Padded><SherutimWrapper /></Padded>}>
               <Route path="*" element={<SherutDynamicView />} />
             </Route>
             {/* <Route path="/employee-portfolio" element={<EmployeePortfolioExternalRedirect />}> */}
-              <Route  path="/employee-portfolio" element={<EmployeePortfolioLayout openService={openService} />}>
+              <Route  path="/employee-portfolio" element={<Padded><EmployeePortfolioLayout openService={openService} /></Padded>}>
                 <Route index element={<EmployeePortfolioIndex openService={openService} />} />
                 <Route path="sherutim/:idntSheryut/*" element={<SherutDynamicView />} />
                 <Route path=":section/:itemId" element={<ExternalIframeView />} />
@@ -119,7 +87,7 @@ const RouterApp: React.FC = () => {
           </SilentErrorBoundary>
         </main>
       </div>
-      <EmployeePickerPopup {... } />
+      <EmployeePickerPopup {...pickerProps} />
     </>
   );
 };

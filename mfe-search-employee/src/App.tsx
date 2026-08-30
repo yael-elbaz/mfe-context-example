@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useUser } from 'shell/store';
+import './index.css';
 
 type PersonType = 'employee' | 'customer';
 
@@ -33,11 +33,11 @@ const EMPLOYEES: Employee[] = [
 ];
 
 const CUSTOMERS: Customer[] = [
-  { type: 'customer', id: 'C001', name: 'משה ישראלי',   city: 'תל אביב',    memberSince: '2019' },
-  { type: 'customer', id: 'C002', name: 'רחל כהן',       city: 'חיפה',       memberSince: '2021' },
-  { type: 'customer', id: 'C003', name: 'דוד לוי',       city: 'ירושלים',    memberSince: '2020' },
-  { type: 'customer', id: 'C004', name: 'שרה אברהם',    city: 'באר שבע',    memberSince: '2022' },
-  { type: 'customer', id: 'C005', name: 'יעקב פרידמן',  city: 'רמת גן',     memberSince: '2018' },
+  { type: 'customer', id: 'C001', name: 'משה ישראלי',  city: 'תל אביב',  memberSince: '2019' },
+  { type: 'customer', id: 'C002', name: 'רחל כהן',     city: 'חיפה',     memberSince: '2021' },
+  { type: 'customer', id: 'C003', name: 'דוד לוי',     city: 'ירושלים',  memberSince: '2020' },
+  { type: 'customer', id: 'C004', name: 'שרה אברהם',   city: 'באר שבע',  memberSince: '2022' },
+  { type: 'customer', id: 'C005', name: 'יעקב פרידמן', city: 'רמת גן',   memberSince: '2018' },
 ];
 
 const TYPE_LABEL: Record<PersonType, string> = {
@@ -45,18 +45,33 @@ const TYPE_LABEL: Record<PersonType, string> = {
   customer: 'לקוח',
 };
 
-const TYPE_COLOR: Record<PersonType, { bg: string; text: string }> = {
-  employee: { bg: '#EEF2FF', text: '#1E3BA2' },
-  customer: { bg: '#FFF3E0', text: '#E65100' },
+/* תגיות סוג — לפי ה-Badge בעיצוב (ירוק / כתום) */
+const TYPE_BADGE: Record<PersonType, string> = {
+  employee: 'bg-[#F6FFF8] border-[0.5px] border-[#2E7D32] text-[#2E7D32]',
+  customer: 'bg-[#FFF9F0] border-[0.5px] border-[#EF6C00] text-[#EF6C00]',
 };
+
+/* Icon_Search — מיוצא מ-Figma (24×24) */
+const IconSearch: React.FC = () => (
+  <span className="inline-flex size-6 shrink-0 items-center justify-center">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path
+        d="M3 10C3 10.9193 3.18106 11.8295 3.53284 12.6788C3.88463 13.5281 4.40024 14.2997 5.05025 14.9497C5.70026 15.5998 6.47194 16.1154 7.32122 16.4672C8.1705 16.8189 9.08075 17 10 17C10.9193 17 11.8295 16.8189 12.6788 16.4672C13.5281 16.1154 14.2997 15.5998 14.9497 14.9497C15.5998 14.2997 16.1154 13.5281 16.4672 12.6788C16.8189 11.8295 17 10.9193 17 10C17 9.08075 16.8189 8.1705 16.4672 7.32122C16.1154 6.47194 15.5998 5.70026 14.9497 5.05025C14.2997 4.40024 13.5281 3.88463 12.6788 3.53284C11.8295 3.18106 10.9193 3 10 3C9.08075 3 8.1705 3.18106 7.32122 3.53284C6.47194 3.88463 5.70026 4.40024 5.05025 5.05025C4.40024 5.70026 3.88463 6.47194 3.53284 7.32122C3.18106 8.1705 3 9.08075 3 10Z"
+        stroke="#8E929F" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+      />
+      <path d="M21 21L15 15" stroke="#8E929F" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  </span>
+);
 
 interface Props {
   onSelected?: (id: string, personType: PersonType) => void;
   objectType?: PersonType[] | null;
+  /** טקסט ה-placeholder — ברירת המחדל לפי העיצוב של דף הבית */
+  placeholder?: string;
 }
 
-const App: React.FC<Props> = ({ onSelected, objectType }) => {
-  const user = useUser();
+const App: React.FC<Props> = ({ onSelected, objectType, placeholder }) => {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<AnyPerson | null>(null);
@@ -96,167 +111,61 @@ const App: React.FC<Props> = ({ onSelected, objectType }) => {
     onSelected?.(person.id, person.type);
   };
 
-  const subtitle =
-    objectType?.length === 1
-      ? TYPE_LABEL[objectType[0]]
-      : 'עובד / לקוח';
-
   return (
-    <div
-      style={{
-        background: 'white',
-        borderRadius: '12px',
-        padding: '24px',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-      }}
-    >
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '20px',
-          paddingBottom: '16px',
-          borderBottom: '1px solid #eee',
-        }}
-      >
-        <h2 style={{ margin: 0, color: '#1e3a5f' }}>🔍 חיפוש {subtitle}</h2>
-        {user && (
-          <span style={{ fontSize: '13px', color: '#888' }}>
-            מחובר כ: {user.email}
-          </span>
-        )}
+    <div dir="rtl" ref={containerRef} className="relative w-full max-w-[528px]">
+      {/* שדה החיפוש — Figma "Search Field" (7:6575):
+          עטיפה לבנה עם padding 4, ובתוכה שדה בגובה 64 עם מסגרת #006AFF */}
+      <div className="flex w-full items-start justify-end overflow-hidden rounded-lg bg-white p-1">
+        <div className="flex h-16 min-w-0 flex-1 items-center justify-end gap-2 rounded-lg border border-[#006AFF] bg-white px-4 py-3">
+          <input
+            type="text"
+            value={query}
+            onChange={handleInputChange}
+            onFocus={() => query.trim() && setOpen(true)}
+            placeholder={placeholder ?? 'איתור אדם'}
+            className="min-w-0 flex-1 bg-transparent text-right text-[16px] font-normal leading-[1.25] text-[#00033D] outline-none placeholder:text-[#8E929F]"
+          />
+          <IconSearch />
+        </div>
       </div>
 
-      <div ref={containerRef} style={{ position: 'relative', maxWidth: '400px' }}>
-        <input
-          type="text"
-          value={query}
-          onChange={handleInputChange}
-          onFocus={() => query.trim() && setOpen(true)}
-          placeholder={`הכנס שם או מספר ${subtitle}...`}
-          style={{
-            width: '100%',
-            padding: '10px 14px',
-            border: '1px solid #C5CBDD',
-            borderRadius: '8px',
-            fontSize: '14px',
-            color: '#00033D',
-            direction: 'rtl',
-            outline: 'none',
-            boxSizing: 'border-box',
-          }}
-        />
-
-        {open && filtered.length > 0 && (
-          <ul
-            style={{
-              position: 'absolute',
-              top: 'calc(100% + 4px)',
-              right: 0,
-              left: 0,
-              background: '#fff',
-              border: '1px solid #C5CBDD',
-              borderRadius: '8px',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-              listStyle: 'none',
-              margin: 0,
-              padding: '4px 0',
-              zIndex: 100,
-              maxHeight: '240px',
-              overflowY: 'auto',
-            }}
-          >
-            {filtered.map((person) => (
-              <li
-                key={`${person.type}-${person.id}`}
-                onClick={() => handleSelect(person)}
-                style={{
-                  padding: '10px 14px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  direction: 'rtl',
-                  gap: '8px',
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = '#F8F9FD')}
-                onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span
-                    style={{
-                      fontSize: '11px',
-                      fontWeight: 600,
-                      padding: '2px 7px',
-                      borderRadius: '4px',
-                      background: TYPE_COLOR[person.type].bg,
-                      color: TYPE_COLOR[person.type].text,
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {TYPE_LABEL[person.type]}
-                  </span>
-                  <span style={{ fontWeight: 500, color: '#00033D' }}>{person.name}</span>
-                </div>
-                <span style={{ fontSize: '12px', color: '#848282', whiteSpace: 'nowrap' }}>
-                  {person.id} ·{' '}
-                  {person.type === 'employee' ? person.department : person.city}
+      {open && filtered.length > 0 && (
+        <ul className="absolute inset-x-0 top-[calc(100%+4px)] z-[100] max-h-[280px] list-none overflow-y-auto rounded-lg border border-[#E2E8F0] bg-white py-1 shadow-[0_4px_12px_rgba(6,77,173,0.12)]">
+          {filtered.map((person) => (
+            <li
+              key={`${person.type}-${person.id}`}
+              onClick={() => handleSelect(person)}
+              className="flex cursor-pointer items-center justify-between gap-2 px-4 py-2.5 hover:bg-[#F8F9FD]"
+            >
+              <div className="flex items-center gap-2">
+                <span className={`rounded-lg px-2 py-1 text-[12px] leading-[1.25] ${TYPE_BADGE[person.type]}`}>
+                  {TYPE_LABEL[person.type]}
                 </span>
-              </li>
-            ))}
-          </ul>
-        )}
+                <span className="text-[14px] font-medium text-[#00033D]">{person.name}</span>
+              </div>
+              <span className="whitespace-nowrap text-[12px] text-[#8E929F]">
+                {person.id} · {person.type === 'employee' ? person.department : person.city}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
 
-        {open && query.trim() && filtered.length === 0 && (
-          <div
-            style={{
-              position: 'absolute',
-              top: 'calc(100% + 4px)',
-              right: 0,
-              left: 0,
-              background: '#fff',
-              border: '1px solid #C5CBDD',
-              borderRadius: '8px',
-              padding: '12px 14px',
-              color: '#848282',
-              fontSize: '14px',
-              direction: 'rtl',
-            }}
-          >
-            לא נמצאו תוצאות
-          </div>
-        )}
-      </div>
+      {open && query.trim() && filtered.length === 0 && (
+        <div className="absolute inset-x-0 top-[calc(100%+4px)] z-[100] rounded-lg border border-[#E2E8F0] bg-white px-4 py-3 text-right text-[14px] text-[#8E929F] shadow-[0_4px_12px_rgba(6,77,173,0.12)]">
+          לא נמצאו תוצאות
+        </div>
+      )}
 
       {selected && (
-        <div
-          style={{
-            marginTop: '20px',
-            padding: '16px',
-            background: '#F8F9FD',
-            borderRadius: '8px',
-            direction: 'rtl',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-            <span
-              style={{
-                fontSize: '11px',
-                fontWeight: 600,
-                padding: '2px 7px',
-                borderRadius: '4px',
-                background: TYPE_COLOR[selected.type].bg,
-                color: TYPE_COLOR[selected.type].text,
-              }}
-            >
+        <div className="mt-4 rounded-lg bg-[#F8F9FD] p-4 text-right">
+          <div className="mb-2 flex items-center gap-2">
+            <span className={`rounded-lg px-2 py-1 text-[12px] leading-[1.25] ${TYPE_BADGE[selected.type]}`}>
               {TYPE_LABEL[selected.type]}
             </span>
-            <span style={{ fontWeight: 600, fontSize: '16px', color: '#1E3BA2' }}>
-              {selected.name}
-            </span>
+            <span className="text-[16px] font-semibold text-[#00033D]">{selected.name}</span>
           </div>
-          <div style={{ fontSize: '14px', color: '#848282', display: 'flex', gap: '16px' }}>
+          <div className="flex gap-4 text-[14px] text-[#8E929F]">
             <span>מספר: {selected.id}</span>
             {selected.type === 'employee' && (
               <>

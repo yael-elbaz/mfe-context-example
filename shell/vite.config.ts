@@ -20,6 +20,7 @@ export default defineConfig({
         './employeeStore': './src/store/employeeStore.ts',
         './personStore': './src/store/personStore.ts',
         './mfeUsage': './src/services/mfeUsage.ts',
+        './SectionCard': './src/components/SectionCard.tsx',
       },
       // מגדירים את ה-remotes גם כאן כדי ש-Rollup יידע שהם חיצוניים
       remotes: {
