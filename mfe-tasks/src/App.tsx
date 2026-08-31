@@ -98,7 +98,7 @@ const App: React.FC<Props> = () => {
         {loading && kpis.length === 0 ? (
           <p className="w-full py-6 text-right text-[14px] text-[#8E929F]">⏳ טוען מונים...</p>
         ) : (
-          <KpiRow kpis={kpis} />
+          <KpiRow kpis={kpis} isLoading={loading} />
         )}
       </SectionCard>
 

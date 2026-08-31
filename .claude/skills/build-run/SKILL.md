@@ -39,21 +39,44 @@ Follow the steps below **in order**. Do not skip steps.
 
 ---
 
-## Step 1 — Install dependencies
+## Step 0 — After a `git pull`, check for stale builds
 
-**Automatically skip installation if node_modules already exists.** Do not ask the user - just check and proceed.
+`vite preview` serves static files from `dist`. A pull replaces **source** files and builds nothing,
+so the browser keeps serving the previous build with no visible sign that it is out of date.
+This looks exactly like "my change didn't work".
 
-Check each package directory and run `npm install` only where `node_modules` is missing.
-Run these sequentially so output is readable:
+Run this first whenever the repo changed. Rebuild every package it flags:
 
 ```bash
-cd c:/Users/user1/Desktop/my/mfe-context-example
+cd "$(git rev-parse --show-toplevel)"
+for d in shell mfe-tasks mfe-search-employee mfe-employee-portfolio mfe-digital-objects mfe-sherut-exemplat mfe-sherutim; do
+  s=$(find "$d/src" -type f \( -name "*.ts" -o -name "*.tsx" -o -name "*.css" \) -printf '%T@\n' 2>/dev/null | sort -rn | head -1 | cut -d. -f1)
+  b=$(find "$d/dist" -name "*.js" -printf '%T@\n' 2>/dev/null | sort -rn | head -1 | cut -d. -f1)
+  if [ -z "$b" ]; then echo "✗ $d — no dist, must build"
+  elif [ "$s" -gt "$b" ]; then echo "✗ $d — STALE, source is newer than build"
+  else echo "✓ $d — build is current"; fi
+done
+```
+
+---
+
+## Step 1 — Install dependencies
+
+**Skip installation only when dependencies are actually complete.** Do not ask the user — check and proceed.
+
+A present `node_modules` is **not** proof that the declared dependencies are installed. A stale
+`node_modules` that predates a `package.json` change will be missing packages, and the build then
+fails with `Rollup failed to resolve import "<pkg>"`. `npm ls --depth=0` catches that; a directory
+existence check does not.
+
+```bash
+cd "$(git rev-parse --show-toplevel)"
 for dir in shell mfe-tasks mfe-search-employee mfe-employee-portfolio mfe-digital-objects mfe-sherut-exemplat mfe-sherutim; do
-  if [ ! -d "$dir/node_modules" ]; then
+  if [ ! -d "$dir/node_modules" ] || ! (cd "$dir" && npm ls --depth=0 >/dev/null 2>&1); then
     echo "==> Installing $dir..."
     (cd "$dir" && npm install)
   else
-    echo "✓ $dir — node_modules already present"
+    echo "✓ $dir — dependencies present"
   fi
 done
 ```
@@ -62,8 +85,17 @@ done
 
 ## Step 2 — Build the shell (MUST be first)
 
+> **Windows: stop the preview server before rebuilding.**
+> A running `vite preview` holds an open handle on the files in `dist`, and the build fails with
+> `Permission denied` or `EPERM`. Stop the server for that port, build, then start it again.
+> This applies to every package, not just the shell.
+>
+> ```powershell
+> Stop-Process -Id (Get-NetTCPConnection -LocalPort 3000 -ErrorAction SilentlyContinue).OwningProcess -Force -ErrorAction SilentlyContinue
+> ```
+
 ```bash
-cd c:/Users/user1/Desktop/my/mfe-context-example/shell
+cd "$(git rev-parse --show-toplevel)/shell"
 npm run build
 ```
 
@@ -75,8 +107,11 @@ Wait for this to finish and confirm `dist/assets/remoteEntry.js` was created bef
 
 Build each MFE. Run them one by one so errors are clearly attributed:
 
+If only some MFEs were flagged stale in Step 0, rebuild just those — stop their preview servers first
+(ports 3001–3006, see the Windows note in Step 2).
+
 ```bash
-cd c:/Users/user1/Desktop/my/mfe-context-example
+cd "$(git rev-parse --show-toplevel)"
 for dir in mfe-tasks mfe-search-employee mfe-employee-portfolio mfe-digital-objects mfe-sherut-exemplat mfe-sherutim; do
   echo "==> Building $dir..."
   (cd "$dir" && npm run build)
@@ -147,6 +182,9 @@ Get-Process -Name node | Where-Object { $_.MainWindowTitle -eq '' } | Stop-Proce
 
 | Symptom | Likely cause | Fix |
 |---------|-------------|-----|
+| **Code changes don't show in the browser after a `git pull`** | A pull updates source but builds nothing — `vite preview` still serves the old `dist` | Run the Step 0 staleness check, rebuild what it flags, hard-reload (Ctrl+F5) |
+| Build fails with `Permission denied` / `EPERM` writing to `dist` | Windows: the running `vite preview` holds the files open | Stop that port's server, rebuild, restart it (Step 2 note) |
+| Build fails with `Rollup failed to resolve import "<pkg>"` | `node_modules` exists but is stale — the package was added to `package.json` later | `npm install` in that package; Step 1's `npm ls` check prevents this |
 | MFE build fails with "Cannot find module 'shell/store'" | Shell not built yet | Run Step 2 first |
 | Blank page or "Failed to fetch dynamically imported module" | Wrong port or CORS | Make sure all 7 preview servers are running |
 | Sherut MFE shows error state | `mfe-sherut-exemplat` not running on :3005 | Run `cd mfe-sherut-exemplat && npm run build && npm run preview` |
