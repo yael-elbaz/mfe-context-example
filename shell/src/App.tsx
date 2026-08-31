@@ -119,7 +119,7 @@ const RouterApp: React.FC = () => {
           </SilentErrorBoundary>
         </main>
       </div>
-      <EmployeePickerPopup {... } />
+      <EmployeePickerPopup {...pickerProps} />
     </>
   );
 };
