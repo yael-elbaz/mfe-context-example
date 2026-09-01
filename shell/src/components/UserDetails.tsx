@@ -1,36 +1,38 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useUser } from '../store/appContext';
+import { useUser, useSelectedUnit } from '../store/appContext';
 import { UserPopup } from './UserPopup';
+import iconArrowDown from '../assets/icons/header-arrow-down.svg';
 
-const AvatarIcon = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="12" cy="12" r="11" stroke="#00033D" strokeWidth="1.5" />
-    <circle cx="12" cy="9" r="3.5" stroke="#00033D" strokeWidth="1.5" />
-    <path d="M5.5 19.5C6.5 16.5 9 15 12 15s5.5 1.5 6.5 4.5" stroke="#00033D" strokeWidth="1.5" strokeLinecap="round" />
-  </svg>
-);
-
-const Avatar: React.FC<{ image?: string; name?: string }> = ({ image, name }) => {
-  if (image) {
-    return (
+/**
+ * בלוק המשתמש בהדר — Figma 239:12218 ("Drop down").
+ *
+ * מידות מהעיצוב: גובה 56, ריפוד 12, פינות 8, מרווח 24 בין החץ לשאר.
+ * הסדר (משמאל לימין): חץ · מיקום · קו 19px · שם · אווטאר 40px.
+ *
+ * הרוחב **לא** קבוע על 376px כמו בעיצוב: שם הטקסט הוא ג'יבריש ארוך שממלא את
+ * הרוחב, ועם נתונים אמיתיים (שמות קצרים) justify-end היה משאיר רווח ריק
+ * בצד שמאל של ההדר. הבלוק נצמד לתוכן שלו.
+ *
+ * שים לב שהאווטאר בעיצוב הוא **ריבוע מעוגל** (rounded 4px, מסגרת נייבי)
+ * ולא עיגול.
+ */
+const Avatar: React.FC<{ image?: string; name?: string }> = ({ image, name }) => (
+  <div className="relative size-[40px] shrink-0">
+    {image ? (
       <img
         src={image}
         alt={name ?? 'משתמש'}
-        style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', border: '1.5px solid #00033D', opacity: 1 }}
+        className="absolute inset-[2.5%] rounded-[4px] border border-solid border-navy object-cover"
       />
-    );
-  }
-  return <AvatarIcon />;
-};
-
-const ChevronIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M4 6l4 4 4-4" stroke="#1C2B5E" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
+    ) : (
+      <div className="absolute inset-[2.5%] rounded-[4px] border border-solid border-navy" />
+    )}
+  </div>
 );
 
 export const UserDetails: React.FC = () => {
   const user = useUser();
+  const selectedUnit = useSelectedUnit();
   const [popupOpen, setPopupOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -45,29 +47,37 @@ export const UserDetails: React.FC = () => {
   }, []);
 
   return (
-    <div className="relative flex items-center gap-2" ref={ref}>
-      <Avatar image={user?.image} name={user?.name} />
-      <span
-        className="hidden lg:inline text-navy"
-        style={{
-          fontFamily: 'Rubik',
-          fontWeight: 400,
-          fontSize: '16px',
-          lineHeight: '22.06px',
-        }}
-      >
-        {user?.name ?? 'ישראל ישראלי'}
-      </span>
+    <div
+      ref={ref}
+      className="relative flex h-[56px] shrink-0 items-center gap-6 rounded-lg p-3"
+    >
       <button
         onClick={() => setPopupOpen((prev) => !prev)}
-        className="flex items-center justify-center"
+        className="flex size-6 shrink-0 cursor-pointer items-center justify-center"
         aria-label="פתח תפריט יחידה"
+        aria-expanded={popupOpen}
       >
-        <ChevronIcon />
+        <img src={iconArrowDown} alt="" className="size-full" />
       </button>
 
+      <div className="flex shrink-0 items-center gap-[11px]">
+        <div className="flex shrink-0 items-center gap-[11px]">
+          <span
+            dir="auto"
+            className="max-w-[150px] truncate text-[16px] leading-[1.25] font-normal text-navy"
+          >
+            {selectedUnit?.name ?? 'לא נבחרה יחידה'}
+          </span>
+          <span aria-hidden className="h-[19px] w-px shrink-0 bg-black" />
+          <span dir="auto" className="text-[16px] leading-[1.25] font-normal whitespace-nowrap text-navy">
+            {user?.name ?? 'ישראל ישראלי'}
+          </span>
+        </div>
+        <Avatar image={user?.image} name={user?.name} />
+      </div>
+
       {popupOpen && (
-        <div className="absolute" style={{ top: 'calc(100% + 4px)', left: 0 }}>
+        <div dir="rtl" className="absolute top-[calc(100%+4px)] right-0 z-50">
           <UserPopup onClose={() => setPopupOpen(false)} />
         </div>
       )}

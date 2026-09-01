@@ -2,14 +2,10 @@
 
 /* פונטים נטענים דינמית מ-loadFonts.ts לפי ה-env */
 
+/* חייב להישאר זהה לגובה שנקבע על ה-<header> ב-Header.tsx.
+   HomePage מזיז את התוכן למטה לפי המשתנה הזה, ופער ביניהם מסתיר תוכן מתחת להדר. */
 :root {
-  --header-height: 44px;
-}
-
-@media (min-width: 768px) {
-  :root {
-    --header-height: 66px;
-  }
+  --header-height: 80px;
 }
 
 @layer base {
@@ -36,6 +32,11 @@
   /* כחולים מהעיצוב (Figma) */
   --color-blue-outline: #006AFF;  /* Light Blue_primary — מסגרת שדה חיפוש */
   --color-blue-action:  #2B7FFF;  /* blue/blue-500 בפיגמה — כפתור ראשי */
+
+  /* Header — Figma 239:12058 */
+  --color-header-bg:    #E7F0FA;  /* feedback/blue-subtle — רקע ההדר */
+  --color-field-bg:     #F5F5F5;  /* Gray_3 — רקע שדה החיפוש בהדר */
+  --color-field-border: #C5CBDD;  /* Gray_2 — מסגרת שדה החיפוש */
 }
 
 /* ------------------------------------------------------------------

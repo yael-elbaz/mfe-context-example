@@ -1,106 +1,67 @@
 import React from 'react';
 import { UserDetails } from './UserDetails';
+import iconCalendar from '../assets/icons/header-calendar.svg';
+import iconNotification from '../assets/icons/header-notification.svg';
+import iconSearch from '../assets/icons/header-search.svg';
 
-// ── אייקונים inline SVG ──────────────────────────────────────────
-
-const BellIcon = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" stroke="#1C2B5E" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M13.73 21a2 2 0 0 1-3.46 0" stroke="#1C2B5E" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
+/**
+ * שדה החיפוש בהדר — Figma 7:2736.
+ * 288px, רקע Gray_3, מסגרת Gray_2, פינות 8, ריפוד 16/12.
+ */
+const SearchField: React.FC = () => (
+  <div className="flex w-[288px] shrink-0 items-center justify-end gap-2 rounded-lg border border-solid border-field-border bg-field-bg px-4 py-3">
+    <input
+      type="text"
+      placeholder="חיפוש כללי"
+      dir="rtl"
+      aria-label="חיפוש כללי"
+      className="min-w-px flex-1 bg-transparent text-right text-[16px] leading-[1.25] font-normal text-navy outline-none placeholder:text-gray-placeholder"
+    />
+    <img src={iconSearch} alt="" className="size-6 shrink-0" />
+  </div>
 );
 
-const CalendarIcon = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <rect x="3" y="4" width="18" height="18" rx="2" stroke="#1C2B5E" strokeWidth="1.5" />
-    <path d="M16 2v4M8 2v4M3 10h18" stroke="#1C2B5E" strokeWidth="1.5" strokeLinecap="round" />
-  </svg>
-);
+/**
+ * ההדר — Figma 239:12058.
+ *
+ * הפריסה מוגדרת ב-dir="ltr" בכוונה: מסגרת העיצוב בפיגמה בנויה משמאל לימין,
+ * וכך סדר ה-DOM כאן זהה לסדר בעיצוב ואין צורך להפוך כל קבוצה מקוננת.
+ * הטקסטים עצמם מקבלים dir משלהם ולכן נשארים עברית תקינה.
+ *
+ * הסדר (משמאל לימין): בלוק המשתמש · קו מפריד · לוח שנה · פעמון · חיפוש ... לוגו.
+ *
+ * גובה 80px — חייב להישאר זהה ל---header-height ב-index.css, שלפיו HomePage
+ * מזיזה את התוכן למטה. פער בין השניים מסתיר תוכן מתחת להדר הקבוע.
+ *
+ * כדי להיכנס ל-80px ה-Top Bar מקבל py-2 במקום py-4 שבעיצוב: 8+8 ריפוד ההדר
+ * משאירים 64px, ושדה החיפוש (44px) עם py-4 היה מגיע ל-76px וחורג.
+ */
+export const Header: React.FC = () => (
+  <header
+    dir="ltr"
+    className="fixed inset-x-0 top-0 z-[100] flex h-[80px] items-center bg-header-bg px-6 py-2"
+  >
+    <UserDetails />
 
-const SearchIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="11" cy="11" r="7" stroke="#00033D" strokeWidth="1.5" />
-    <path d="M16.5 16.5L21 21" stroke="#00033D" strokeWidth="1.5" strokeLinecap="round" />
-  </svg>
-);
+    {/* Top Bar — Figma 239:13276 */}
+    <div className="flex min-w-px flex-1 items-center justify-between px-10 py-2 drop-shadow-[0px_3px_0.3px_rgba(0,0,0,0.02)]">
+      <div className="flex items-center gap-4 self-stretch">
+        <span aria-hidden className="w-px shrink-0 self-stretch bg-gray-placeholder" />
 
-const HamburgerIcon = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M3 6h18M3 12h18M3 18h18" stroke="#1C2B5E" strokeWidth="1.5" strokeLinecap="round" />
-  </svg>
-);
-
-// ── Header ───────────────────────────────────────────────────────
-
-export const Header: React.FC = () => {
-  return (
-    <header
-      className="flex items-center justify-between lg:justify-end bg-white h-11 md:h-[66px]"
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        width: '100vw',
-        padding: '16px',
-        boxShadow: '0px 3px 5.9px 14px #00000040',
-        zIndex: 100,
-        direction: 'rtl',
-        margin: 0,
-        boxSizing: 'border-box',
-      }}
-    >
-      {/* לוגו + המבורגר — מוצגים רק על tablet/mobile, צמודים יחד */}
-      <div className="lg:hidden flex items-center gap-2">
-        <button className="flex items-center justify-center" aria-label="תפריט">
-          <HamburgerIcon />
-        </button>
-        <div
-          className="flex-shrink-0 bg-gray-100 flex items-center justify-center overflow-hidden w-7 h-[27px] md:w-[52px] md:h-[50px]"
-          style={{ borderRadius: '7px' }}
-        >
-          <span className="text-xs text-gray-400">לוגו</span>
+        <div className="flex shrink-0 items-center gap-[15px]">
+          <button className="flex size-6 cursor-pointer items-center justify-center" aria-label="לוח שנה">
+            <img src={iconCalendar} alt="" className="size-full" />
+          </button>
+          <button className="flex size-6 cursor-pointer items-center justify-center" aria-label="התראות">
+            <img src={iconNotification} alt="" className="size-full" />
+          </button>
         </div>
+
+        <SearchField />
       </div>
 
-      <div className="flex items-center gap-4">
-        {/* בר חיפוש מלא — desktop/laptop בלבד */}
-        <div
-          className="hidden lg:flex items-center flex-row-reverse gap-2 bg-search-bg"
-          style={{
-            width: '245px',
-            height: '38px',
-            borderRadius: '38px',
-            paddingInlineStart: '20px',
-            paddingInlineEnd: '16px',
-          }}
-        >
-          <span
-            className="flex-1 text-right bg-transparent outline-none text-sm text-navy opacity-40"
-            style={{ fontFamily: 'Rubik' }}
-          >
-            חיפוש כללי
-          </span>
-          <SearchIcon />
-        </div>
-
-        {/* אייקון חיפוש בודד — tablet/mobile בלבד */}
-        <button className="lg:hidden flex items-center justify-center" aria-label="חיפוש">
-          <SearchIcon />
-        </button>
-
-        {/* איקונים: לוח שנה + פעמון — מוסתר על mobile */}
-        <div className="hidden md:flex items-center" style={{ gap: '13px' }}>
-          <CalendarIcon />
-          <BellIcon />
-        </div>
-
-        {/* קו מפריד אנכי */}
-        <div style={{ width: '1px', height: '32px', background: '#E0E0E0' }} />
-
-        {/* פרטי משתמש + פופאפ */}
-        <UserDetails />
-      </div>
-    </header>
-  );
-};
+      {/* לוגו — Figma 50×48, פינות 7 */}
+      <div className="h-[48px] w-[50px] shrink-0 rounded-[7px] bg-white/50" />
+    </div>
+  </header>
+);
