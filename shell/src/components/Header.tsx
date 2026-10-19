@@ -1,52 +1,68 @@
 import React from 'react';
-import calendarIcon from '../assets/icons/calendar.svg';
-import notificationIcon from '../assets/icons/notification.svg';
-import searchIcon from '../assets/icons/search.svg';
+import { UserDetails } from './UserDetails';
+import iconCalendar from '../assets/icons/header-calendar.svg';
+import iconNotification from '../assets/icons/header-notification.svg';
+import iconSearch from '../assets/icons/header-search.svg';
 
-// ── אייקונים מיוצאים מפיגמה (Icon Header, 24×24) ─────────────────
-
-const HeaderIcon: React.FC<{ src: string; alt: string }> = ({ src, alt }) => (
-  <div className="shrink-0 size-6 overflow-clip">
-    <img src={src} alt={alt} className="block size-full max-w-none" />
-  </div>
-);
-
-// ── שדה חיפוש (Search Field / Deafult) ───────────────────────────
-
+/**
+ * שדה החיפוש בהדר — Figma 7:2736.
+ * 288px, רקע Gray_3, מסגרת Gray_2, פינות 8, ריפוד 16/12.
+ */
 const SearchField: React.FC = () => (
-  <div className="flex w-72 shrink-0 items-center justify-end gap-2 rounded-lg border border-gray-2 bg-gray-3 px-4 py-3">
-    <span dir="rtl" className="min-w-px flex-1 text-right text-base leading-tight text-gray-1">
-      חיפוש כללי
-    </span>
-    <HeaderIcon src={searchIcon} alt="" />
+  <div className="flex w-[288px] shrink-0 items-center justify-end gap-2 rounded-lg border border-solid border-field-border bg-field-bg px-4 py-3">
+    <input
+      type="text"
+      placeholder="חיפוש כללי"
+      dir="rtl"
+      aria-label="חיפוש כללי"
+      className="min-w-px flex-1 bg-transparent text-right text-[16px] leading-[1.25] font-normal text-navy outline-none placeholder:text-gray-placeholder"
+    />
+    <img src={iconSearch} alt="" className="size-6 shrink-0" />
   </div>
 );
 
-// ── Top Bar ──────────────────────────────────────────────────────
-// dir="ltr" כדי לשמור על סדר האלמנטים כפי שהוא בפיגמה:
-// קבוצת האייקונים משמאל, הלוגו מימין. הטקסט העברי עצמו RTL.
+/**
+ * ההדר — Figma 239:12058.
+ *
+ * הפריסה מוגדרת ב-dir="ltr" בכוונה: מסגרת העיצוב בפיגמה בנויה משמאל לימין,
+ * וכך סדר ה-DOM כאן זהה לסדר בעיצוב ואין צורך להפוך כל קבוצה מקוננת.
+ * הטקסטים עצמם מקבלים dir משלהם ולכן נשארים עברית תקינה.
+ *
+ * הסדר (משמאל לימין): בלוק המשתמש · קו מפריד · לוח שנה · פעמון · חיפוש ... לוגו.
+ *
+ * גובה 80px — חייב להישאר זהה ל---header-height ב-index.css, שלפיו HomePage
+ * מזיזה את התוכן למטה. פער בין השניים מסתיר תוכן מתחת להדר הקבוע.
+ *
+ * כדי להיכנס ל-80px ה-Top Bar מקבל py-2 במקום py-4 שבעיצוב: 8+8 ריפוד ההדר
+ * משאירים 64px, ושדה החיפוש (44px) עם py-4 היה מגיע ל-76px וחורג.
+ */
+export const Header: React.FC = () => (
+  <header
+    dir="ltr"
+    className="fixed inset-x-0 top-0 z-[100] flex h-[80px] items-center bg-header-bg px-6 py-2"
+  >
+    <UserDetails />
 
-export const Header: React.FC = () => {
-  return (
-    <header
-      dir="ltr"
-      className="fixed inset-x-0 top-0 z-[100] box-border flex h-20 items-center justify-between bg-white px-10 py-4"
-      style={{ boxShadow: '0px 3px 0.6px 14px #00000005' }}
-    >
-      <div className="flex h-full items-center gap-4">
+    {/* Top Bar — Figma 239:13276 */}
+    <div className="flex min-w-px flex-1 items-center justify-between px-10 py-2 drop-shadow-[0px_3px_0.3px_rgba(0,0,0,0.02)]">
+      <div className="flex items-center gap-4 self-stretch">
         {/* Line 923 — קו מפריד אנכי */}
-        <div className="h-12 w-px shrink-0 bg-gray-1" />
+        <span aria-hidden className="w-px shrink-0 self-stretch bg-gray-placeholder" />
 
         <div className="flex shrink-0 items-center gap-[15px]">
-          <HeaderIcon src={calendarIcon} alt="לוח שנה" />
-          <HeaderIcon src={notificationIcon} alt="התראות" />
+          <button className="flex size-6 cursor-pointer items-center justify-center" aria-label="לוח שנה">
+            <img src={iconCalendar} alt="" className="size-full" />
+          </button>
+          <button className="flex size-6 cursor-pointer items-center justify-center" aria-label="התראות">
+            <img src={iconNotification} alt="" className="size-full" />
+          </button>
         </div>
 
         <SearchField />
       </div>
 
-      {/* image 9 — לוגו */}
-      <div className="h-12 w-[50px] shrink-0 rounded-[7px] bg-gray-3" />
-    </header>
-  );
-};
+      {/* לוגו — Figma 50×48, פינות 7 */}
+      <div className="h-[48px] w-[50px] shrink-0 rounded-[7px] bg-white/50" />
+    </div>
+  </header>
+);

@@ -2,6 +2,8 @@
 
 /* פונטים נטענים דינמית מ-loadFonts.ts לפי ה-env */
 
+/* חייב להישאר זהה לגובה שנקבע על ה-<header> ב-Header.tsx.
+   HomePage מזיז את התוכן למטה לפי המשתנה הזה, ופער ביניהם מסתיר תוכן מתחת להדר. */
 :root {
   /* גובה ה-Top Bar לפי הפיגמה: 48px תוכן + 16px padding למעלה/למטה */
   --header-height: 80px;
@@ -21,6 +23,7 @@
   --color-blue-heading: #1E3BA2;  /* שם משתמש בפופאפ */
   --color-blue-sub:    #1B2B6B;   /* placeholder חיפוש */
   --color-gray-muted:  #848282;   /* מספר מס׳, תוויות משנה */
+  --color-gray-placeholder: #8E929F; /* Gray_1 — placeholder בשדות */
 
   /* רקעים */
   --color-surface:     #F8F9FD;   /* רקע פופאפ / hover */
@@ -31,6 +34,49 @@
   --color-gray-2:      #C5CBDD;   /* Gray_2 — מסגרת שדה חיפוש */
   --color-gray-3:      #F5F5F5;   /* Gray_3 — רקע שדה חיפוש */
   --color-active:      #4395FF;   /* כפתור נבחר */
+
+  /* כחולים מהעיצוב (Figma) */
+  --color-blue-outline: #006AFF;  /* Light Blue_primary — מסגרת שדה חיפוש */
+  --color-blue-action:  #2B7FFF;  /* blue/blue-500 בפיגמה — כפתור ראשי */
+
+  /* Header — Figma 239:12058 */
+  --color-header-bg:    #E7F0FA;  /* feedback/blue-subtle — רקע ההדר */
+  --color-field-bg:     #F5F5F5;  /* Gray_3 — רקע שדה החיפוש בהדר */
+  --color-field-border: #C5CBDD;  /* Gray_2 — מסגרת שדה החיפוש */
+}
+
+/* ------------------------------------------------------------------
+   EmployeePickerPopup — נטרול המעטפת של mfe_search_employee
+   ה-MFE מרנדר כרטיס לבן וכותרת פנימית משלו, עם inline styles (ולכן !important).
+   כאן אנחנו מסירים אותם ומעצבים את שדה החיפוש לפי הפיגמה.
+   שביר מול שינוי מבנה ה-DOM ב-MFE — אם החיפוש נראה שבור, זה המקום הראשון לבדוק.
+   ------------------------------------------------------------------ */
+.employee-picker-mfe > div {
+  background: transparent !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+
+/* הכותרת הפנימית "🔍 חיפוש עובד" + האימייל — מוסתרת, יש כותרת בפופאפ */
+.employee-picker-mfe > div > div:first-child {
+  display: none !important;
+}
+
+/* מיכל החיפוש ברוחב מלא במקום max-width: 400px */
+.employee-picker-mfe > div > div:last-child {
+  max-width: none !important;
+}
+
+/* שדה החיפוש לפי הפיגמה: 64px, מסגרת כחולה, מקום לאייקון בימין */
+.employee-picker-mfe input {
+  height: 64px !important;
+  width: 100% !important;
+  border: 1px solid var(--color-blue-outline) !important;
+  border-radius: 8px !important;
+  padding: 12px 52px 12px 16px !important;
+  font-size: 16px !important;
+  text-align: right !important;
 }
 
 /* סרגל גלילה דק (2px) לרשימות בדף הבית — לפי Group 794 בעיצוב */

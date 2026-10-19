@@ -21,6 +21,31 @@ export const FunnelFilledIcon: React.FC = () => (
   </span>
 );
 
+/**
+ * Line 925 — הקו המפריד בין המספר לתווית באריח KPI.
+ *
+ * ה-asset מיוצא מהפיגמה כקו **אופקי** 38×1 (stroke #A0AEC0), והעיצוב מסובב אותו
+ * ב-90° כדי לקבל קו אנכי. המיכל הוא w-0 — הקו לא תופס רוחב בפריסה,
+ * והמרווח סביבו נקבע ע"י ה-gap של גוש המספר.
+ */
+export const DividerLine: React.FC = () => (
+  <span aria-hidden className="flex h-[38px] w-0 shrink-0 items-center justify-center">
+    <span className="flex-none rotate-90">
+      <svg
+        width="38"
+        height="1"
+        viewBox="0 0 38 1"
+        fill="none"
+        preserveAspectRatio="none"
+        xmlns="http://www.w3.org/2000/svg"
+        className="block max-w-none"
+      >
+        <line y1="0.5" x2="38" y2="0.5" stroke="#A0AEC0" />
+      </svg>
+    </span>
+  </span>
+);
+
 /* outline/flag — 16×18 בתוך ריבוע 24 */
 export const FlagIcon: React.FC = () => (
   <span className="inline-flex size-6 shrink-0 items-center justify-center overflow-hidden">
