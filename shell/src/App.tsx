@@ -4,6 +4,7 @@ import { useAppContext } from './store/appContext';
 import { Header } from './components/Header';
 import EmployeePortfolioLayout from './components/EmployeePortfolioLayout';
 import CustomerPortfolioLayout from './components/CustomerPortfolioLayout';
+import { CustomerSherutimPreview, CustomerSherutimFull } from './components/CustomerPortfolioSherutim';
 import EmployeePortfolioIndex from './components/EmployeePortfolioIndex';
 import ExternalIframeView from './components/ExternalIframeView';
 import LegacySectionRedirect from './components/LegacySectionRedirect';
@@ -67,7 +68,8 @@ const RouterApp: React.FC = () => {
             <Route path="/" element={<HomePage openService={openService} />} />
             <Route path="/select-employee" element={<Padded><SelectEmployeePage /></Padded>} />
             <Route path="/customer-portfolio" element={<Padded><CustomerPortfolioLayout /></Padded>}>
-              <Route index element={<div style={{ padding: '24px', color: '#848282', direction: 'rtl' }}>בחר שירות לקוח</div>} />
+              <Route index element={<CustomerSherutimPreview openService={openService} />} />
+              <Route path="sherutim" element={<CustomerSherutimFull openService={openService} />} />
             </Route>
             <Route path="/sherutim" element={
               <Padded>{mfe('טוען שירותים...', SherutimFullMFE, { openService, navigate })}</Padded>

@@ -3,13 +3,8 @@
 /* פונטים נטענים דינמית מ-loadFonts.ts לפי ה-env */
 
 :root {
-  --header-height: 44px;
-}
-
-@media (min-width: 768px) {
-  :root {
-    --header-height: 66px;
-  }
+  /* גובה ה-Top Bar לפי הפיגמה: 48px תוכן + 16px padding למעלה/למטה */
+  --header-height: 80px;
 }
 
 @layer base {
@@ -29,7 +24,12 @@
 
   /* רקעים */
   --color-surface:     #F8F9FD;   /* רקע פופאפ / hover */
-  --color-search-bg:   #F8F8F8;   /* רקע שדה חיפוש */
+  --color-search-bg:   #F8F8F8;   /* רקע שדה חיפוש (ישן) */
+
+  /* טוקני אפור מהפיגמה — Top Bar */
+  --color-gray-1:      #8E929F;   /* Gray_1 — placeholder חיפוש, קו מפריד */
+  --color-gray-2:      #C5CBDD;   /* Gray_2 — מסגרת שדה חיפוש */
+  --color-gray-3:      #F5F5F5;   /* Gray_3 — רקע שדה חיפוש */
   --color-active:      #4395FF;   /* כפתור נבחר */
 }
 

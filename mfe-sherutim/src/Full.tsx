@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import './index.css';
-import type { OpenService, SherutCategory } from './types';
+import type { OpenService, PersonType, SherutCategory } from './types';
 import { useSherutim } from './hooks/useSherutim';
 import { useSherutimStore } from './store/sherutimStore';
 import ErrorBoundary from './ErrorBoundary';
@@ -9,7 +9,11 @@ import CategoryBar, { FAVORITES_ID, IconStar } from './CategoryBar';
 interface Props {
   openService?: OpenService;
   employeeId?: string;
+  // סוג האדם הנבחר (נשלח מה-shell) — מסנן את השירותים לפי objectType. בלי ערך מוצגים כולם
+  objectType?: PersonType | null;
   navigate?: (to: string) => void;
+  // כפתור "חזרה" — כשלא מועבר, חוזרים לתיק העובד (או לדף הבית)
+  onBack?: () => void;
 }
 
 function param(key: string, value: string) {
@@ -173,13 +177,13 @@ const EmptyFavorites: React.FC = () => (
 
 /* ===================== Full ===================== */
 
-const Full: React.FC<Props> = ({ openService, employeeId = '', navigate }) => {
+const Full: React.FC<Props> = ({ openService, employeeId = '', objectType, navigate, onBack }) => {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>(FAVORITES_ID);
   const [searchQuery, setSearchQuery] = useState('');
 
   // ה-hook מפריד את הרשימה המעורבת לקטגוריות + שירותים, מצרף isFavorite לכל שירות,
   // ומחזיר את רשימת המועדפים ואת כל השירותים בצורה שטוחה
-  const { categories, sherutim, favorites, loading: favoritesLoading } = useSherutim();
+  const { categories, sherutim, favorites, loading: favoritesLoading } = useSherutim(objectType);
   const toggleFavorite = useSherutimStore(s => s.toggleFavorite);
 
   const trimmedQuery = searchQuery.trim();
@@ -260,7 +264,7 @@ const Full: React.FC<Props> = ({ openService, employeeId = '', navigate }) => {
           />
         </div>
         <button
-          onClick={() => navigate?.(employeeId ? `/employee-portfolio?employeeId=${employeeId}` : '/')}
+          onClick={() => onBack ? onBack() : navigate?.(employeeId ? `/employee-portfolio?employeeId=${employeeId}` : '/')}
           className="h-[41px] px-5 rounded-full bg-white border border-[#A0AEC0] text-[#00033D] text-[14px] hover:border-[#2B7FFF] transition-colors"
         >
           ← חזרה

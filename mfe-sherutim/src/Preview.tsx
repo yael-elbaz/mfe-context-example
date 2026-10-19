@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import './index.css';
-import type { OpenService, SherutCategory } from './types';
+import type { OpenService, PersonType, SherutCategory } from './types';
 import SherutCard from './SherutCard';
 import SectionCard, { OptionsButton } from 'shell/SectionCard';
 import { useSherutim } from './hooks/useSherutim';
@@ -8,6 +8,8 @@ import { useSherutim } from './hooks/useSherutim';
 interface Props {
   openService?: OpenService;
   employeeId?: string;
+  // סוג האדם הנבחר (נשלח מה-shell) — מסנן את השירותים לפי objectType. בלי ערך מוצגים כולם
+  objectType?: PersonType | null;
   onShowAll?: () => void;
 }
 
@@ -31,8 +33,8 @@ function makeCall(params: Record<string, string>, url?: string) {
   };
 }
 
-const Preview: React.FC<Props> = ({ openService, employeeId = '', onShowAll }) => {
-  const { categories, sherutim, favorites } = useSherutim();
+const Preview: React.FC<Props> = ({ openService, employeeId = '', objectType, onShowAll }) => {
+  const { categories, sherutim, favorites } = useSherutim(objectType);
 
   // מיפוי idntObject -> קטגוריה, כדי למצוא את אייקון הקטגוריה של כל שירות
   const categoryByIdnt = useMemo(() => {

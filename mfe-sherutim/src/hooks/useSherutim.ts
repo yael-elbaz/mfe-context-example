@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react';
-import type { SherutCategory, SherutWithFavorite } from '../types';
+import { OBJECT_TYPE_CODE, type PersonType, type Sherut, type SherutCategory, type SherutWithFavorite } from '../types';
 import { useSherutimStore } from '../store/sherutimStore';
 import { useSelectedUnit } from 'shell/store';
 
@@ -23,11 +23,19 @@ export interface UseSherutimResult {
 // re-export לנוחות צרכנים קיימים
 export type { SherutWithFavorite };
 
+// האם השירות רלוונטי לסוג האדם — לפי כל ערכי objectType שב-menuParamsList (המפתח יכול לחזור כמה פעמים)
+function matchesObjectType(sherut: Sherut, objectType: PersonType): boolean {
+  const code = OBJECT_TYPE_CODE[objectType];
+  return sherut.menuParamsList.some(p => p.parameterKey === 'objectType' && p.parameterValue === code);
+}
+
 /**
  * קורא את השירותים מתוך ה-store המשותף (fetch פעם אחת לכל הסשן) עבור היחידה הנבחרת.
  * ה-isFavorite כבר צרוב על כל שירות ב-store; כאן רק מפרידים לקטגוריות/שירותים/מועדפים.
+ * objectType — סוג האדם הנבחר שה-shell שולח. כשהוא קיים מוצגים רק שירותים שרלוונטיים לו
+ * (וקטגוריות שנשארו ריקות מוסתרות); כש-objectType הוא null/undefined (למשל דף הבית) מוחזרים כל השירותים ללא סינון.
  */
-export function useSherutim(): UseSherutimResult {
+export function useSherutim(objectType?: PersonType | null): UseSherutimResult {
   const unit = useSelectedUnit();
   const status = useSherutimStore(s => s.status);
   const items = useSherutimStore(s => s.items);
@@ -47,16 +55,21 @@ export function useSherutim(): UseSherutimResult {
   );
 
   const withFavorite = useMemo<SherutWithFavorite[]>(
-    () => items.filter((i): i is SherutWithFavorite => i.type === 'object'),
-    [items],
+    () => items.filter((i): i is SherutWithFavorite =>
+      i.type === 'object' && (!objectType || matchesObjectType(i, objectType))
+    ),
+    [items, objectType],
   );
 
   const categories = useMemo<CategoryWithSherutim[]>(
-    () => categoryList.map(category => ({
-      category,
-      sherutim: withFavorite.filter(s => s.idntObjectAv === category.idntObject),
-    })),
-    [categoryList, withFavorite],
+    () => {
+      const all = categoryList.map(category => ({
+        category,
+        sherutim: withFavorite.filter(s => s.idntObjectAv === category.idntObject),
+      }));
+      return objectType ? all.filter(c => c.sherutim.length > 0) : all;
+    },
+    [categoryList, withFavorite, objectType],
   );
 
   const favoriteList = useMemo<SherutWithFavorite[]>(

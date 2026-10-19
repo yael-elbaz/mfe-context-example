@@ -1,9 +1,11 @@
 import React, { lazy } from 'react';
-import type { OpenService } from './types/openService';
+import type { OpenService, PersonType } from './types/openService';
 
 export interface SectionProps {
   openService?: OpenService;
   employeeId?: string;
+  // סוג האדם הנבחר — MFE שתומך בזה (sherutim) מסנן לפיו את הרשימה
+  objectType?: PersonType | null;
   navigate?: (to: string) => void;
   onShowAll?: () => void;
   onFocusItem?: (id: string, iframeUrl?: string) => void;

@@ -2,6 +2,7 @@ import React, { Suspense } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { SECTIONS } from '../employeeSections';
 import type { OpenService } from '../types/openService';
+import { useSelectedPersonType } from '../store/personStore';
 
 const SECTION_SHOW_ALL: Record<string, (navigate: ReturnType<typeof useNavigate>, search: string) => void> = {
   sherutim: (navigate, search) => navigate(`/employee-portfolio/sherutim${search}`),
@@ -17,6 +18,7 @@ const EmployeePortfolioIndex: React.FC<{ openService?: OpenService }> = ({ openS
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const employeeId = searchParams.get('employeeId') ?? '';
+  const objectType = useSelectedPersonType();
   const search = searchParams.toString() ? `?${searchParams.toString()}` : '';
 
   return (
@@ -29,6 +31,7 @@ const EmployeePortfolioIndex: React.FC<{ openService?: OpenService }> = ({ openS
             <Preview
               openService={openService}
               employeeId={employeeId}
+              objectType={objectType}
               onShowAll={showAll ? () => showAll(navigate, search) : undefined}
               onFocusItem={focusItem ? (itemId, iframeUrl) => focusItem(navigate, search, itemId, iframeUrl) : undefined}
             />

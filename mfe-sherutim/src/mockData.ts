@@ -1,10 +1,17 @@
-import type { Sherut, SherutCategory, SherutimItem } from './types';
+import type { MenuParam, Sherut, SherutCategory, SherutimItem } from './types';
 
 const EXEMPLAT_MFE = {
   mfeUrl:    'http://localhost:3005/assets/remoteEntry.js',
   mfeScope:  'mfe_sherut_exemplat',
   mfeModule: './App',
 };
+
+// פרמטר objectType כפי שמגיע מהשרת: 1 = עובד, 2 = לקוח. שירות שרלוונטי לשניהם מכיל את המפתח פעמיים.
+const objectType = (code: string): MenuParam => ({ codeSugParameter: '', parameterKey: 'objectType', parameterValue: code });
+const EMP:  MenuParam[] = [objectType('1')];
+const CUS:  MenuParam[] = [objectType('2')];
+const BOTH: MenuParam[] = [objectType('1'), objectType('2')];
+const NONE: MenuParam[] = [];
 
 // בפרודקשן ה-iconUrl יגיע מהשרת כ-URL לקובץ אייקון.
 // כאן אנחנו משתמשים ב-data-URI כדי שהאייקונים יוצגו גם ללא רשת.
@@ -34,25 +41,25 @@ export const SHERUTIM_CATEGORIES: SherutCategory[] = [
 ];
 
 export const MOCK_SHERUTIM: Sherut[] = [
-  { type: 'object', id: 's1', idntSheryut: 'SHR001', title: 'בקשה להגשת חופשה שנתית מרוכזת עם אישור מנהל ישיר',           status: 'פתוח',  idntObjectAv: 1, ...EXEMPLAT_MFE },
-  { type: 'object', id: 's2', idntSheryut: 'SHR002', title: 'אישור נסיעות לחו״ל ובקשת החזר הוצאות אש״ל ולינה',          status: 'ממתין', idntObjectAv: 1, ...EXEMPLAT_MFE },
-  { type: 'object', id: 's3', idntSheryut: 'SHR003', title: 'עדכון פרטים אישיים',    status: 'הושלם', idntObjectAv: 3, ...EXEMPLAT_MFE },
-  { type: 'object', id: 's4', idntSheryut: 'SHR004', title: 'בקשת ציוד משרדי',       status: 'פתוח',  idntObjectAv: 2, ...EXEMPLAT_MFE },
-  { type: 'object', id: 's5', idntSheryut: 'SHR005', title: 'דיווח שעות עבודה',      status: 'ממתין', idntObjectAv: 1, ...EXEMPLAT_MFE },
-  { type: 'object', id: 's6', idntSheryut: 'SHR006', title: 'בקשת הלוואה',           status: 'פתוח',  idntObjectAv: 2, ...EXEMPLAT_MFE },
-  { type: 'object', id: 's7', idntSheryut: 'SHR007', title: 'עדכון כתובת מגורים',    status: 'הושלם', idntObjectAv: 3, ...EXEMPLAT_MFE },
-  { type: 'object', id: 's8', idntSheryut: 'SHR008', title: 'תלוש שכר',             status: 'הושלם', idntObjectAv: 2, ...EXEMPLAT_MFE },
-  { type: 'object', id: 's9',  idntSheryut: 'SHR009', title: 'הזמנת חדר ישיבות',     status: 'פתוח',  idntObjectAv: 4, ...EXEMPLAT_MFE },
-  { type: 'object', id: 's10', idntSheryut: 'SHR010', title: 'בקשת ריהוט',          status: 'ממתין', idntObjectAv: 4, ...EXEMPLAT_MFE },
-  { type: 'object', id: 's11', idntSheryut: 'SHR011', title: 'דוח נוכחות חודשי',     status: 'הושלם', idntObjectAv: 5, ...EXEMPLAT_MFE },
-  { type: 'object', id: 's12', idntSheryut: 'SHR012', title: 'ניתוח ביצועים',        status: 'פתוח',  idntObjectAv: 5, ...EXEMPLAT_MFE },
-  { type: 'object', id: 's13', idntSheryut: 'SHR013', title: 'פתיחת פנייה',          status: 'פתוח',  idntObjectAv: 6, ...EXEMPLAT_MFE },
-  { type: 'object', id: 's14', idntSheryut: 'SHR014', title: 'מעקב דואר נכנס',       status: 'ממתין', idntObjectAv: 6, ...EXEMPLAT_MFE },
-  { type: 'object', id: 's15', idntSheryut: 'SHR015', title: 'בקשת קו טלפון',        status: 'פתוח',  idntObjectAv: 7, ...EXEMPLAT_MFE },
-  { type: 'object', id: 's16', idntSheryut: 'SHR016', title: 'משרה פנימית',          status: 'פתוח',  idntObjectAv: 8, ...EXEMPLAT_MFE },
-  { type: 'object', id: 's17', idntSheryut: 'SHR017', title: 'בקשת קידום',           status: 'ממתין', idntObjectAv: 8, ...EXEMPLAT_MFE },
-  { type: 'object', id: 's18', idntSheryut: 'SHR018', title: 'תיאום בדיקה רפואית',    status: 'הושלם', idntObjectAv: 9, ...EXEMPLAT_MFE },
-  { type: 'object', id: 's19', idntSheryut: 'SHR019', title: 'בקשת ייעוץ רווחה',      status: 'פתוח',  idntObjectAv: 9, ...EXEMPLAT_MFE },
+  { type: 'object', id: 's1', idntSheryut: 'SHR001', title: 'בקשה להגשת חופשה שנתית מרוכזת עם אישור מנהל ישיר',           status: 'פתוח',  idntObjectAv: 1, ...EXEMPLAT_MFE, menuParamsList: EMP },
+  { type: 'object', id: 's2', idntSheryut: 'SHR002', title: 'אישור נסיעות לחו״ל ובקשת החזר הוצאות אש״ל ולינה',          status: 'ממתין', idntObjectAv: 1, ...EXEMPLAT_MFE, menuParamsList: EMP },
+  { type: 'object', id: 's3', idntSheryut: 'SHR003', title: 'עדכון פרטים אישיים',    status: 'הושלם', idntObjectAv: 3, ...EXEMPLAT_MFE, menuParamsList: BOTH },
+  { type: 'object', id: 's4', idntSheryut: 'SHR004', title: 'בקשת ציוד משרדי',       status: 'פתוח',  idntObjectAv: 2, ...EXEMPLAT_MFE, menuParamsList: EMP },
+  { type: 'object', id: 's5', idntSheryut: 'SHR005', title: 'דיווח שעות עבודה',      status: 'ממתין', idntObjectAv: 1, ...EXEMPLAT_MFE, menuParamsList: EMP },
+  { type: 'object', id: 's6', idntSheryut: 'SHR006', title: 'בקשת הלוואה',           status: 'פתוח',  idntObjectAv: 2, ...EXEMPLAT_MFE, menuParamsList: BOTH },
+  { type: 'object', id: 's7', idntSheryut: 'SHR007', title: 'עדכון כתובת מגורים',    status: 'הושלם', idntObjectAv: 3, ...EXEMPLAT_MFE, menuParamsList: BOTH },
+  { type: 'object', id: 's8', idntSheryut: 'SHR008', title: 'תלוש שכר',             status: 'הושלם', idntObjectAv: 2, ...EXEMPLAT_MFE, menuParamsList: EMP },
+  { type: 'object', id: 's9',  idntSheryut: 'SHR009', title: 'הזמנת חדר ישיבות',     status: 'פתוח',  idntObjectAv: 4, ...EXEMPLAT_MFE, menuParamsList: NONE },
+  { type: 'object', id: 's10', idntSheryut: 'SHR010', title: 'בקשת ריהוט',          status: 'ממתין', idntObjectAv: 4, ...EXEMPLAT_MFE, menuParamsList: NONE },
+  { type: 'object', id: 's11', idntSheryut: 'SHR011', title: 'דוח נוכחות חודשי',     status: 'הושלם', idntObjectAv: 5, ...EXEMPLAT_MFE, menuParamsList: EMP },
+  { type: 'object', id: 's12', idntSheryut: 'SHR012', title: 'ניתוח ביצועים',        status: 'פתוח',  idntObjectAv: 5, ...EXEMPLAT_MFE, menuParamsList: EMP },
+  { type: 'object', id: 's13', idntSheryut: 'SHR013', title: 'פתיחת פנייה',          status: 'פתוח',  idntObjectAv: 6, ...EXEMPLAT_MFE, menuParamsList: CUS },
+  { type: 'object', id: 's14', idntSheryut: 'SHR014', title: 'מעקב דואר נכנס',       status: 'ממתין', idntObjectAv: 6, ...EXEMPLAT_MFE, menuParamsList: CUS },
+  { type: 'object', id: 's15', idntSheryut: 'SHR015', title: 'בקשת קו טלפון',        status: 'פתוח',  idntObjectAv: 7, ...EXEMPLAT_MFE, menuParamsList: CUS },
+  { type: 'object', id: 's16', idntSheryut: 'SHR016', title: 'משרה פנימית',          status: 'פתוח',  idntObjectAv: 8, ...EXEMPLAT_MFE, menuParamsList: EMP },
+  { type: 'object', id: 's17', idntSheryut: 'SHR017', title: 'בקשת קידום',           status: 'ממתין', idntObjectAv: 8, ...EXEMPLAT_MFE, menuParamsList: EMP },
+  { type: 'object', id: 's18', idntSheryut: 'SHR018', title: 'תיאום בדיקה רפואית',    status: 'הושלם', idntObjectAv: 9, ...EXEMPLAT_MFE, menuParamsList: BOTH },
+  { type: 'object', id: 's19', idntSheryut: 'SHR019', title: 'בקשת ייעוץ רווחה',      status: 'פתוח',  idntObjectAv: 9, ...EXEMPLAT_MFE, menuParamsList: CUS },
   // שירותי מילוי לבדיקת גלילה בקטגוריית "חופשות ונוכחות" (idntObjectAv: 1)
   ...Array.from({ length: 24 }, (_, i) => ({
     type: 'object' as const,
@@ -62,6 +69,7 @@ export const MOCK_SHERUTIM: Sherut[] = [
     status: 'פתוח' as const,
     idntObjectAv: 1,
     ...EXEMPLAT_MFE,
+    menuParamsList: EMP,
   })),
 ];
 
