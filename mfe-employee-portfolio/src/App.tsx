@@ -6,14 +6,18 @@ import TabStrip from './components/TabStrip';
 import TabContent from './components/TabContent';
 import BasicDataRow from './components/BasicDataRow';
 import EmployeeAvatar from './components/EmployeeAvatar';
+import TabDetailsPanel from './components/TabDetailsPanel';
 
 interface Props {
   navigate?: (to: string) => void;
   extendedTabDataUrl?: string | null;
   selectedActiveTab?: number;
+  // card — הכרטיס המלא (ברירת מחדל). details — רק טאבי ההרחבה והמידע שלהם, פתוחים תמיד,
+  // בלי אווטאר/שורת נתונים/חזרה/כפתור הרחבה (ה-shell מציג את פרטי העובד בהדר הפנימי של התיק).
+  variant?: 'card' | 'details';
 }
 
-const App: React.FC<Props> = ({ navigate, extendedTabDataUrl, selectedActiveTab }) => {
+const App: React.FC<Props> = ({ navigate, extendedTabDataUrl, selectedActiveTab, variant = 'card' }) => {
   const employee = useEmployee();
   const loading = useEmployeeLoading();
 
@@ -65,6 +69,28 @@ const App: React.FC<Props> = ({ navigate, extendedTabDataUrl, selectedActiveTab 
     if (activeTabData) return <BasicDataRow data={activeTabData.basicData} />;
     return <div className="flex-1 text-[#848282] text-sm">אין נתונים להצגה עבור עובד זה</div>;
   };
+
+  if (variant === 'details') {
+    return (
+      <div className="flex flex-col gap-3" style={{ fontFamily: 'Rubik, Arial, sans-serif' }} dir="rtl">
+        {tabsError ? (
+          <div className="text-[#cc0000] text-xs">שגיאה בטעינת נתונים</div>
+        ) : tabsLoading ? (
+          <div className="text-[#888888] text-xs">⏳ טוען...</div>
+        ) : tabs.length === 0 ? (
+          <div className="text-[#848282] text-sm">אין נתונים להצגה עבור עובד זה</div>
+        ) : (
+          <TabDetailsPanel
+            tabs={tabs}
+            openTabId={openTabId}
+            // תמיד יש טאב פתוח — לחיצה על הטאב הפתוח לא סוגרת אותו
+            onSelect={tab => { if (tab.id !== openTabId) toggleCard(tab); }}
+            data={openTab ? tabDataById[openTab.id] ?? null : null}
+          />
+        )}
+      </div>
+    );
+  }
 
   return (
     <div

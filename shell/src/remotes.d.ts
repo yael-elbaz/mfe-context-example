@@ -16,6 +16,7 @@ declare module 'mfe_employee_portfolio/App' {
     navigate?: (to: string) => void;
     extendedTabDataUrl?: string | null;
     selectedActiveTab?: number;
+    variant?: 'card' | 'details';
   }>;
   export default App;
 }

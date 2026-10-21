@@ -41,6 +41,8 @@
 
   /* Header — Figma 239:12058 */
   --color-header-bg:    #E7F0FA;  /* feedback/blue-subtle — רקע ההדר */
+  /* הדר פנימי של תיק העובד — אפור-תכלת, מעט כהה יותר מההדר הכללי ופחות רווי */
+  --color-portfolio-header-bg: #E0E8F1;
   --color-field-bg:     #F5F5F5;  /* Gray_3 — רקע שדה החיפוש בהדר */
   --color-field-border: #C5CBDD;  /* Gray_2 — מסגרת שדה החיפוש */
 }
