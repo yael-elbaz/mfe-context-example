@@ -6,8 +6,6 @@ import { Helper } from '../utils/urlHelper';
 import { getSherutMfeConfig, type SherutMfeConfig } from '../services/sherutimService';
 import SideNav from './SideNav';
 import EmployeePortfolioHeader from './EmployeePortfolioHeader';
-import { EmployeePortfolioAside } from './EmployeePortfolioIndex';
-import type { OpenService } from '../types/openService';
 
 const EmployeePortfolioMFE = lazy(() => import('mfe_employee_portfolio/App'));
 const SearchPersonMFE = lazy(() => import('mfe_search_employee/App'));
@@ -23,7 +21,7 @@ const PROFILES: Record<string, Omit<EmployeeProfile, 'type'>> = {
   '1008': { id: '1008', firstName: 'גל',    lastName: 'פרידמן',  yearsInCompany: 1, unit: 'צוות פיתוח',     department: 'IT',    role: 'מפתח Backend',     email: 'gal.friedman@org.co.il', phone: '050-8901234', image: 'https://i.pravatar.cc/150?img=15', skills: ['Python', 'FastAPI', 'Redis', 'PostgreSQL'] },
 };
 
-const EmployeePortfolioLayout: React.FC<{ openService?: OpenService }> = ({ openService }) => {
+const EmployeePortfolioLayout: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const employeeId = Helper.getParam('employeeId', searchParams) ?? '';
@@ -31,8 +29,6 @@ const EmployeePortfolioLayout: React.FC<{ openService?: OpenService }> = ({ open
   const [loading, setLoading] = useState(false);
   const [notFound, setNotFound] = useState(false);
 
-  // העמודה השמאלית (שירותים + תובנות) מוצגת רק בעמוד הראשי של התיק
-  const isIndex = useMatch({ path: '/employee-portfolio', end: true }) !== null;
   const sherutMatch = useMatch('/employee-portfolio/sherutim/:idntSheryut/*');
   const idntSheryut = sherutMatch?.params.idntSheryut ?? null;
   const [mfeConfig, setMfeConfig] = useState<SherutMfeConfig | null>(null);
@@ -98,21 +94,17 @@ const EmployeePortfolioLayout: React.FC<{ openService?: OpenService }> = ({ open
           )}
         </EmployeePortfolioHeader>
 
-        {/* ימין: תוכן התיק. שמאל: שירותים ותובנות */}
-        <div className={`grid flex-1 grid-cols-1 gap-4 p-4 ${isIndex ? 'lg:grid-cols-[minmax(0,1fr)_300px]' : ''}`}>
-          <div className="flex min-w-0 flex-col gap-4">
-            {notFound ? (
-              <div className="p-6 text-right text-base text-[#888]">עובד לא נמצא</div>
-            ) : loading || !employee ? (
-              <div className="p-12 text-center text-blue-heading">⏳ טוען נתוני עובד...</div>
-            ) : (
-              <div className="flex flex-1 flex-col [&>*]:flex-1">
-                <Outlet context={{ mfeConfig }} />
-              </div>
-            )}
-          </div>
-
-          {isIndex && employee && !loading && !notFound && <EmployeePortfolioAside openService={openService} />}
+        {/* תוכן התיק */}
+        <div className="flex min-w-0 flex-1 flex-col p-4">
+          {notFound ? (
+            <div className="p-6 text-right text-base text-[#888]">עובד לא נמצא</div>
+          ) : loading || !employee ? (
+            <div className="p-12 text-center text-blue-heading">⏳ טוען נתוני עובד...</div>
+          ) : (
+            <div className="flex flex-1 flex-col [&>*]:flex-1">
+              <Outlet context={{ mfeConfig }} />
+            </div>
+          )}
         </div>
       </section>
     </div>

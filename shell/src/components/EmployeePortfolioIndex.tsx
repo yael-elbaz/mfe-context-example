@@ -76,8 +76,7 @@ const SectionSlot: React.FC<{ id: string; openService?: OpenService; rows?: numb
 };
 
 /**
- * העמודה השמאלית של תיק העובד: שירותים דיגיטליים ותובנות.
- * מרונדרת ב-EmployeePortfolioLayout (ולא כאן) כדי שתתחיל מראש התיק, לצד כרטיס העובד.
+ * העמודה השמאלית של עמוד הבית בתיק העובד: שירותים דיגיטליים ותובנות.
  * שירותים — 2 שורות (4 כרטיסים נמוכים); התובנות ממלאות את השאר וגוללות בפנים.
  * רספונסיבי:
  *  - מובייל: מתחת לאובייקטים הדיגיטליים, שירותים ותובנות אחד מתחת לשני ברוחב מלא.
@@ -85,7 +84,7 @@ const SectionSlot: React.FC<{ id: string; openService?: OpenService; rows?: numb
  *  - דסקטופ (lg): עמודה צרה משמאל. h-0 + min-h-full — העמודה לא מגדילה את שורת ה-grid
  *    אלא נמתחת לגובה העמודה הימנית, וכך גלישה של התובנות הופכת לגלילה במקום להאריך את התיק.
  */
-export const EmployeePortfolioAside: React.FC<{ openService?: OpenService }> = ({ openService }) => (
+const EmployeePortfolioAside: React.FC<{ openService?: OpenService }> = ({ openService }) => (
   <aside className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2 lg:flex lg:h-0 lg:min-h-full lg:flex-col">
     <div className="min-w-0 shrink-0">
       <SectionSlot id="sherutim" openService={openService} rows={2} compact />
@@ -95,10 +94,15 @@ export const EmployeePortfolioAside: React.FC<{ openService?: OpenService }> = (
 );
 
 /**
- * עמוד הבית של תיק העובד — אובייקטים דיגיטליים, מתחת לכרטיס העובד שבעמודה הימנית של ה-Layout.
+ * עמוד הבית של תיק העובד. ימין: אובייקטים דיגיטליים. שמאל: שירותים ותובנות.
  */
 const EmployeePortfolioIndex: React.FC<{ openService?: OpenService }> = ({ openService }) => (
-  <SectionSlot id="digital-objects" openService={openService} />
+  <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
+    <div className="flex min-w-0 flex-col [&>*]:flex-1">
+      <SectionSlot id="digital-objects" openService={openService} />
+    </div>
+    <EmployeePortfolioAside openService={openService} />
+  </div>
 );
 
 export default EmployeePortfolioIndex;
