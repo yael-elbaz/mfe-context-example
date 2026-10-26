@@ -11,14 +11,14 @@ const EmployeePortfolioMFE = lazy(() => import('mfe_employee_portfolio/App'));
 const SearchPersonMFE = lazy(() => import('mfe_search_employee/App'));
 
 const PROFILES: Record<string, Omit<EmployeeProfile, 'type'>> = {
-  '1001': { id: '1001', firstName: 'דנה',   lastName: 'לוי',     yearsInCompany: 5, unit: 'צוות חשבונאות',  department: 'כספים', role: 'מנהלת חשבונות',    email: 'dana.levi@org.co.il',    phone: '054-1234567', image: 'https://i.pravatar.cc/150?img=47', skills: ['Excel', 'SAP', 'דוחות כספיים', 'ביקורת פנימית'] },
-  '1002': { id: '1002', firstName: 'יוסי',  lastName: 'כהן',     yearsInCompany: 3, unit: 'צוות גיוס',      department: 'HR',    role: 'רכז גיוס',         email: 'yossi.cohen@org.co.il',  phone: '052-2345678', image: 'https://i.pravatar.cc/150?img=12', skills: ['LinkedIn Recruiter', 'ראיונות עבודה', 'הערכת מועמדים'] },
-  '1003': { id: '1003', firstName: 'מיכל',  lastName: 'גולן',    yearsInCompany: 4, unit: 'צוות פיתוח',     department: 'IT',    role: 'מפתחת Full Stack', email: 'michal.golan@org.co.il', phone: '050-3456789', image: 'https://i.pravatar.cc/150?img=32', skills: ['React', 'Node.js', 'TypeScript', 'PostgreSQL', 'Docker'] },
-  '1004': { id: '1004', firstName: 'אבי',   lastName: 'שפירא',   yearsInCompany: 8, unit: 'צוות תקציב',     department: 'כספים', role: 'מנהל תקציב',       email: 'avi.shapira@org.co.il',  phone: '054-4567890', image: 'https://i.pravatar.cc/150?img=51', skills: ['תכנון תקציבי', 'Excel', 'Power BI', 'ניתוח כלכלי'] },
-  '1005': { id: '1005', firstName: 'רינת',  lastName: 'ברק',     yearsInCompany: 6, unit: 'הנהלת HR',       department: 'HR',    role: 'מנהלת HR',         email: 'rinat.barak@org.co.il',  phone: '052-5678901', image: 'https://i.pravatar.cc/150?img=44', skills: ['ניהול ארגוני', 'פיתוח עובדים', 'דיני עבודה', 'גיוס'] },
-  '1006': { id: '1006', firstName: 'נועם',  lastName: 'אלון',    yearsInCompany: 7, unit: 'צוות ארכיטקטורה', department: 'IT',  role: 'ארכיטקט מערכות',   email: 'noam.alon@org.co.il',    phone: '050-6789012', image: 'https://i.pravatar.cc/150?img=59', skills: ['System Design', 'Microservices', 'AWS', 'Kubernetes', 'CI/CD'] },
-  '1007': { id: '1007', firstName: 'שירה',  lastName: 'מזרחי',   yearsInCompany: 2, unit: 'צוות חשבונאות',  department: 'כספים', role: 'רואת חשבון',       email: 'shira.mizrahi@org.co.il', phone: '054-7890123', image: 'https://i.pravatar.cc/150?img=38', skills: ['ביקורת', 'IFRS', 'הנהלת חשבונות', 'מס הכנסה'] },
-  '1008': { id: '1008', firstName: 'גל',    lastName: 'פרידמן',  yearsInCompany: 1, unit: 'צוות פיתוח',     department: 'IT',    role: 'מפתח Backend',     email: 'gal.friedman@org.co.il', phone: '050-8901234', image: 'https://i.pravatar.cc/150?img=15', skills: ['Python', 'FastAPI', 'Redis', 'PostgreSQL'] },
+  '1001': { id: '1001', employeeNumber: '1001', tz: '034567891', firstName: 'דנה',   lastName: 'לוי',     yearsInCompany: 5, unit: 'צוות חשבונאות',  department: 'כספים', role: 'מנהלת חשבונות',    email: 'dana.levi@org.co.il',    phone: '054-1234567', image: 'https://i.pravatar.cc/150?img=47', skills: ['Excel', 'SAP', 'דוחות כספיים', 'ביקורת פנימית'] },
+  '1002': { id: '1002', employeeNumber: '1002', tz: '205847392', firstName: 'יוסי',  lastName: 'כהן',     yearsInCompany: 3, unit: 'צוות גיוס',      department: 'HR',    role: 'רכז גיוס',         email: 'yossi.cohen@org.co.il',  phone: '052-2345678', image: 'https://i.pravatar.cc/150?img=12', skills: ['LinkedIn Recruiter', 'ראיונות עבודה', 'הערכת מועמדים'] },
+  '1003': { id: '1003', employeeNumber: '1003', tz: '312658470', firstName: 'מיכל',  lastName: 'גולן',    yearsInCompany: 4, unit: 'צוות פיתוח',     department: 'IT',    role: 'מפתחת Full Stack', email: 'michal.golan@org.co.il', phone: '050-3456789', image: 'https://i.pravatar.cc/150?img=32', skills: ['React', 'Node.js', 'TypeScript', 'PostgreSQL', 'Docker'] },
+  '1004': { id: '1004', employeeNumber: '1004', tz: '027391846', firstName: 'אבי',   lastName: 'שפירא',   yearsInCompany: 8, unit: 'צוות תקציב',     department: 'כספים', role: 'מנהל תקציב',       email: 'avi.shapira@org.co.il',  phone: '054-4567890', image: 'https://i.pravatar.cc/150?img=51', skills: ['תכנון תקציבי', 'Excel', 'Power BI', 'ניתוח כלכלי'] },
+  '1005': { id: '1005', employeeNumber: '1005', tz: '058213647', firstName: 'רינת',  lastName: 'ברק',     yearsInCompany: 6, unit: 'הנהלת HR',       department: 'HR',    role: 'מנהלת HR',         email: 'rinat.barak@org.co.il',  phone: '052-5678901', image: 'https://i.pravatar.cc/150?img=44', skills: ['ניהול ארגוני', 'פיתוח עובדים', 'דיני עבודה', 'גיוס'] },
+  '1006': { id: '1006', employeeNumber: '1006', tz: '301472958', firstName: 'נועם',  lastName: 'אלון',    yearsInCompany: 7, unit: 'צוות ארכיטקטורה', department: 'IT',  role: 'ארכיטקט מערכות',   email: 'noam.alon@org.co.il',    phone: '050-6789012', image: 'https://i.pravatar.cc/150?img=59', skills: ['System Design', 'Microservices', 'AWS', 'Kubernetes', 'CI/CD'] },
+  '1007': { id: '1007', employeeNumber: '1007', tz: '209384715', firstName: 'שירה',  lastName: 'מזרחי',   yearsInCompany: 2, unit: 'צוות חשבונאות',  department: 'כספים', role: 'רואת חשבון',       email: 'shira.mizrahi@org.co.il', phone: '054-7890123', image: 'https://i.pravatar.cc/150?img=38', skills: ['ביקורת', 'IFRS', 'הנהלת חשבונות', 'מס הכנסה'] },
+  '1008': { id: '1008', employeeNumber: '1008', tz: '318205496', firstName: 'גל',    lastName: 'פרידמן',  yearsInCompany: 1, unit: 'צוות פיתוח',     department: 'IT',    role: 'מפתח Backend',     email: 'gal.friedman@org.co.il', phone: '050-8901234', image: 'https://i.pravatar.cc/150?img=15', skills: ['Python', 'FastAPI', 'Redis', 'PostgreSQL'] },
 };
 
 const EmployeePortfolioLayout: React.FC = () => {
@@ -78,8 +78,8 @@ const EmployeePortfolioLayout: React.FC = () => {
 
       {/* מסגרת תיק העובד — שמאל */}
       <section className="flex min-h-[calc(100vh_-_var(--header-height)_-_40px)] min-w-0 flex-1 flex-col overflow-clip rounded-xl border border-gray-2 border-t-4 border-t-active bg-[#F6F9FC]">
-        {/* הדר פנימי: פרטי העובד העיקריים; ריחוף מציף את הכרטיס, ואפשר לנעוץ אותו */}
-        <EmployeePortfolioHeader employee={loading ? null : employee} onClose={closePortfolio} openSherutId={idntSheryut}>
+        {/* הדר פנימי: פרטי הזיהוי של העובד, ומתחתיו הטאבים והמידע של הטאב הפעיל */}
+        <EmployeePortfolioHeader employee={loading ? null : employee} onClose={closePortfolio}>
           {loading ? (
             <div className="p-5 text-center text-[#888]">⏳ טוען...</div>
           ) : (

@@ -12,8 +12,8 @@ interface Props {
   navigate?: (to: string) => void;
   extendedTabDataUrl?: string | null;
   selectedActiveTab?: number;
-  // card — הכרטיס המלא (ברירת מחדל). details — רק טאבי ההרחבה והמידע שלהם, פתוחים תמיד,
-  // בלי אווטאר/שורת נתונים/חזרה/כפתור הרחבה (ה-shell מציג את פרטי העובד בהדר הפנימי של התיק).
+  // card — הכרטיס המלא (ברירת מחדל). details — הטאבים והמידע של הטאב הפעיל, גלויים תמיד,
+  // בלי אווטאר/חזרה/כפתור הרחבה (ה-shell מציג את פרטי הזיהוי של העובד בהדר הפנימי של התיק).
   variant?: 'card' | 'details';
 }
 
@@ -85,7 +85,7 @@ const App: React.FC<Props> = ({ navigate, extendedTabDataUrl, selectedActiveTab,
             openTabId={openTabId}
             // תמיד יש טאב פתוח — לחיצה על הטאב הפתוח לא סוגרת אותו
             onSelect={tab => { if (tab.id !== openTabId) toggleCard(tab); }}
-            data={openTab ? tabDataById[openTab.id] ?? null : null}
+            dataById={tabDataById}
           />
         )}
       </div>

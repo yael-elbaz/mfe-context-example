@@ -25,8 +25,8 @@ const MOCK_INSIGHTS = [
 ];
 
 /**
- * תובנות — placeholder עד שיהיה MFE ייעודי.
- * ממלא את שארית גובה העמודה; אם התוכן גולש — גלילה פנימית ברשימה.
+ * תובנות — placeholder עד שיהיה MFE ווידג'טים ייעודי.
+ * ממלא את כל גובה העמודה השמאלית.
  */
 const InsightsCard: React.FC = () => (
   <section className="flex min-h-0 flex-1 flex-col gap-3 rounded-lg border border-[#E2E8F0] bg-white p-4" dir="rtl">
@@ -76,32 +76,26 @@ const SectionSlot: React.FC<{ id: string; openService?: OpenService; rows?: numb
 };
 
 /**
- * העמודה השמאלית של עמוד הבית בתיק העובד: שירותים דיגיטליים ותובנות.
- * שירותים — 2 שורות (4 כרטיסים נמוכים); התובנות ממלאות את השאר וגוללות בפנים.
- * רספונסיבי:
- *  - מובייל: מתחת לאובייקטים הדיגיטליים, שירותים ותובנות אחד מתחת לשני ברוחב מלא.
- *  - טאבלט (md): מתחת לאובייקטים הדיגיטליים, זה לצד זה — 50% כל אחד.
- *  - דסקטופ (lg): עמודה צרה משמאל. h-0 + min-h-full — העמודה לא מגדילה את שורת ה-grid
- *    אלא נמתחת לגובה העמודה הימנית, וכך גלישה של התובנות הופכת לגלילה במקום להאריך את התיק.
- */
-const EmployeePortfolioAside: React.FC<{ openService?: OpenService }> = ({ openService }) => (
-  <aside className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2 lg:flex lg:h-0 lg:min-h-full lg:flex-col">
-    <div className="min-w-0 shrink-0">
-      <SectionSlot id="sherutim" openService={openService} rows={2} compact />
-    </div>
-    <InsightsCard />
-  </aside>
-);
-
-/**
- * עמוד הבית של תיק העובד. ימין: אובייקטים דיגיטליים. שמאל: שירותים ותובנות.
+ * עמוד הבית של תיק העובד.
+ *  ימין — אובייקטים דיגיטליים, ומתחתם שירותים דיגיטליים באותו רוחב (שורה אחת של כרטיסים נמוכים;
+ *         מספר הכרטיסים נגזר מהרוחב).
+ *  שמאל — הווידג'טים (כרגע התובנות) לכל גובה העמוד. רבע מהרוחב; אובייקטים ושירותים — שלושה רבעים.
+ * שתי העמודות נמתחות לגובה הגבוהה מביניהן; האובייקטים הדיגיטליים ממלאים את הגובה שנשאר מעל השירותים.
+ * מובייל/טאבלט: הכל בעמודה אחת — אובייקטים, שירותים, ווידג'טים.
  */
 const EmployeePortfolioIndex: React.FC<{ openService?: OpenService }> = ({ openService }) => (
-  <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
-    <div className="flex min-w-0 flex-col [&>*]:flex-1">
-      <SectionSlot id="digital-objects" openService={openService} />
+  <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,1fr)]">
+    <div className="flex min-w-0 flex-col gap-4">
+      <div className="flex min-w-0 flex-1 flex-col [&>*]:flex-1">
+        <SectionSlot id="digital-objects" openService={openService} />
+      </div>
+      <div className="min-w-0 shrink-0">
+        <SectionSlot id="sherutim" openService={openService} rows={1} compact />
+      </div>
     </div>
-    <EmployeePortfolioAside openService={openService} />
+    <aside className="flex min-w-0 flex-col">
+      <InsightsCard />
+    </aside>
   </div>
 );
 
