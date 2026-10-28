@@ -5,11 +5,16 @@ interface Props {
   tabs: TabConfig[];
   openTabId: number | null;
   onSelect: (tab: TabConfig) => void;
+  /** cards — bordered cards (the card variant). underline — flat tabs with a colored underline. */
+  look?: 'cards' | 'underline';
+  /** Alert count per tab id, shown as a red badge on the tab. */
+  badges?: Record<number, number>;
 }
 
-// Horizontal, scrollable row of tab cards. Shows left/right arrows only when the
-// cards overflow the available width.
-const TabStrip: React.FC<Props> = ({ tabs, openTabId, onSelect }) => {
+// Horizontal, scrollable row of tabs. Shows left/right arrows only when the
+// tabs overflow the available width.
+const TabStrip: React.FC<Props> = ({ tabs, openTabId, onSelect, look = 'cards', badges }) => {
+  const underline = look === 'underline';
   const scrollRef = useRef<HTMLDivElement>(null);
   const [overflow, setOverflow] = useState(false);
 
@@ -45,30 +50,44 @@ const TabStrip: React.FC<Props> = ({ tabs, openTabId, onSelect }) => {
 
       <div
         ref={scrollRef}
-        className="flex-1 flex flex-row gap-2 overflow-x-auto scroll-smooth"
+        className={`flex-1 flex flex-row ${underline ? 'gap-1' : 'gap-2'} overflow-x-auto scroll-smooth`}
         style={{ scrollbarWidth: 'none' }}
       >
         {tabs.map(tab => {
           const isOpen = tab.id === openTabId;
+          const alerts = badges?.[tab.id] ?? 0;
           return (
             <button
               key={tab.id}
               onClick={() => onSelect(tab)}
-              className="shrink-0 flex items-center gap-2 px-3 py-2 rounded-lg border bg-white cursor-pointer font-[inherit] whitespace-nowrap"
-              style={{
-                borderColor: isOpen ? tab.color : '#E8EAF0',
-                borderRightWidth: '4px',
-                borderRightColor: tab.color,
-                background: isOpen ? `${tab.color}14` : '#FFFFFF',
-              }}
+              aria-pressed={isOpen}
+              className={underline
+                ? 'shrink-0 flex items-center gap-1.5 px-3 pt-2.5 pb-2 border-0 border-b-[3px] border-solid bg-transparent cursor-pointer font-[inherit] whitespace-nowrap hover:bg-[#F0F2F8]'
+                : 'shrink-0 flex items-center gap-2 px-3 py-2 rounded-lg border bg-white cursor-pointer font-[inherit] whitespace-nowrap'}
+              style={underline
+                ? { borderBottomColor: isOpen ? tab.color : 'transparent' }
+                : {
+                    borderColor: isOpen ? tab.color : '#E8EAF0',
+                    borderRightWidth: '4px',
+                    borderRightColor: tab.color,
+                    background: isOpen ? `${tab.color}14` : '#FFFFFF',
+                  }}
             >
               {tab.iconUrl && <img src={tab.iconUrl} alt="" className="w-4 h-4" />}
               <span
                 className={`text-[13px] ${isOpen ? 'font-semibold' : 'font-normal'}`}
-                style={{ color: tab.color }}
+                style={{ color: underline && !isOpen ? '#4A4F66' : tab.color }}
               >
                 {tab.title || tab.displayName}
               </span>
+              {alerts > 0 && (
+                <span
+                  title="התראות"
+                  className="grid h-4 min-w-4 place-items-center rounded-full bg-[#E02424] px-1 text-[10px] font-semibold text-white"
+                >
+                  {alerts}
+                </span>
+              )}
             </button>
           );
         })}

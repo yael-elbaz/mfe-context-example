@@ -16,6 +16,7 @@ declare module 'mfe_employee_portfolio/App' {
     navigate?: (to: string) => void;
     extendedTabDataUrl?: string | null;
     selectedActiveTab?: number;
+    variant?: 'card' | 'details';
   }>;
   export default App;
 }
@@ -44,6 +45,7 @@ declare module 'mfe_sherutim/Preview' {
   const Preview: React.ComponentType<{
     openService?: import('./types/openService').OpenService;
     employeeId?: string;
+    objectType?: import('./types/openService').PersonType | null;
     onShowAll?: () => void;
   }>;
   export default Preview;
@@ -53,7 +55,9 @@ declare module 'mfe_sherutim/Full' {
   const Full: React.ComponentType<{
     openService?: import('./types/openService').OpenService;
     employeeId?: string;
+    objectType?: import('./types/openService').PersonType | null;
     navigate?: (to: string) => void;
+    onBack?: () => void;
   }>;
   export default Full;
 }

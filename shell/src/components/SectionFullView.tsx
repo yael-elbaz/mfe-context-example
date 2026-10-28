@@ -2,12 +2,14 @@ import React, { Suspense } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { SECTIONS } from '../employeeSections';
 import type { OpenService } from '../types/openService';
+import { useSelectedPersonType } from '../store/personStore';
 
 const SectionFullView: React.FC<{ openService?: OpenService }> = ({ openService }) => {
   const { section } = useParams<{ section: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const employeeId = searchParams.get('employeeId') ?? '';
+  const objectType = useSelectedPersonType();
   const match = SECTIONS.find(s => s.id === section);
 
   if (!match) return (
@@ -23,6 +25,7 @@ const SectionFullView: React.FC<{ openService?: OpenService }> = ({ openService 
       <match.Full
         openService={openService}
         employeeId={employeeId}
+        objectType={objectType}
         navigate={navigate}
         onFocusItem={(itemId, iframeUrl) => navigate(`/employee-portfolio/${match.id}/${itemId}${search}`, { state: { iframeUrl } })}
       />

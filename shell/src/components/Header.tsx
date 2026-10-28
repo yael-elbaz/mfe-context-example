@@ -135,6 +135,7 @@ export const Header: React.FC = () => (
     {/* Top Bar — Figma 239:13276 */}
     <div className="flex min-w-px flex-1 items-center justify-between px-10 py-2 drop-shadow-[0px_3px_0.3px_rgba(0,0,0,0.02)]">
       <div className="flex items-center gap-4 self-stretch">
+        {/* Line 923 — קו מפריד אנכי */}
         <span aria-hidden className="w-px shrink-0 self-stretch bg-gray-placeholder" />
 
         <div className="flex shrink-0 items-center gap-[15px]">

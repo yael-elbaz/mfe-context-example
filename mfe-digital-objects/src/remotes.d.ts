@@ -1,6 +1,8 @@
 declare module 'shell/employeeStore' {
   export interface EmployeeProfile {
     id: string;
+    employeeNumber: string;
+    tz: string;
     firstName: string;
     lastName: string;
     yearsInCompany: number;

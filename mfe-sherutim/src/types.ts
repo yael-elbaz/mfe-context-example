@@ -4,6 +4,23 @@ export type ServiceMeta = {
 
 export type OpenService = (meta: any) => void;
 
+// סוג האדם הנבחר כפי שה-shell שולח אותו ('employee' | 'customer' ...)
+export type PersonType = 'employee' | 'customer' | 'mishtamesh';
+
+// קוד ה-objectType כפי שהוא מופיע ב-parameterValue של השרת (תואם ל-OBJECT_TYPE ב-shell)
+export const OBJECT_TYPE_CODE: Record<PersonType, string> = {
+  employee: '1',
+  customer: '2',
+  mishtamesh: '3',
+};
+
+// פרמטר של שירות. מפתח יכול לחזור כמה פעמים — למשל objectType פעם לעובד ופעם ללקוח
+export interface MenuParam {
+  codeSugParameter: string;
+  parameterKey: string;
+  parameterValue: string;
+}
+
 // כל הפריטים מגיעים מהשרת ברשימה אחת; מבדילים לפי type:
 // 'self' = קטגוריה, 'object' = שירות רגיל. קטגוריה מקבצת שירותים לפי idntObjectAv === idntObject
 export interface SherutCategory {
@@ -24,6 +41,7 @@ export interface Sherut {
   mfeScope: string;
   mfeModule: string;
   idntObjectAv: number;
+  menuParamsList: MenuParam[];
 }
 
 export type SherutimItem = SherutCategory | Sherut;
