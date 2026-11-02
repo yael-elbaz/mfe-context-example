@@ -80,7 +80,7 @@ const RouterApp: React.FC = () => {
               <Route path="*" element={<SherutDynamicView />} />
             </Route>
             {/* <Route path="/employee-portfolio" element={<EmployeePortfolioExternalRedirect />}> */}
-              <Route  path="/employee-portfolio" element={<Padded><EmployeePortfolioLayout openService={openService} /></Padded>}>
+              <Route  path="/employee-portfolio" element={<Padded><EmployeePortfolioLayout /></Padded>}>
                 <Route index element={<EmployeePortfolioIndex openService={openService} />} />
                 <Route path="sherutim/:idntSheryut/*" element={<SherutDynamicView />} />
                 <Route path=":section/:itemId" element={<ExternalIframeView />} />

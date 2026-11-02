@@ -9,6 +9,10 @@ export interface SectionProps {
   navigate?: (to: string) => void;
   onShowAll?: () => void;
   onFocusItem?: (id: string, iframeUrl?: string) => void;
+  // מספר שורות כרטיסים (נתמך ב-sherutim Preview)
+  rows?: number;
+  // כרטיסים נמוכים (נתמך ב-sherutim Preview)
+  compact?: boolean;
 }
 
 export interface Section {

@@ -11,11 +11,17 @@ interface Props {
   // סוג האדם הנבחר (נשלח מה-shell) — מסנן את השירותים לפי objectType. בלי ערך מוצגים כולם
   objectType?: PersonType | null;
   onShowAll?: () => void;
+  // מספר שורות כרטיסים (ברירת מחדל: שורה אחת, כמו בדף הבית). בעמודה צרה — 2 שורות
+  rows?: number;
+  // כרטיסים נמוכים (104 במקום 184) — לעמודה הצרה בתיק העובד
+  compact?: boolean;
 }
 
 // רוחב מינימלי של כרטיס שירות והמרווח ביניהם (לפי העיצוב: 6 כרטיסים ברוחב 905) —
 // משמשים לחישוב כמה כרטיסים נכנסים בשורה אחת. הכרטיסים עצמם נמתחים (flex-1).
 const CARD_WIDTH = 137.5;
+// כרטיס נמוך (compact) — גם צר יותר ב-1/6, לעמודה הצרה (300px) בתיק העובד
+const COMPACT_CARD_WIDTH = 115;
 const CARD_GAP = 16;
 
 function param(key: string, value: string) {
@@ -33,7 +39,7 @@ function makeCall(params: Record<string, string>, url?: string) {
   };
 }
 
-const Preview: React.FC<Props> = ({ openService, employeeId = '', objectType, onShowAll }) => {
+const Preview: React.FC<Props> = ({ openService, employeeId = '', objectType, onShowAll, rows = 1, compact = false }) => {
   const { categories, sherutim, favorites } = useSherutim(objectType);
 
   // מיפוי idntObject -> קטגוריה, כדי למצוא את אייקון הקטגוריה של כל שירות
@@ -45,22 +51,24 @@ const Preview: React.FC<Props> = ({ openService, employeeId = '', objectType, on
 
   // מודדים את רוחב המכל כדי לקבוע כמה כרטיסים נכנסים בשורה אחת בלבד.
   const rowRef = useRef<HTMLDivElement>(null);
-  const [visibleCount, setVisibleCount] = useState(0);
+  const [columns, setColumns] = useState(0);
+  const visibleCount = columns * rows;
 
   useEffect(() => {
     const el = rowRef.current;
     if (!el) return;
+    const cardWidth = compact ? COMPACT_CARD_WIDTH : CARD_WIDTH;
     const measure = () => {
       const width = el.clientWidth;
       if (width <= 0) return;
-      const fit = Math.floor((width + CARD_GAP) / (CARD_WIDTH + CARD_GAP));
-      setVisibleCount(Math.max(1, fit));
+      const fit = Math.floor((width + CARD_GAP) / (cardWidth + CARD_GAP));
+      setColumns(Math.max(1, fit));
     };
     measure();
     const ro = new ResizeObserver(measure);
     ro.observe(el);
     return () => ro.disconnect();
-  }, []);
+  }, [compact]);
 
   // רשימת התצוגה: קודם המועדפים (לפי הסדר שהגיע), ואז שאר השירותים
   // לפי סדר ה-endpoint — בלי לחזור על אותו שירות פעמיים.
@@ -95,14 +103,19 @@ const Preview: React.FC<Props> = ({ openService, employeeId = '', objectType, on
         actions={<OptionsButton />}
         onLinkClick={() => onShowAll?.()}
       >
-        {/* שורה אחת בלבד — מספר הכרטיסים נגזר מרוחב המסך. flexWrap מושבת כדי למנוע גלישה */}
-        <div ref={rowRef} className="flex w-full items-start justify-end gap-4 overflow-hidden">
+        {/* מספר העמודות נגזר מרוחב המסך, ומספר השורות מ-rows — ללא גלישה מעבר לכך */}
+        <div
+          ref={rowRef}
+          className="grid w-full gap-4 overflow-hidden"
+          style={{ gridTemplateColumns: `repeat(${Math.max(1, columns)}, minmax(0, 1fr))` }}
+        >
           {visibleSherutim.map(s => (
             <SherutCard
               key={s.id}
               title={s.title}
               status={s.status}
               favorite={s.isFavorite}
+              compact={compact}
               categoryIconUrl={categoryByIdnt.get(s.idntObjectAv)?.iconUrl}
               onClick={() => openService?.(makeCall(
                 { type: 'sherut', id: employeeId, idntSheryut: s.idntSheryut, scope: s.mfeScope, module: s.mfeModule },

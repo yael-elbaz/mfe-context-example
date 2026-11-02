@@ -1,4 +1,24 @@
-@import "tailwindcss";
+/* ------------------------------------------------------------------
+   Tailwind מיובא כאן בצורה המפורקת ולא כ-@import "tailwindcss" יחיד.
+   ההבדל היחיד מהברירת מחדל: ה-utilities יוצאים **מחוץ** ל-@layer.
+
+   למה: כל MFE נבנה עם Tailwind משלו, ו-Module Federation מזריק את ה-CSS
+   שלו למסמך אחרי זה של ה-shell. גם שם ה-utilities יושבים ב-@layer
+   utilities — אותה שכבה בדיוק — ולכן הכלל המאוחר מנצח: mfe-sherutim מגדיר
+   .hidden{display:none} ו-mfe-tasks מגדיר .flex{display:flex}, והם דרסו
+   את md:block / md:hidden של ההדר והשאירו אותו במצב מצומצם גם ב-1300px.
+
+   לפי מפרט cascade layers, כלל לא-משוכב מנצח כל כלל משוכב — בלי קשר לסדר
+   הטעינה. מרגע שה-utilities של ה-shell מחוץ לשכבה, שום MFE לא יכול לדרוס
+   אותם, ואפשר לכתוב mobile-first רגיל (hidden md:block) בלי עקיפות.
+
+   ⚠ הסדר כאן מחייב: @layer חייב להופיע לפני @import לפי מפרט CSS.
+   ------------------------------------------------------------------ */
+@layer theme, base, components;
+
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/preflight.css" layer(base);
+@import "tailwindcss/utilities.css";
 
 /* פונטים נטענים דינמית מ-loadFonts.ts לפי ה-env */
 
@@ -41,6 +61,8 @@
 
   /* Header — Figma 239:12058 */
   --color-header-bg:    #E7F0FA;  /* feedback/blue-subtle — רקע ההדר */
+  /* הדר פנימי של תיק העובד — אפור-תכלת, מעט כהה יותר מההדר הכללי ופחות רווי */
+  --color-portfolio-header-bg: #E0E8F1;
   --color-field-bg:     #F5F5F5;  /* Gray_3 — רקע שדה החיפוש בהדר */
   --color-field-border: #C5CBDD;  /* Gray_2 — מסגרת שדה החיפוש */
 }

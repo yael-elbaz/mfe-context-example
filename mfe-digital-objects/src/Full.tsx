@@ -74,7 +74,8 @@ const Full: React.FC<Props> = ({ employeeId, navigate, onFocusItem }) => {
   });
 
   return (
-    <div style={{ background: '#fff', borderRadius: '12px', padding: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+    <div style={{ background: '#fff', borderRadius: '8px', padding: '16px', border: '1px solid #E2E8F0', boxSizing: 'border-box' }}>
+      {/* מסגרת זהה למקטעי דף הבית (SectionCard): פינות 8, מסגרת #E2E8F0, ריפוד 16, בלי צל */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', direction: 'rtl' }}>
         <h2 style={{ margin: 0, color: '#1E3BA2', fontSize: '18px' }}>
           אובייקטים דיגיטליים — {employee.firstName} {employee.lastName}

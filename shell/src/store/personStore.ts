@@ -3,6 +3,8 @@ import { create } from 'zustand';
 export interface EmployeeProfile {
   type: 'employee';
   id: string;
+  employeeNumber: string; // מס׳ עובד
+  tz: string;             // תעודת זהות
   firstName: string;
   lastName: string;
   yearsInCompany: number;
