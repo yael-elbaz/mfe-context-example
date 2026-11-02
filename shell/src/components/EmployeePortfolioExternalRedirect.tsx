@@ -2,7 +2,8 @@ import React, { useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 /**
- * TEMP: בכל ניווט לכל מסך תחת /employee-portfolio (תיק עובד, כולל תתי-מסלולים)
+ * TEMP: בכל ניווט לכל מסך תחת /employee-portfolio או /customer-portfolio
+ * (תיק עובד / תיק לקוח, כולל תתי-מסלולים)
  * נפתחת לשונית חדשה עם אותו URL אך על דומיין אחר, והלשונית הנוכחית מנווטת
  * חזרה לדף הבית (התיק עצמו לא מוצג כאן).
  *
@@ -24,9 +25,10 @@ const EmployeePortfolioExternalRedirect: React.FC = () => {
 
     // האפליקציה הישנה (הדומיין החיצוני) פותחת שירות בלי מקטע "sherutim":
     // /employee-portfolio/sherutim/:idntSheryut  ->  /employee-portfolio/:idntSheryut
+    // /customer-portfolio/sherutim/:idntSheryut  ->  /customer-portfolio/:idntSheryut
     const legacyPath = location.pathname.replace(
-      '/employee-portfolio/sherutim/',
-      '/employee-portfolio/'
+      /\/(employee-portfolio|customer-portfolio)\/sherutim\//,
+      '/$1/'
     );
 
     const sameUrlOtherDomain =

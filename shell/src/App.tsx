@@ -67,10 +67,12 @@ const RouterApp: React.FC = () => {
           <Routes>
             <Route path="/" element={<HomePage openService={openService} />} />
             <Route path="/select-employee" element={<Padded><SelectEmployeePage /></Padded>} />
-            <Route path="/customer-portfolio" element={<Padded><CustomerPortfolioLayout /></Padded>}>
-              <Route index element={<CustomerSherutimPreview openService={openService} />} />
-              <Route path="sherutim" element={<CustomerSherutimFull openService={openService} />} />
-            </Route>
+            {/* <Route path="/customer-portfolio" element={<EmployeePortfolioExternalRedirect />}> */}
+              <Route path="/customer-portfolio" element={<Padded><CustomerPortfolioLayout /></Padded>}>
+                <Route index element={<CustomerSherutimPreview openService={openService} />} />
+                <Route path="sherutim" element={<CustomerSherutimFull openService={openService} />} />
+              </Route>
+            {/* </Route> */}
             <Route path="/sherutim" element={
               <Padded>{mfe('טוען שירותים...', SherutimFullMFE, { openService, navigate })}</Padded>
             } />
