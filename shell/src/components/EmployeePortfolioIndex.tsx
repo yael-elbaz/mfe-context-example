@@ -4,9 +4,10 @@ import { SECTIONS, type Section } from '../employeeSections';
 import type { OpenService } from '../types/openService';
 import { useSelectedPersonType } from '../store/personStore';
 
-const SECTION_SHOW_ALL: Record<string, (navigate: ReturnType<typeof useNavigate>, search: string) => void> = {
-  sherutim: (navigate, search) => navigate(`/employee-portfolio/sherutim${search}`),
-  'digital-objects': (navigate, search) => navigate(`/employee-portfolio/digital-objects${search}`),
+// מעבר למצב מלא. previewState (אם ה-Preview העביר) נשמר ב-state של הניווט ו-SectionFullView מעביר אותו ל-Full
+const SECTION_SHOW_ALL: Record<string, (navigate: ReturnType<typeof useNavigate>, search: string, previewState?: unknown) => void> = {
+  sherutim: (navigate, search, previewState) => navigate(`/employee-portfolio/sherutim${search}`, { state: { previewState } }),
+  'digital-objects': (navigate, search, previewState) => navigate(`/employee-portfolio/digital-objects${search}`, { state: { previewState } }),
 };
 
 const SECTION_FOCUS_ITEM: Record<string, (navigate: ReturnType<typeof useNavigate>, search: string, itemId: string, iframeUrl?: string) => void> = {
@@ -68,7 +69,7 @@ const SectionSlot: React.FC<{ id: string; openService?: OpenService; rows?: numb
         objectType={objectType}
         rows={rows}
         compact={compact}
-        onShowAll={showAll ? () => showAll(navigate, search) : undefined}
+        onShowAll={showAll ? (previewState) => showAll(navigate, search, previewState) : undefined}
         onFocusItem={focusItem ? (itemId, iframeUrl) => focusItem(navigate, search, itemId, iframeUrl) : undefined}
       />
     </Suspense>

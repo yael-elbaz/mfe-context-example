@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { useEmployee } from 'shell/employeeStore';
-import { MOCK_OBJECTS, STATUS_STYLE, DigitalObject } from './shared';
+import { MOCK_OBJECTS, STATUS_STYLE, DigitalObject, DigitalObjectsPreviewState } from './shared';
 import { useIframeFocusEvent } from './useIframeFocusEvent';
+import SectionCard from 'shell/SectionCard';
+import FilterButton from './FilterButton';
 
 // דמו בלבד: מייצר URL שניתן להטמעה ב-iframe מקומית, במקום ה-URL האמיתי
 // שיגיע מאירוע ה-iframe בסביבה האמיתית.
@@ -15,7 +17,8 @@ const demoUrl = (obj: DigitalObject) =>
 
 interface Props {
   employeeId?: string;
-  onShowAll?: () => void;
+  // מעבר למצב מלא; state מגיע ל-Full כ-previewState (ראו DigitalObjectsPreviewState)
+  onShowAll?: (state?: DigitalObjectsPreviewState) => void;
   onFocusItem?: (id: string, iframeUrl?: string) => void;
 }
 
@@ -70,36 +73,34 @@ const Preview: React.FC<Props> = ({ onShowAll, onFocusItem }) => {
   const preview = filtered.slice(0, 3);
 
   return (
-    <div style={{ background: '#fff', borderRadius: '8px', padding: '16px', border: '1px solid #E2E8F0', boxSizing: 'border-box' }}>
-      {/* מסגרת זהה למקטעי דף הבית (SectionCard): פינות 8, מסגרת #E2E8F0, ריפוד 16, בלי צל */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', direction: 'rtl' }}>
-        <h3 style={{ margin: 0, color: '#1E3BA2', fontSize: '16px' }}>אובייקטים דיגיטליים</h3>
-        <button
-          onClick={() => onShowAll?.()}
-          style={{ background: 'none', border: '1px solid #1E3BA2', color: '#1E3BA2', borderRadius: '8px', padding: '4px 12px', cursor: 'pointer', fontSize: '13px' }}
-        >
-          הצג הכל
-        </button>
+    <SectionCard
+      title="אובייקטים דיגיטליים"
+      count={filtered.length}
+      countLabel="פריטים"
+      onShowAll={onShowAll}
+    >
+      <div style={{ width: '100%' }}>
+      <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '10px', direction: 'rtl' }}>
+        <FilterButton onClick={() => onShowAll?.({ filtersOpen: true })} />
+        <input
+          type="text"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="חיפוש..."
+          style={{
+            flex: '1',
+            minWidth: 0,
+            padding: '8px 12px',
+            border: '1px solid #C5CBDD',
+            borderRadius: '8px',
+            fontSize: '13px',
+            color: '#00033D',
+            direction: 'rtl',
+            outline: 'none',
+            boxSizing: 'border-box',
+          }}
+        />
       </div>
-
-      <input
-        type="text"
-        value={search}
-        onChange={e => setSearch(e.target.value)}
-        placeholder="חיפוש..."
-        style={{
-          width: '100%',
-          padding: '8px 12px',
-          border: '1px solid #C5CBDD',
-          borderRadius: '8px',
-          fontSize: '13px',
-          color: '#00033D',
-          direction: 'rtl',
-          outline: 'none',
-          boxSizing: 'border-box',
-          marginBottom: '10px',
-        }}
-      />
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
         {preview.length === 0
@@ -113,7 +114,8 @@ const Preview: React.FC<Props> = ({ onShowAll, onFocusItem }) => {
           ועוד {filtered.length - 3} פריטים נוספים
         </div>
       )}
-    </div>
+      </div>
+    </SectionCard>
   );
 };
 

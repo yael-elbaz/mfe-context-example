@@ -13,7 +13,7 @@ interface Props {
   objectType?: PersonType | null;
   navigate?: (to: string) => void;
   // כפתור "חזרה" — כשלא מועבר, חוזרים לתיק העובד (או לדף הבית)
-  onBack?: () => void;
+  backToPreview?: () => void;
 }
 
 function param(key: string, value: string) {
@@ -177,7 +177,7 @@ const EmptyFavorites: React.FC = () => (
 
 /* ===================== Full ===================== */
 
-const Full: React.FC<Props> = ({ openService, employeeId = '', objectType, navigate, onBack }) => {
+const Full: React.FC<Props> = ({ openService, employeeId = '', objectType, navigate, backToPreview }) => {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>(FAVORITES_ID);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -264,7 +264,7 @@ const Full: React.FC<Props> = ({ openService, employeeId = '', objectType, navig
           />
         </div>
         <button
-          onClick={() => onBack ? onBack() : navigate?.(employeeId ? `/employee-portfolio?employeeId=${employeeId}` : '/')}
+          onClick={() => backToPreview ? backToPreview() : navigate?.(employeeId ? `/employee-portfolio?employeeId=${employeeId}` : '/')}
           className="h-[41px] px-5 rounded-full bg-white border border-[#A0AEC0] text-[#00033D] text-[14px] hover:border-[#2B7FFF] transition-colors"
         >
           ← חזרה

@@ -25,7 +25,7 @@ declare module 'mfe_digital_objects/Preview' {
   const Preview: React.ComponentType<{
     openService?: import('./types/openService').OpenService;
     employeeId?: string;
-    onShowAll?: () => void;
+    onShowAll?: (state?: unknown) => void;
     onFocusItem?: (id: string, iframeUrl?: string) => void;
   }>;
   export default Preview;
@@ -35,8 +35,9 @@ declare module 'mfe_digital_objects/Full' {
   const Full: React.ComponentType<{
     openService?: import('./types/openService').OpenService;
     employeeId?: string;
-    navigate?: (to: string) => void;
+    backToPreview?: () => void;
     onFocusItem?: (id: string, iframeUrl?: string) => void;
+    previewState?: unknown;
   }>;
   export default Full;
 }
@@ -57,7 +58,7 @@ declare module 'mfe_sherutim/Full' {
     employeeId?: string;
     objectType?: import('./types/openService').PersonType | null;
     navigate?: (to: string) => void;
-    onBack?: () => void;
+    backToPreview?: () => void;
   }>;
   export default Full;
 }

@@ -7,7 +7,16 @@ export interface SectionProps {
   // סוג האדם הנבחר — MFE שתומך בזה (sherutim) מסנן לפיו את הרשימה
   objectType?: PersonType | null;
   navigate?: (to: string) => void;
-  onShowAll?: () => void;
+  /**
+   * מעבר ממצב preview למצב מלא. ה-Preview יכול להעביר state כלשהו (למשל { filtersOpen: true }),
+   * שנשמר ב-state של הניווט ומגיע ל-Full כ-previewState.
+   * חייב להיות נתון פשוט (נשמר ב-history) — בלי פונקציות.
+   */
+  onShowAll?: (state?: unknown) => void;
+  // ה-state שה-Preview העביר ב-onShowAll (undefined אם נכנסו ישירות ל-URL)
+  previewState?: unknown;
+  // "חזרה" ממצב מלא לתיק העובד — מוגדר ב-SectionFullView
+  backToPreview?: () => void;
   onFocusItem?: (id: string, iframeUrl?: string) => void;
   // מספר שורות כרטיסים (נתמך ב-sherutim Preview)
   rows?: number;

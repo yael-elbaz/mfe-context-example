@@ -47,12 +47,16 @@ declare module 'shell/SectionCard' {
 
   export interface SectionCardProps {
     title: string;
-    linkLabel: string;
+    /** ברירת מחדל: "הצג הכל" ב-preview, "חזרה" במצב מלא */
+    linkLabel?: string;
     count: number;
     countLabel: string;
     /** סלוט פעולות בהדר — פילטר, options, או כל שילוב. */
     actions?: React.ReactNode;
-    onLinkClick?: () => void;
+    /** מצב preview — הקישור בהדר עובר למצב מלא */
+    onShowAll?: () => void;
+    /** מצב מלא — הקישור בהדר חוזר ל-preview */
+    backToPreview?: () => void;
     children: React.ReactNode;
   }
 

@@ -34,6 +34,6 @@ export const CustomerSherutimFull: React.FC<{ openService?: OpenService }> = ({ 
     employeeId: customerId,
     objectType,
     navigate,
-    onBack: () => navigate(`/customer-portfolio?${searchParams.toString()}`),
+    backToPreview: () => navigate(`/customer-portfolio?${searchParams.toString()}`),
   });
 };

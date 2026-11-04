@@ -16,6 +16,17 @@ const DiagonalArrowIcon: React.FC = () => (
   </span>
 );
 
+/** חץ "חזרה" — מצביע ימינה (תחילת השורה ב-RTL), באותו tile 40×40 כמו ה-diagonal arrow */
+const BackArrowIcon: React.FC = () => (
+  <span className="flex size-10 shrink-0 items-center justify-center rounded-lg p-2 transition-colors group-hover:bg-[#F1F5FB] group-focus-visible:bg-[#F1F5FB]">
+    <span className="inline-flex size-6 shrink-0 items-center justify-center overflow-hidden">
+      <svg width="14" height="12" viewBox="0 0 14 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M1 6H13M13 6L8 1M13 6L8 11" stroke="#00033D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </span>
+  </span>
+);
+
 /* outline/options-2 — 20×18 בתוך ריבוע 24 */
 const OptionsIcon: React.FC = () => (
   <span className="inline-flex size-6 shrink-0 items-center justify-center overflow-hidden">
@@ -38,8 +49,11 @@ export const OptionsButton: React.FC<{ onClick?: () => void }> = ({ onClick }) =
 interface Props {
   /** כותרת הסקשן — Heading/h4 */
   title: string;
-  /** טקסט הקישור בצד שמאל (RTL) */
-  linkLabel: string;
+  /**
+   * טקסט הקישור בצד שמאל (RTL) — אופציונלי.
+   * ברירת מחדל: "הצג הכל" במצב preview, "חזרה" במצב מלא.
+   */
+  linkLabel?: string;
   /** מספר בתוך ה-badge העגול */
   count: number;
   /** התווית לצד ה-badge */
@@ -49,7 +63,13 @@ interface Props {
    * כאן יושבת השונות בין הסקשנים, כך שאין צורך בדגל בוליאני חדש לכל וריאציה.
    */
   actions?: React.ReactNode;
-  onLinkClick?: () => void;
+  /**
+   * הקישור בהדר נקבע לפי ה-callback שמועבר (ה-shell מעביר אותם ל-MFE, וה-MFE מעביר הלאה):
+   *  onShowAll     — מצב preview: "הצג הכל" + חץ אלכסוני, מעבר למצב מלא
+   *  backToPreview — מצב מלא:    "חזרה" + חץ, חזרה ל-preview
+   */
+  onShowAll?: () => void;
+  backToPreview?: () => void;
   children: React.ReactNode;
 }
 
@@ -62,8 +82,10 @@ interface Props {
  * ואת הפעולות בהדר, ולעתים מרנדר יותר מסקשן אחד.
  */
 const SectionCard: React.FC<Props> = ({
-  title, linkLabel, count, countLabel, actions, onLinkClick, children,
-}) => (
+  title, linkLabel, count, countLabel, actions, onShowAll, backToPreview, children,
+}) => {
+  const isFull = !!backToPreview;
+  return (
   <section className="flex w-full flex-col items-end gap-4 rounded-lg border border-[#E2E8F0] bg-white p-4">
     <header className="flex w-full items-start justify-between">
       {/* צד ימין — כותרת + מונה */}
@@ -83,16 +105,18 @@ const SectionCard: React.FC<Props> = ({
       {/* צד שמאל — קישור "לכל ה..." (Figma 17:11885) */}
       <button
         type="button"
-        onClick={onLinkClick}
+        onClick={() => (isFull ? backToPreview?.() : onShowAll?.())}
         className="group flex cursor-pointer items-center justify-end gap-2 rounded-lg"
       >
-        <span className="text-base font-normal leading-[1.25] text-[#00033D]">{linkLabel}</span>
-        <DiagonalArrowIcon />
+        {isFull && <BackArrowIcon />}
+        <span className="text-base font-normal leading-[1.25] text-[#00033D]">{linkLabel ?? (isFull ? 'חזרה' : 'הצג הכל')}</span>
+        {!isFull && <DiagonalArrowIcon />}
       </button>
     </header>
 
     {children}
   </section>
-);
+  );
+};
 
 export default SectionCard;

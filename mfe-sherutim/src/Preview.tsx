@@ -101,7 +101,7 @@ const Preview: React.FC<Props> = ({ openService, employeeId = '', objectType, on
         count={visibleSherutim.length}
         countLabel="מספר מטלות ממתניות"
         actions={<OptionsButton />}
-        onLinkClick={() => onShowAll?.()}
+        onShowAll={onShowAll}
       >
         {/* מספר העמודות נגזר מרוחב המסך, ומספר השורות מ-rows — ללא גלישה מעבר לכך */}
         <div

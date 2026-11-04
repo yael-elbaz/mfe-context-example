@@ -1,6 +1,14 @@
 export type ObjectType = 'ציוד' | 'רישיון תוכנה' | 'הרשאת מערכת';
 export type ObjectStatus = 'פעיל' | 'בבדיקה' | 'מנוטרל';
 
+/**
+ * מה שה-Preview מעביר ל-Full דרך onShowAll(state) — ה-shell רק מעביר אותו הלאה כ-previewState.
+ * נתון פשוט בלבד (נשמר ב-history של הדפדפן).
+ */
+export interface DigitalObjectsPreviewState {
+  filtersOpen?: boolean;
+}
+
 export interface DigitalObject {
   id: string;
   name: string;
