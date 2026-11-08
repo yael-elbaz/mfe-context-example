@@ -42,6 +42,9 @@ export interface Sherut {
   mfeModule: string;
   idntObjectAv: number;
   menuParamsList: MenuParam[];
+  /** 'overlay' — השירות נפתח בחלון צף מעל הדף (נקבע בקונפיג של השירות) */
+  displaySettings?: 'overlay';
+  overlaySize?: 's' | 'm' | 'l';
 }
 
 export type SherutimItem = SherutCategory | Sherut;

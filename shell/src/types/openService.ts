@@ -81,10 +81,24 @@ export type OpenService = (meta: Service) => void;
 
 export type OpenType = 'navigate' | 'blank' | 'overlay';
 
+export type OverlaySize = 's' | 'm' | 'l';
+
+/** שירות שנפתח באוברליי — מה שה-shell צריך כדי לטעון ולהציג אותו */
+export interface OverlayService {
+  serviceId: string;
+  title: string;
+  mfeConfig: { remoteUrl: string; scope: string; module: string };
+  /** הפרמטרים של השירות עצמו (menuParamsList שטוח) — עוברים ל-MFE כ-props */
+  params: Record<string, unknown>;
+  size: OverlaySize;
+}
+
 export interface ResolvedRoute {
   url: string;
   state?: Record<string, any>;
   openType: OpenType;
   setup?: string;
+  /** רק כש-openType === 'overlay' */
+  overlay?: OverlayService;
 }
 

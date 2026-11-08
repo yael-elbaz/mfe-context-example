@@ -310,7 +310,10 @@ const Full: React.FC<Props> = ({ openService, employeeId = '', objectType, navig
                   fullWidthOnMobile={visibleSherutim.length === 1}
                   categoryIconUrl={categoryByIdnt.get(s.idntObjectAv)?.iconUrl}
                   onClick={() => openService?.(makeCall(
-                    { type: 'sherut', id: employeeId, idntSheryut: s.idntSheryut, scope: s.mfeScope, module: s.mfeModule },
+                    {
+                      type: 'sherut', id: employeeId, idntSheryut: s.idntSheryut, title: s.title, scope: s.mfeScope, module: s.mfeModule,
+                      ...(s.displaySettings && { displaySettings: s.displaySettings, overlaySize: s.overlaySize ?? 'm' }),
+                    },
                     s.mfeUrl
                   ))}
                   onToggleFavorite={() => toggleFavorite(s.id)}

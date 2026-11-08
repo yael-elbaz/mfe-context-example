@@ -1,26 +1,38 @@
 import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { flattenMeta, resolveRoute } from '../services/openService';
-import type { Service, DigitalService, PersonType } from '../types/openService';
+import type { Service, DigitalService, PersonType, OverlayService } from '../types/openService';
 import type { SelectedPerson } from './useEmployeePickerPopup';
 import { useSelectedPersonStore } from '../store/personStore';
+import { overlayBasePath } from '../utils/overlayBase';
 
-export const useOpenService = (waitForEmployee: (objectType?: PersonType[] | null) => Promise<SelectedPerson | null>) => {
+export const useOpenService = (
+  waitForEmployee: (objectType?: PersonType[] | null) => Promise<SelectedPerson | null>,
+  showOverlay: (s: OverlayService) => void,
+) => {
   const navigate = useNavigate();
 
   const navToServcie = useCallback(async (flat: DigitalService) => {
-    const { url, state, openType, setup } = await resolveRoute(flat);
+    const { url, state, openType, setup, overlay } = await resolveRoute(flat);
 
     switch (openType) {
       case 'blank':
         window.open(url, '_blank', setup ?? '');
         break;
-      case 'overlay':
+      case 'overlay': {
+        if (!overlay) break;
+        // בתוך תיק — האוברליי נפתח מעל מסך ה-preview של התיק (למשל ממצב מלא של מקטע)
+        const { pathname, search } = window.location;
+        const base = overlayBasePath(pathname);
+        if (base !== pathname) navigate(base + search);
+        showOverlay(overlay);
+        break;
+      }
       case 'navigate':
         navigate(url, { state });
         break;
     }
-  }, [navigate]);
+  }, [navigate, showOverlay]);
 
   const openService = useCallback(async (meta: Service) => {
     const flat = flattenMeta(meta) as DigitalService & Record<string, any>;
@@ -43,7 +55,7 @@ export const useOpenService = (waitForEmployee: (objectType?: PersonType[] | nul
     }
 
     navToServcie(flat);
-  }, [navigate, waitForEmployee]);
+  }, [navToServcie, waitForEmployee]);
 
   return { openService, navToServcie };
 };

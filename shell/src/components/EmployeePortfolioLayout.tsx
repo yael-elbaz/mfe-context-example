@@ -31,6 +31,8 @@ const EmployeePortfolioLayout: React.FC = () => {
 
   const sherutMatch = useMatch('/employee-portfolio/sherutim/:idntSheryut/*');
   const idntSheryut = sherutMatch?.params.idntSheryut ?? null;
+  // מקטע במצב מלא (/employee-portfolio/:section) — המסגרת בגובה קבוע והגלילה בתוך המקטע, לא בעמוד
+  const isSectionFull = !!useMatch('/employee-portfolio/:section');
   const [mfeConfig, setMfeConfig] = useState<SherutMfeConfig | null>(null);
 
   useEffect(() => {
@@ -77,7 +79,9 @@ const EmployeePortfolioLayout: React.FC = () => {
       </div>
 
       {/* מסגרת תיק העובד — שמאל */}
-      <section className="flex min-h-[calc(100vh_-_var(--header-height)_-_40px)] min-w-0 flex-1 flex-col overflow-clip rounded-xl border border-gray-2 border-t-4 border-t-active bg-[#F6F9FC]">
+      <section className={`flex min-w-0 flex-1 flex-col overflow-clip rounded-xl border border-gray-2 border-t-4 border-t-active bg-[#F6F9FC] ${
+        isSectionFull ? 'h-[calc(100vh_-_var(--header-height)_-_40px)]' : 'min-h-[calc(100vh_-_var(--header-height)_-_40px)]'
+      }`}>
         {/* הדר פנימי: פרטי הזיהוי של העובד, ומתחתיו הטאבים והמידע של הטאב הפעיל */}
         <EmployeePortfolioHeader employee={loading ? null : employee} onClose={closePortfolio}>
           {loading ? (
@@ -95,13 +99,14 @@ const EmployeePortfolioLayout: React.FC = () => {
         </EmployeePortfolioHeader>
 
         {/* תוכן התיק */}
-        <div className="flex min-w-0 flex-1 flex-col p-4">
+        {/* min-h-0 לאורך השרשרת — כדי שבמצב מלא המקטע יתכווץ לגובה שנותר ויגלול בפנים */}
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col p-4">
           {notFound ? (
             <div className="p-6 text-right text-base text-[#888]">עובד לא נמצא</div>
           ) : loading || !employee ? (
             <div className="p-12 text-center text-blue-heading">⏳ טוען נתוני עובד...</div>
           ) : (
-            <div className="flex flex-1 flex-col [&>*]:flex-1">
+            <div className="flex min-h-0 flex-1 flex-col [&>*]:min-h-0 [&>*]:flex-1">
               <Outlet context={{ mfeConfig }} />
             </div>
           )}

@@ -118,7 +118,10 @@ const Preview: React.FC<Props> = ({ openService, employeeId = '', objectType, on
               compact={compact}
               categoryIconUrl={categoryByIdnt.get(s.idntObjectAv)?.iconUrl}
               onClick={() => openService?.(makeCall(
-                { type: 'sherut', id: employeeId, idntSheryut: s.idntSheryut, scope: s.mfeScope, module: s.mfeModule },
+                {
+                  type: 'sherut', id: employeeId, idntSheryut: s.idntSheryut, title: s.title, scope: s.mfeScope, module: s.mfeModule,
+                  ...(s.displaySettings && { displaySettings: s.displaySettings, overlaySize: s.overlaySize ?? 'm' }),
+                },
                 s.mfeUrl
               ))}
             />

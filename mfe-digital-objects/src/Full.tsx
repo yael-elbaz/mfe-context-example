@@ -56,6 +56,8 @@ const FilterBar: React.FC<FilterBarProps> = ({ typeFilter, setTypeFilter, status
     background: '#F8F9FD',
     boxSizing: 'border-box',
     direction: 'rtl',
+    // אם הגובה קטן מתוכן הסרגל — גלילה בתוך הסרגל
+    overflowY: 'auto',
   }}>
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
       <h3 style={{ margin: 0, color: '#1E3BA2', fontSize: '16px' }}>סינון מורחב</h3>
@@ -177,7 +179,8 @@ const Full: React.FC<Props> = ({ backToPreview, onFocusItem, previewState }) => 
       backToPreview={backToPreview}
     >
       {/* סרגל הסינון לא מכסה את הנתונים — הוא תופס 20% בצד ימין והתוכן נדחף ל-80% שנותרו */}
-      <div style={{ width: '100%', display: 'flex', gap: '16px', direction: 'rtl' }}>
+      {/* ממלא את הגובה שנשאר בכרטיס (minHeight: 0 מאפשר להתכווץ) — רק רשימת הפריטים גוללת */}
+      <div style={{ width: '100%', flex: '1 1 0', minHeight: 0, display: 'flex', gap: '16px', direction: 'rtl' }}>
       {filtersOpen && (
         <FilterBar
           typeFilter={typeFilter}
@@ -191,8 +194,8 @@ const Full: React.FC<Props> = ({ backToPreview, onFocusItem, previewState }) => 
         />
       )}
 
-      <div style={{ flex: '1 1 0', minWidth: 0 }}>
-      <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '14px', direction: 'rtl', flexWrap: 'wrap' }}>
+      <div style={{ flex: '1 1 0', minWidth: 0, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+      <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '14px', direction: 'rtl', flexWrap: 'wrap', flexShrink: 0 }}>
         <FilterButton active={filtersOpen} onClick={() => setFiltersOpen(o => !o)} />
         <input
           type="text"
@@ -240,6 +243,7 @@ const Full: React.FC<Props> = ({ backToPreview, onFocusItem, previewState }) => 
         color: '#848282',
         direction: 'rtl',
         gap: '12px',
+        flexShrink: 0,
       }}>
         <span>שם</span>
         <span>סוג</span>
@@ -248,7 +252,8 @@ const Full: React.FC<Props> = ({ backToPreview, onFocusItem, previewState }) => 
         <span />
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+      {/* אזור הגלילה היחיד במצב מלא */}
+      <div style={{ flex: '1 1 0', minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '6px' }}>
         {filtered.length === 0
           ? <div style={{ textAlign: 'center', color: '#848282', fontSize: '14px', padding: '32px' }}>לא נמצאו פריטים</div>
           : filtered.map(obj => <ObjectRow key={obj.id} obj={obj} onFocus={() => onFocusItem?.(obj.id, demoUrl(obj))} />)

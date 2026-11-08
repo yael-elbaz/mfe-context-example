@@ -1,5 +1,5 @@
 import { toObjectTypeList } from '../types/openService';
-import type { Service, ServiceSrc, DigitalService, ResolvedRoute } from '../types/openService';
+import type { Service, ServiceSrc, DigitalService, ResolvedRoute, OverlaySize } from '../types/openService';
 import { Helper } from '../utils/urlHelper';
 import { resolveBlankUrl } from './openInBlank';
 
@@ -64,13 +64,41 @@ export async function resolveRoute(flat: DigitalService & Record<string, any>): 
     scope:     flat.serviceSrc?.scope     ?? '',
     module:    flat.serviceSrc?.module    ?? '',
   };
+  const serviceId = getServiceId(flat);
   const url = flat.objectType == null
     ? Helper.buildUrl(`sherutim/${flat.idntMenuItem}`, qs)
-    : Helper.buildUrl(`/employee-portfolio/sherutim/${flat.idntSheryut}`, qs);
+    : Helper.buildUrl(`/employee-portfolio/sherutim/${serviceId}`, qs);
 
-  return {
-    url,
-    state: { mfeConfig },
-    openType: flat.isOverlay ? 'overlay' : 'navigate',
-  };
+  if (flat.isOverlay) {
+    return {
+      url,
+      openType: 'overlay',
+      overlay: {
+        serviceId,
+        title: flat.textMenuItem || String(flat.title ?? ''),
+        mfeConfig: {
+          remoteUrl: mfeConfig.remoteUrl,
+          scope: toScalar(mfeConfig.scope) ?? '',
+          module: toScalar(mfeConfig.module) ?? '',
+        },
+        params: { ...flat, idntSheryut: serviceId },
+        size: toOverlaySize(flat.overlaySize),
+      },
+    };
+  }
+
+  return { url, state: { mfeConfig }, openType: 'navigate' };
+}
+
+/**
+ * מזהה השירות. idntSheryut ו-idntMenuItem הם אותו ערך; כרגע ה-MFE של השירותים שולח
+ * idntMenuItem: 0 ואת המזהה ב-menuParamsList כ-idntSheryut — לכן נופלים אליו כשאין idntMenuItem.
+ */
+function getServiceId(flat: DigitalService & Record<string, any>): string {
+  return flat.idntMenuItem ? String(flat.idntMenuItem) : String(flat.idntSheryut ?? '');
+}
+
+function toOverlaySize(v: unknown): OverlaySize {
+  const s = String(Array.isArray(v) ? v[0] : v ?? '').toLowerCase();
+  return s === 's' || s === 'l' ? s : 'm';
 }

@@ -14,6 +14,8 @@ import SherutimWrapper from './components/SherutimWrapper';
 import { useOpenService } from './hooks/useOpenService';
 import { useEmployeePickerPopup } from './hooks/useEmployeePickerPopup';
 import EmployeePickerPopup from './components/EmployeePickerPopup';
+import { useServiceOverlay } from './hooks/useServiceOverlay';
+import ServiceOverlay from './components/overlay/ServiceOverlay';
 import SelectEmployeePage from './components/SelectEmployeePage';
 import HomePage from './components/home/HomePage';
 import { mfe } from './components/MfeSlot';
@@ -55,7 +57,8 @@ const Padded: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 
 const RouterApp: React.FC = () => {
   const { waitForEmployee, pickerProps } = useEmployeePickerPopup();
-  const { openService } = useOpenService(waitForEmployee);
+  const { showOverlay, overlayProps } = useServiceOverlay();
+  const { openService } = useOpenService(waitForEmployee, showOverlay);
   const navigate = useNavigate();
 
   return (
@@ -91,6 +94,8 @@ const RouterApp: React.FC = () => {
           </SilentErrorBoundary>
         </main>
       </div>
+      {/* שירות באוברליי — מעל הדף, מתחת לבורר העובד (שירות באוברליי יכול לפתוח אותו) */}
+      <ServiceOverlay {...overlayProps} />
       <EmployeePickerPopup {...pickerProps} />
     </>
   );
