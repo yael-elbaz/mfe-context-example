@@ -1,127 +1,43 @@
-# Spec: Open Service in Overlay
+# Spec: Open Service in Overlay (v2 — decided by the service route)
 
 ## Goal
 
-Some services (sherutim) open as a **floating window** over the current screen instead of
-replacing it. The page underneath stays where it is; the user works in the overlay, then closes it
-and is back exactly where they were.
+Some services (sherutim) open as a **floating window** instead of a full page. The service config
+decides (`displaySettings: 'overlay'`), not the caller.
 
-- Opens anchored to the **bottom-left corner** of the viewport.
-- Three sizes — **S / M / L**. The service config picks the initial size; the user can switch.
-- The user can **drag** the window by its title bar.
-- **Modal**: while it's open, the page underneath stays visible but **can't be clicked**.
-- Closes by the **cancel (×) button**, or **from inside the service** (e.g. "save and close").
-- Inside a **portfolio** (employee / customer), the page under the overlay is always the portfolio's
-  **preview** screen — see [Base page](#base-page).
+- An overlay exists **only inside a portfolio** (employee / customer). Never over the home page.
+- Under the overlay the user sees the **person card** (portfolio header) and below it the
+  **digital-objects MFE** — not the portfolio's home (preview) screen.
+- The decision "full page or overlay" is made in **one place**: the service route component
+  `SherutDynamicView` (`…/sherutim/:idntSheryut`), when it loads the service.
+- The service inside the overlay can still **close** itself and **change size** (S / M / L).
 
-Whether a service opens in an overlay is a **property of the service** (its config,
-`displaySettings: 'overlay'`), not something the caller or the URL decides. This keeps the rule from
-`SPEC-open-service.md`: MFEs declare intent, the shell owns how and where things open.
+### What changes from v1
 
-### Not in the URL
-
-The overlay is **UI state in the shell**, not part of the URL:
-
-- The service config already says it's an overlay service — the URL doesn't need to repeat it.
-- The URL keeps describing the **page** (`/employee-portfolio?employeeId=…`); the overlay floats on top.
-- Consequences, accepted on purpose:
-  - A **reload** closes the overlay (the page underneath reloads as usual).
-  - **Browser Back** does not close the overlay by itself — it navigates the page (see [Closing](#closing)).
-  - A link can't be shared "with the overlay open".
-
----
-
-## What exists today
-
-| Piece | Status |
+| v1 (current code) | v2 |
 |---|---|
-| `flattenMeta` reads `displaySettings === 'overlay'` → `isOverlay` | ✅ exists |
-| `DigitalService.overlaySize`, `overlayIcon` | ✅ typed, not used |
-| `resolveRoute` returns `openType: 'overlay'` | ✅ exists |
-| `useOpenService` — `case 'overlay'` | ⚠️ falls through to `navigate` (opens as a full page) |
-| Loading a sherut MFE at runtime (`loadRemoteModule`) | ✅ exists, used by `SherutDynamicView` |
-| `useEmployeePickerPopup` + `<EmployeePickerPopup {...pickerProps}/>` in `RouterApp` | ✅ the pattern the overlay copies |
-
-So the decision is already made upstream; this spec adds the overlay hook and the window itself.
+| `useOpenService` decides overlay vs. navigate (`openType: 'overlay'`) | `useOpenService` **always navigates** to the service URL. No overlay logic in it. |
+| Overlay + base page kept in `history.state` (`background`, `routesLocation`) | No history-state tricks. The URL is the service route, the route renders what it needs. |
+| Base page = portfolio preview | Base = person card + digital objects |
+| Overlay rendered once in `RouterApp`, outside `<Routes>` | Overlay rendered **inside** `SherutDynamicView` |
+| Shared link → full page | Shared link → **same as in-app**: overlay over digital objects (config decides) |
+| Possible on the home page | Only inside a portfolio |
 
 ---
 
-## Base page
+## Routes
 
-The overlay sits on top of a **base page**. Which page that is depends on where the user is when
-the service opens:
+| URL | Rendered by | Overlay possible? |
+|---|---|---|
+| `/employee-portfolio/sherutim/:idntSheryut` | `EmployeePortfolioLayout` → `Outlet` → `SherutDynamicView` | ✅ |
+| `/customer-portfolio/sherutim/:idntSheryut` | `CustomerPortfolioLayout` → `Outlet` → `SherutDynamicView` — **new route** | ✅ |
+| `/sherutim/:idntSheryut` (no person) | `SherutimWrapper` → `SherutDynamicView` | ❌ always full page, even if the config says overlay |
 
-| User is on | Base page under the overlay |
-|---|---|
-| `/employee-portfolio` (preview) | stays — no navigation |
-| `/employee-portfolio/<section>` (section full mode) | `/employee-portfolio` (preview) |
-| `/employee-portfolio/<section>/<itemId>` (iframe view) | `/employee-portfolio` (preview) |
-| `/employee-portfolio/sherutim/<id>` (service page) | `/employee-portfolio` (preview) |
-| `/customer-portfolio` (preview) | stays — no navigation |
-| `/customer-portfolio/sherutim` (full mode) | `/customer-portfolio` (preview) |
-| anywhere else (home, `/sherutim/...`) | the current page, unchanged |
+`SherutDynamicView` gets a `portfolio` prop from the route (`'employee' | 'customer' | undefined`) —
+the route declares where it is, the component doesn't parse the URL.
 
-Rule: **inside a portfolio, the base is the portfolio root (its preview); everywhere else, the current page.**
-
-- The current query string is kept (`employeeId`, …) — the same thing `backToPreview` does
-  (`/employee-portfolio${search}`), so the preview shows the same person.
-- The portfolio layout (side nav, employee header) stays mounted, because only the child route changes.
-- The list of portfolio roots lives in one place (`PORTFOLIO_ROOTS`). A new portfolio is one line there.
-
-```ts
-const PORTFOLIO_ROOTS = ['/employee-portfolio', '/customer-portfolio'];
-
-/** the page the overlay opens on top of */
-function overlayBasePath(pathname: string): string {
-  return PORTFOLIO_ROOTS.find(root => pathname === root || pathname.startsWith(root + '/')) ?? pathname;
-}
-```
-
----
-
-## Overlay state — a hook, not a store
-
-No global store is needed. The only two places that touch the overlay — `useOpenService` (opens it)
-and the window (renders and closes it) — both live in **`RouterApp`**. So the state is a plain
-`useState` in a hook called there, exactly like `useEmployeePickerPopup` / `pickerProps` today:
-
-```ts
-// RouterApp
-const { waitForEmployee, pickerProps } = useEmployeePickerPopup();
-const { showOverlay, overlayProps } = useServiceOverlay();
-const { openService } = useOpenService(waitForEmployee, showOverlay);
-...
-<ServiceOverlay {...overlayProps} />
-<EmployeePickerPopup {...pickerProps} />
-```
-
-```ts
-type OverlaySize = 's' | 'm' | 'l';
-
-interface OverlayService {
-  serviceId: string;              // idntMenuItem (same value as idntSheryut)
-  title: string;                  // shown in the title bar
-  mfeConfig?: SherutMfeConfig;    // remoteUrl / scope / module — fetched if missing
-  params: Record<string, string>; // the service's own params (sherutimUrlParams)
-  size: OverlaySize;              // from service config, default 'm'
-}
-
-function useServiceOverlay(): {
-  showOverlay: (s: OverlayService) => void;   // ignored + message if one is already open
-  overlayProps: {
-    service: OverlayService | null;           // null → nothing rendered
-    blockedNotice: boolean;                   // "close the open service first" is showing
-    onClose: () => void;
-  };
-};
-```
-
-- Size switching and drag position are local state **inside `ServiceOverlay`** — nobody else needs them.
-- MFEs never see this hook; they open via `openService` and close via `onClose`.
-- `mfeConfig` comes from the service metadata when available, otherwise `getSherutMfeConfig(serviceId)`
-  — the same fallback `SherutimWrapper` uses.
-- If one day something outside `RouterApp` needs to open or read the overlay, that's the point to
-  move it into a Zustand store. Not before.
+`resolveRoute` today builds `/employee-portfolio/sherutim/…` for every `objectType`. It changes to
+pick the portfolio by the selected person's type (`customer` → `/customer-portfolio/sherutim/…`).
 
 ---
 
@@ -131,163 +47,104 @@ function useServiceOverlay(): {
 MFE calls openService(meta)
         │
         ▼
-flattenMeta(meta)            → isOverlay = displaySettings === 'overlay'
-        │                       overlaySize from menuParams (default 'm')
+useOpenService → resolveRoute(flat)
+        │   openType: 'navigate' | 'blank'   (no 'overlay' anymore)
+        │   state: { mfeConfig }             ← mfeConfig now carries displaySettings, overlaySize, title
         ▼
-resolveRoute(flat)           → { openType: 'overlay', serviceId, params, mfeConfig?, size }
+navigate('/employee-portfolio/sherutim/SHR004?employeeId=1001&q=…', { state })
         │
         ▼
-useOpenService  case 'overlay':
-  1. base = overlayBasePath(location.pathname)
-  2. if base !== location.pathname → navigate(base + location.search)   ← e.g. full mode → preview
-  3. showOverlay({ serviceId, title, mfeConfig, params, size })
-        │
-        ▼
-<ServiceOverlay {...overlayProps}/> (rendered once in RouterApp, outside <Routes>)
-  └─ service !== null
-  1. mfeConfig  = overlay.mfeConfig ?? await getSherutMfeConfig(serviceId)
-  2. Component  = await loadRemoteModule(mfeConfig.remoteUrl, mfeConfig.module)
-  3. render     <Component {...serviceProps} displayMode="overlay" onClose={close} />
+EmployeePortfolioLayout (person card stays mounted) → Outlet → SherutDynamicView portfolio="employee"
+  1. config = location.state.mfeConfig ?? await getSherutMfeConfig(id)   ← direct link / reload
+  2. Component = await loadRemoteModule(config.remoteUrl, config.module)
+  3. decide:
+       config.displaySettings === 'overlay' && portfolio
+         → <SherutOverlayView>   = digital-objects MFE + <ServiceOverlay> with the service inside
+       else
+         → full page, as today
 ```
 
-### Only one overlay at a time
+### Service config
 
-If an overlay service is opened while another overlay is already open, the new one **does not open**
-and the open one is **not replaced**. Instead the user sees a message:
+`SherutMfeConfig` (from `getSherutMfeConfig`, and the same shape passed in navigation state) gains:
 
-> יש לסגור קודם את השירות הפתוח
+```ts
+interface SherutMfeConfig {
+  // … existing: remoteUrl, scope, module, objectType, selectedActiveTab, extendedTabDataUrl
+  displaySettings?: 'overlay';     // absent → full page
+  overlaySize?: 's' | 'm' | 'l';   // initial size, default 'm'
+  title?: string;                  // overlay title bar
+}
+```
 
-- Since the page underneath is blocked, this can only happen from **inside the open service**
-  (it calls `openService` for an overlay service). So the message is shown **inside the open
-  window**, as a banner under the title bar — where the user is looking. No global toast is needed
-  (the shell has none today).
-- The banner hides itself after a few seconds, or when the user closes it.
-- `showOverlay` checks `service !== null` → sets `blockedNotice` instead of opening.
-- Services that open as a page (`navigate`) or in a new tab (`blank`) are not affected by this rule.
+The API (`/api/sherutim/:id/mfe-config`) must return these too, so a direct link or reload knows
+it's an overlay service. Until then the mock returns them for `SHR004` / `SHR006`.
 
 ---
 
-## Closing
+## SherutOverlayView — what's under and over
 
-| Trigger | Who |
+```
+┌ EmployeePortfolioLayout ──────────────────────────────────────┬──────────┐
+│  person card + tabs (EmployeePortfolioHeader)  — unchanged     │ side nav │
+├────────────────────────────────────────────────────────────────┤          │
+│  digital-objects MFE (fills the content area)                  │          │
+│                                                                │          │
+│   ┌───────────────────────────┐                                │          │
+│   │ Service title     S M L × │                                │          │
+│   ├───────────────────────────┤                                │          │
+│   │   service MFE             │                                │          │
+│   └───────────────────────────┘                                │          │
+└────────────────────────────────────────────────────────────────┴──────────┘
+```
+
+- `SherutOverlayView` (new, `shell/src/components/overlay/SherutOverlayView.tsx`) renders:
+  1. the digital-objects section (from `SECTIONS`, the same component the preview uses), and
+  2. `<ServiceOverlay>` with the already-loaded service component.
+- The portfolio layout (card, tabs, side nav) is untouched — it's the parent route.
+
+---
+
+## Closing and size
+
+| Trigger | Result |
 |---|---|
-| × (cancel) in the title bar | shell |
-| `Esc` while focus is inside the overlay | shell |
-| "Save and close" or any other operation inside the service | the MFE calls `onClose()` |
-| Browser Back / any route change | shell, automatically |
+| × in the title bar / `Esc` | `navigate(portfolioRoot + search)` → portfolio home |
+| Service calls `onClose()` ("save and close") | same |
+| Browser Back | the browser leaves the route → overlay is gone (it's just a route) |
+| S / M / L in the title bar | size changes |
+| Service calls `onResize('s' \| 'm' \| 'l')` | size changes — **new** |
 
-All of them call `onClose` from `overlayProps`. Closing **doesn't navigate** — the user stays on the
-base page (in a portfolio: the preview).
+Size and drag position are local state in `ServiceOverlay`. They reset when the route unmounts.
 
-- **Clicking the backdrop does not close** — a stray click must not throw away what the user typed.
-- **No unsaved-changes warning.** × closes immediately; the shell doesn't ask the MFE whether it has unsaved work.
-- **Auto-close on route change.** The page underneath is blocked, so the only way it can change is
-  browser Back (or the service itself calling `openService`). `useServiceOverlay` watches the
-  location and closes the overlay when it changes — a service opened for one employee must not stay
-  open over another page.
-
----
-
-## Contract with the service MFE
-
-The same component must work as a page (`SherutDynamicView`) and in an overlay. It receives:
+### Contract with the service MFE
 
 ```ts
 interface SherutProps {
   idntSheryut: string;
   employeeId: string;
-  /** where it is rendered — lets the MFE drop its own page chrome (title, back button) */
   displayMode: 'page' | 'overlay';
-  /** close / leave. Overlay: closes the window. Page: goes back to the portfolio. */
+  /** page: back to the portfolio. overlay: close the window (also back to the portfolio). */
   onClose: () => void;
+  /** overlay only — ask the shell to change the window size. */
+  onResize?: (size: 's' | 'm' | 'l') => void;
 }
 ```
-
-- `onClose` is given **in both modes**, so a "save and close" button needs no branching inside the MFE.
-- The MFE does **not** render its own window frame, title bar, or close button — the shell does.
-- The MFE should fill the height it is given and scroll internally (the overlay body has a fixed height per size).
-
-`SherutDynamicView` changes to pass `displayMode="page"` and `onClose={goBack}`.
 
 ---
 
 ## The window
 
-```
- viewport (portfolio example)
-┌──────────────────────────────────────────────────────────────┐
-│ header                                                       │
-├──────────────────────────────────────────────────┬───────────┤
-│  preview sections (digital objects, tasks, …)    │  side nav │
-│  stay rendered underneath — the overlay floats   │           │
-│  ON TOP of them, it does not push them           │           │
-│  ┌───────────────────────────┐                   │           │
-│  │ ⠿ Service title   S M L × │ ← title bar: drag,│           │
-│  ├───────────────────────────┤   size, close     │           │
-│  │   service MFE             │                   │           │
-│  │   (scrolls inside)        │                   │           │
-│  └───────────────────────────┘                   │           │
-│  ↑ always opens 24px from the left and bottom    │           │
-└──────────────────────────────────────────────────┴───────────┘
-```
+Unchanged from v1 except where it is rendered:
 
-**Placement rules**
-
-- The window is `position: fixed` and rendered in `RouterApp` **outside** the page layout, so it
-  floats **above the preview data**. The preview does not move, shrink or reflow.
-- A **full-viewport backdrop** sits between the page and the window and swallows every click —
-  page, side nav and header are all blocked. The backdrop is **fully transparent** (no dim, no blur):
-  the overlay is a draggable window, not a dialog that takes over the screen, so the page must look
-  exactly as before. The window itself carries a shadow so it reads as floating.
-- It **always opens in the bottom-left corner** of the viewport (24px from left and bottom), every
-  time it opens and on every screen width.
-- The user may drag it away; that position lasts only until the overlay closes. Next open is
-  bottom-left again.
-
-### Sizes
-
-| Size | Width | Height | Note |
-|---|---|---|---|
-| `s` | 400px | 480px | short forms |
-| `m` | 640px | 600px | default |
-| `l` | 960px | `min(800px, 100vh − header − 48px)` | |
-
-All three are capped by the viewport. Exact values are placeholders until the design lands in Figma.
-
-The user changes size **only** with the S/M/L switch in the title bar — there is no free resize
-by dragging an edge or corner.
-
-Switching size keeps the window's **bottom-left corner** fixed (it grows up and to the right),
-then clamps it back into the viewport. The size lives in the overlay store.
-
-### Dragging
-
-- Pointer events on the title bar (`pointerdown` → `setPointerCapture` → `pointermove`), applied as
-  `transform: translate(x, y)` — no layout work while dragging, no library.
-- Clamped so the title bar can never leave the viewport (the user can always grab it again).
-- Buttons inside the title bar don't start a drag.
-- Position resets when the overlay closes.
-
-### Layering
-
-| Layer | z-index |
-|---|---|
-| Page, fixed header | as today |
-| **Overlay backdrop** (blocks clicks) | above the header |
-| **Service overlay window** | above the backdrop |
-| `EmployeePickerPopup` | above the overlay — a service in the overlay may call `openService`, which can open the picker |
-
-### Narrow screens
-
-No special mode — the window still opens in the bottom-left corner. On a viewport smaller than
-the chosen size, width and height are capped to the viewport (minus the 24px margins).
-
-### Accessibility
-
-- `role="dialog"`, `aria-modal="true"`, `aria-labelledby` → the title.
-- Focus moves into the overlay on open, **Tab is trapped inside it**, and focus returns to the
-  element that opened it on close.
-- `Esc` closes.
+- `position: fixed`, opens in the **bottom-left corner** (24px from left and bottom).
+- Transparent full-viewport backdrop blocks clicks on the page underneath (card, digital objects,
+  side nav, header). No dim, no blur.
+- Sizes (placeholders until Figma): `s` 400×480, `m` 640×600, `l` 960×min(800, viewport).
+  All capped by the viewport.
+- Drag by the title bar (phase 2), position resets on close.
+- `role="dialog"`, `aria-modal`, focus in on open, `Esc` closes.
+- Layering: backdrop and window above the header; `EmployeePickerPopup` above the overlay.
 
 ---
 
@@ -295,44 +152,102 @@ the chosen size, width and height are capped to the viewport (minus the 24px mar
 
 | File | Change |
 |------|--------|
-| `shell/src/hooks/useServiceOverlay.ts` | **New** — `useState` for the open service, `showOverlay`, `overlayProps`, auto-close on route change |
-| `shell/src/utils/overlayBase.ts` | **New** — `PORTFOLIO_ROOTS`, `overlayBasePath(pathname)` |
-| `shell/src/services/openService.ts` | `resolveRoute`: for overlay, return `serviceId`, `params`, `size` instead of a URL |
-| `shell/src/hooks/useOpenService.ts` | Takes `showOverlay`; `case 'overlay'`: navigate to the base page if needed, then `showOverlay(...)` |
-| `shell/src/components/overlay/ServiceOverlay.tsx` | **New** — backdrop + window frame: title bar, size switch, drag, close, focus trap, loading/error states |
-| `shell/src/components/overlay/useDraggable.ts` | **New** — pointer-drag hook with viewport clamping |
-| `shell/src/hooks/useSherutModule.ts` | **New** — config (cached → API fallback) + `loadRemoteModule`, shared by page and overlay |
-| `shell/src/sections/SherutDynamicView.tsx` | Use `useSherutModule`; pass `displayMode="page"` and `onClose` |
-| `shell/src/App.tsx` | Call `useServiceOverlay()`, pass `showOverlay` to `useOpenService`, render `<ServiceOverlay {...overlayProps}/>` before `<EmployeePickerPopup />` |
-| `shell/src/types/openService.ts` | `OverlaySize = 's' \| 'm' \| 'l'`; `SherutProps` |
-| `mfe-sherut-exemplat/src/App.tsx` | Accept `displayMode` and `onClose`; add a "save and close" example |
+| `shell/src/hooks/useServiceOverlay.ts` | **Delete** — no more overlay state in `RouterApp` |
+| `shell/src/hooks/useOpenService.ts` | Drop `showOverlay` param and `case 'overlay'` |
+| `shell/src/services/openService.ts` | `resolveRoute`: no `overlay` branch; put `displaySettings`, `overlaySize`, `title` into `state.mfeConfig`; customer portfolio URL |
+| `shell/src/types/openService.ts` | `OpenType = 'navigate' \| 'blank'`; remove `OverlayService` / `ResolvedRoute.overlay` |
+| `shell/src/services/sherutimService.ts` | `SherutMfeConfig` + `displaySettings`, `overlaySize`, `title`; mock returns overlay for SHR004/SHR006 |
+| `shell/src/sections/SherutDynamicView.tsx` | Read config (state → API fallback), decide page vs. overlay, `portfolio` prop |
+| `shell/src/components/overlay/SherutOverlayView.tsx` | **New** — digital objects + `<ServiceOverlay>` |
+| `shell/src/components/overlay/ServiceOverlay.tsx` | Takes the loaded component + config + `onClose` as props; local size state; passes `onResize` |
+| `shell/src/utils/overlayBase.ts` | **Delete** (or keep only `PORTFOLIO_ROOTS` if needed for close) |
+| `shell/src/App.tsx` | Remove `useServiceOverlay`, `routesLocation`, `<ServiceOverlay>`; add `/customer-portfolio/sherutim/:idntSheryut/*` |
+| `shell/src/components/CustomerPortfolioLayout.tsx` | Provide `mfeConfig` outlet context like the employee layout (or `SherutDynamicView` stops needing it — see step 1 of the flow) |
 
 ---
 
-## Phases
+## Decisions
 
-1. **Hook + backdrop** — `useServiceOverlay`, `overlayBasePath`, `resolveRoute`/`useOpenService` changes,
-   `ServiceOverlay` rendering the MFE in a plain fixed box over a click-blocking backdrop.
-   Proves open / close / move to preview / blocked page / auto-close on Back.
-2. **Window** — title bar, S/M/L switch, drag, viewport capping, focus trap.
-3. **Contract** — `useSherutModule` extraction, `displayMode` + `onClose` in `SherutDynamicView` and
-   `mfe-sherut-exemplat`.
+1. **Digital objects under the overlay — the Full component.** The Preview's extended filter
+   navigates to full mode (and so closed the overlay); Full toggles its filters in place.
+   "חזרה" goes to the portfolio home (closes the overlay, like ×).
+2. **Opening another service from inside the overlay replaces it** — it's a plain navigation. The
+   v1 notice "יש לסגור קודם את השירות הפתוח" is dropped.
+3. **× / Esc / `onClose` go to the portfolio home** (`/<portfolio>-portfolio` + current search).
 
 ---
 
-## Open questions
+## v3 — the page behind stays usable
 
-None — all decided. The service id is `idntMenuItem` (the same value as `idntSheryut`).
+The overlay is no longer modal. While it is open, the user can keep working with the digital
+objects behind it, and a digital object can itself open a service (e.g. an "edit" service that is
+an overlay). So the rule is now: **at most one overlay at a time.**
+
+### What changes
+
+| Today (v2) | v3 |
+|---|---|
+| Transparent full-screen backdrop blocks every click | **No backdrop** — page, side nav and header are clickable |
+| Digital objects under the overlay rendered without handlers | Rendered **like on the portfolio home**: `openService`, `onShowAll`, `onFocusItem` |
+| `role="dialog" aria-modal="true"` | `role="dialog"` without `aria-modal`; `Esc` closes **only when focus is inside the window** |
+| Second overlay → replaces the first (it's a navigation) | Second overlay → **blocked**: the open window flashes + a short message |
+
+### "One overlay at a time" — who knows an overlay is open
+
+`useOpenService` (in `RouterApp`) has to know, before it navigates, that an overlay is already
+open. The only one who knows is `SherutOverlayView` (deep inside the service route). On a direct
+link / reload there is no navigation state to read either. So a **tiny Zustand store** carries it:
+
+```ts
+// shell/src/store/overlayStore.ts
+interface OverlayStore {
+  openServiceId: string | null;   // set by SherutOverlayView on mount, cleared on unmount
+  nudgeCount: number;             // ++ every time a second overlay is blocked
+  setOpen: (id: string | null) => void;
+  nudge: () => void;
+}
+```
+
+- **Not exposed to MFEs** (not in `vite.config` `exposes`). MFEs still only call `openService`.
+- It is UI state of the shell, same family as `appContext` / `personStore`.
+
+### Flow
+
+```
+digital object (behind the overlay) → openService(meta)
+        │
+        ▼
+useOpenService: flat.isOverlay && overlayStore.openServiceId
+        ├─ yes → overlayStore.nudge(); stop           ← no navigation
+        └─ no  → navigate as usual (v2)
+
+ServiceOverlay subscribes to nudgeCount:
+  1. window flashes (blue ring pulse, ~0.4s × 2)
+  2. banner under the title bar for ~2s: "יש כבר שירות פתוח, יש לסגור אותו קודם"
+```
+
+- Clicking the **same** overlay service again counts as a second overlay → nudge.
+- A **page** service (not overlay) opened from behind still navigates — it leaves the route, so the
+  overlay closes. Same for `onShowAll` / `onFocusItem` of the digital objects (they navigate away).
+
+### Files
+
+| File | Change |
+|------|--------|
+| `shell/src/store/overlayStore.ts` | **New** — `openServiceId`, `nudgeCount`, `setOpen`, `nudge` |
+| `shell/src/hooks/useOpenService.ts` | Block a second overlay → `nudge()` |
+| `shell/src/components/overlay/SherutOverlayView.tsx` | `setOpen(id)` on mount / `setOpen(null)` on unmount; digital objects get `openService` + navigation handlers |
+| `shell/src/components/overlay/ServiceOverlay.tsx` | Remove backdrop and `aria-modal`; `Esc` only inside; flash + banner on `nudgeCount` |
+| `shell/src/sections/SherutDynamicView.tsx` | Accept `openService` and pass it down |
+| `shell/src/App.tsx` | Pass `openService` to both `SherutDynamicView` portfolio routes |
+| `shell/src/index.css` | `@keyframes` for the flash |
 
 ---
 
 ## What this does NOT do
 
-- Does not put the overlay in the URL — reload closes it.
-- Does not open more than one overlay — a second one shows "יש לסגור קודם את השירות הפתוח".
-- Does not support free resize — only S / M / L.
-- Does not warn about unsaved changes on close.
-- Does not change how `openService` decides **which** service opens — only how an overlay service is displayed.
+- Does not open an overlay outside a portfolio — `/sherutim/:id` is always a full page.
 - Does not let a caller force overlay/page — the service config decides.
-- Does not add a global store — overlay state is local to `RouterApp`, and MFEs still only call `openService` and `onClose`.
+- Does not support free resize — only S / M / L (by the user or by the service).
+- Does not warn about unsaved changes on close.
 - Does not support `target=blank` services in an overlay; those still open in a new tab.

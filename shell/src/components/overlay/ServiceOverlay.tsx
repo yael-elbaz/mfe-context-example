@@ -1,8 +1,9 @@
-import React, { useEffect, useRef, useState } from 'react';
-import type { ServiceOverlayProps } from '../../hooks/useServiceOverlay';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { OverlaySize } from '../../types/openService';
-import { loadRemoteModule } from '../../utils/dynamicFederation';
-import { useSelectedPerson } from '../../store/personStore';
+import { useDraggable } from './useDraggable';
+import { useOverlayStore } from '../../store/overlayStore';
+
+const NOTICE_MS = 2000;
 
 // מידות זמניות עד שיגיע עיצוב ב-Figma. תמיד מוגבל לגודל המסך פחות 24px מכל צד.
 const SIZE_CLASS: Record<OverlaySize, string> = {
@@ -10,6 +11,20 @@ const SIZE_CLASS: Record<OverlaySize, string> = {
   m: 'w-[640px] h-[600px]',
   l: 'w-[960px] h-[800px]',
 };
+
+const SIZES: OverlaySize[] = ['s', 'm', 'l'];
+
+export interface ServiceOverlayProps {
+  title: string;
+  /** גודל הפתיחה מהגדרות השירות */
+  initialSize: OverlaySize;
+  /** ה-MFE של השירות — null בזמן טעינה */
+  Component: React.ComponentType<any> | null;
+  error: string | null;
+  /** props שעוברים ל-MFE של השירות (מעבר ל-displayMode / onClose / onResize) */
+  serviceProps: Record<string, unknown>;
+  onClose: () => void;
+}
 
 class OverlayErrorBoundary extends React.Component<{ children: React.ReactNode }, { error: Error | null }> {
   state = { error: null as Error | null };
@@ -23,83 +38,105 @@ class OverlayErrorBoundary extends React.Component<{ children: React.ReactNode }
 }
 
 /**
- * חלון השירות באוברליי: נפתח בפינה השמאלית התחתונה, מעל רקע שקוף שחוסם לחיצות על הדף.
- * שלב 1 — חלון קבוע (בלי גרירה ובלי מתג גודל; אלה בשלב 2).
+ * חלון השירות באוברליי: נפתח בפינה השמאלית התחתונה. לא מודאלי — הדף שמאחור נשאר פעיל.
+ * מרונדר מתוך SherutDynamicView — חי כל עוד ה-route של השירות פתוח.
+ * הגודל משתנה מהמתג בשורת הכותרת, או מתוך השירות (onResize).
+ * ניסיון לפתוח אוברליי שני (nudgeCount ב-overlayStore) — החלון מהבהב ומוצגת הודעה.
  */
-const ServiceOverlay: React.FC<ServiceOverlayProps> = ({ service, blockedNotice, onDismissNotice, onClose }) => {
-  const person = useSelectedPerson();
+const ServiceOverlay: React.FC<ServiceOverlayProps> = ({ title, initialSize, Component, error, serviceProps, onClose }) => {
   const windowRef = useRef<HTMLDivElement>(null);
-  const [Component, setComponent] = useState<React.ComponentType<any> | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const titleBarRef = useRef<HTMLDivElement>(null);
+  const [size, setSize] = useState<OverlaySize>(initialSize);
+  const { style: dragStyle, handleProps, clampIntoView } = useDraggable(windowRef);
+  const nudgeCount = useOverlayStore((s) => s.nudgeCount);
+  const [notice, setNotice] = useState(false);
+  // הערך בזמן הפתיחה — מהבהבים רק על ניסיונות שקרו אחריה
+  const nudgeAtOpen = useRef(nudgeCount);
 
-  // טעינת ה-MFE של השירות
-  useEffect(() => {
-    if (!service) return;
-    let cancelled = false;
-    setComponent(null);
-    setError(null);
-    loadRemoteModule(service.mfeConfig.remoteUrl, service.mfeConfig.module)
-      .then(C => { if (!cancelled) setComponent(() => C); })
-      .catch(err => { if (!cancelled) setError((err as Error).message); });
-    return () => { cancelled = true; };
-  }, [service]);
+  // שינוי גודל שומר על הפינה השמאלית התחתונה; אם החלון יצא מהמסך — מחזירים אותו פנימה
+  useLayoutEffect(() => {
+    clampIntoView(titleBarRef.current?.offsetHeight ?? 0);
+  }, [size, clampIntoView]);
 
-  // פוקוס נכנס לחלון בפתיחה וחוזר לאלמנט שפתח אותו בסגירה; Esc סוגר
   useEffect(() => {
-    if (!service) return;
+    if (nudgeCount === nudgeAtOpen.current) return;
+    setNotice(true);
+    const t = window.setTimeout(() => setNotice(false), NOTICE_MS);
+    return () => window.clearTimeout(t);
+  }, [nudgeCount]);
+
+  // פוקוס נכנס לחלון בפתיחה וחוזר לאלמנט הקודם בסגירה
+  useEffect(() => {
     const opener = document.activeElement as HTMLElement | null;
     windowRef.current?.focus();
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('keydown', onKey);
-      opener?.focus?.();
-    };
-  }, [service, onClose]);
+    return () => opener?.focus?.();
+  }, []);
 
-  if (!service) return null;
+  // Esc סוגר רק כשהפוקוס בתוך החלון — אחרת הוא שייך לדף שמאחור
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') onClose();
+  };
 
   return (
     <>
-      {/* רקע שקוף לגמרי — רק חוסם לחיצות על הדף, ההדר והתפריט */}
-      <div className="fixed inset-0 z-[500]" aria-hidden="true" />
-
       <div
         ref={windowRef}
         role="dialog"
-        aria-modal="true"
         aria-labelledby="service-overlay-title"
         tabIndex={-1}
         dir="rtl"
-        className={`fixed bottom-6 left-6 z-[501] flex max-h-[calc(100vh_-_48px)] max-w-[calc(100vw_-_48px)] flex-col overflow-hidden rounded-xl border border-[#E2E8F0] bg-white shadow-[0_8px_32px_rgba(0,0,0,0.18)] outline-none ${SIZE_CLASS[service.size]}`}
+        style={dragStyle}
+        onKeyDown={onKeyDown}
+        className={`fixed bottom-6 left-6 z-[501] flex translate-x-(--drag-x) translate-y-(--drag-y) max-h-[calc(100vh_-_48px)] max-w-[calc(100vw_-_48px)] flex-col overflow-hidden rounded-xl border border-[#E2E8F0] bg-white shadow-[0_8px_32px_rgba(0,0,0,0.18)] outline-none ${SIZE_CLASS[size]}`}
       >
-        {/* שורת כותרת */}
-        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-[#E2E8F0] px-4 py-3">
-          <h2 id="service-overlay-title" className="m-0 truncate text-base font-medium text-blue-heading">
-            {service.title || 'שירות'}
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="סגירה"
-            className="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-full border-none bg-transparent text-xl leading-none text-[#00033D] hover:bg-[#F8F9FD]"
-          >
-            ×
-          </button>
-        </div>
+        {/* הבהוב — מסגרת כחולה מעל החלון; key מתחיל את האנימציה מחדש בכל ניסיון */}
+        {notice && (
+          <div
+            key={nudgeCount}
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 z-10 rounded-xl opacity-0 shadow-[inset_0_0_0_3px_#4395FF] animate-overlay-flash"
+          />
+        )}
 
-        {/* "יש לסגור קודם" — כשמנסים לפתוח אוברליי נוסף מתוך השירות */}
-        {blockedNotice && (
-          <div role="alert" className="flex shrink-0 items-center justify-between gap-3 bg-[#FFF8E1] px-4 py-2 text-sm text-[#7A5500]">
-            <span>יש לסגור קודם את השירות הפתוח</span>
+        {/* שורת כותרת — ידית הגרירה */}
+        <div
+          ref={titleBarRef}
+          {...handleProps}
+          className="flex shrink-0 cursor-move touch-none items-center justify-between gap-3 border-b border-[#E2E8F0] px-4 py-3 select-none"
+        >
+          <h2 id="service-overlay-title" className="m-0 truncate text-base font-medium text-blue-heading">
+            {title || 'שירות'}
+          </h2>
+          <div className="flex shrink-0 items-center gap-1">
+            {SIZES.map((s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => setSize(s)}
+                aria-pressed={size === s}
+                aria-label={`גודל ${s.toUpperCase()}`}
+                className={`flex size-7 cursor-pointer items-center justify-center rounded-md border-none text-xs font-medium ${
+                  size === s ? 'bg-[#4395FF] text-white' : 'bg-transparent text-[#00033D] hover:bg-[#F8F9FD]'
+                }`}
+              >
+                {s.toUpperCase()}
+              </button>
+            ))}
             <button
               type="button"
-              onClick={onDismissNotice}
-              aria-label="סגירת ההודעה"
-              className="cursor-pointer border-none bg-transparent text-base leading-none text-[#7A5500]"
+              onClick={onClose}
+              aria-label="סגירה"
+              className="flex size-8 cursor-pointer items-center justify-center rounded-full border-none bg-transparent text-xl leading-none text-[#00033D] hover:bg-[#F8F9FD]"
             >
               ×
             </button>
+          </div>
+        </div>
+
+        {/* ניסיון לפתוח אוברליי שני */}
+        {notice && (
+          <div role="alert" className="shrink-0 bg-[#FFF8E1] px-4 py-2 text-sm text-[#7A5500]">
+            יש כבר שירות פתוח, יש לסגור אותו קודם
           </div>
         )}
 
@@ -115,11 +152,10 @@ const ServiceOverlay: React.FC<ServiceOverlayProps> = ({ service, blockedNotice,
           ) : (
             <OverlayErrorBoundary>
               <Component
-                {...service.params}
-                idntSheryut={service.serviceId}
-                employeeId={person?.id ?? ''}
+                {...serviceProps}
                 displayMode="overlay"
                 onClose={onClose}
+                onResize={setSize}
               />
             </OverlayErrorBoundary>
           )}

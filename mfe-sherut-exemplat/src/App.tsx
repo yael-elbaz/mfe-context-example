@@ -83,6 +83,20 @@ const SHERUT_DATA: Record<string, SherutData> = {
       { label: 'מנהל ממשיך', value: 'יוסי כהן' },
     ],
   },
+  // נפתח מכפתור "עריכה" באובייקטים הדיגיטליים (אוברליי)
+  SHR009: {
+    title: 'עריכת אובייקט דיגיטלי',
+    description: 'עדכון פרטי אובייקט דיגיטלי שהוקצה לעובד — סטטוס, פרטים ותאריך הקצאה.',
+    status: 'פתוח',
+    category: 'אובייקטים דיגיטליים',
+    currentStepIndex: 0,
+    fields: [
+      { label: 'סטטוס', value: 'פעיל' },
+      { label: 'פרטים', value: '' },
+      { label: 'תאריך הקצאה', value: '' },
+      { label: 'הערות', value: '' },
+    ],
+  },
 };
 
 const STATUS_STYLE = {

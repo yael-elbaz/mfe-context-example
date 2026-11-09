@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useEmployee } from 'shell/employeeStore';
-import { MOCK_OBJECTS, STATUS_STYLE, DigitalObject, DigitalObjectsPreviewState } from './shared';
+import { MOCK_OBJECTS, STATUS_STYLE, DigitalObject, DigitalObjectsPreviewState, editServiceCall, OpenService } from './shared';
 import { useIframeFocusEvent } from './useIframeFocusEvent';
 import SectionCard from 'shell/SectionCard';
 import FilterButton from './FilterButton';
@@ -17,12 +17,14 @@ const demoUrl = (obj: DigitalObject) =>
 
 interface Props {
   employeeId?: string;
+  // "עריכה" ברשומה פותחת שירות (אוברליי) — ה-shell מחליט איך
+  openService?: OpenService;
   // מעבר למצב מלא; state מגיע ל-Full כ-previewState (ראו DigitalObjectsPreviewState)
   onShowAll?: (state?: DigitalObjectsPreviewState) => void;
   onFocusItem?: (id: string, iframeUrl?: string) => void;
 }
 
-const ObjectRow: React.FC<{ obj: DigitalObject; onFocus?: () => void }> = ({ obj, onFocus }) => {
+const ObjectRow: React.FC<{ obj: DigitalObject; onFocus?: () => void; onEdit?: () => void }> = ({ obj, onFocus, onEdit }) => {
   const s = STATUS_STYLE[obj.status];
   return (
     <div style={{
@@ -48,17 +50,27 @@ const ObjectRow: React.FC<{ obj: DigitalObject; onFocus?: () => void }> = ({ obj
         color: s.color,
         whiteSpace: 'nowrap',
       }}>{obj.status}</span>
-      <button
-        onClick={onFocus}
-        style={{ background: 'none', border: '1px solid #1E3BA2', color: '#1E3BA2', borderRadius: '6px', padding: '3px 10px', cursor: 'pointer', fontSize: '12px', whiteSpace: 'nowrap' }}
-      >
-        התמקד
-      </button>
+      <div style={{ display: 'flex', gap: '6px' }}>
+        {onEdit && (
+          <button
+            onClick={onEdit}
+            style={{ background: '#1E3BA2', border: '1px solid #1E3BA2', color: '#fff', borderRadius: '6px', padding: '3px 10px', cursor: 'pointer', fontSize: '12px', whiteSpace: 'nowrap' }}
+          >
+            עריכה
+          </button>
+        )}
+        <button
+          onClick={onFocus}
+          style={{ background: 'none', border: '1px solid #1E3BA2', color: '#1E3BA2', borderRadius: '6px', padding: '3px 10px', cursor: 'pointer', fontSize: '12px', whiteSpace: 'nowrap' }}
+        >
+          התמקד
+        </button>
+      </div>
     </div>
   );
 };
 
-const Preview: React.FC<Props> = ({ onShowAll, onFocusItem }) => {
+const Preview: React.FC<Props> = ({ openService, onShowAll, onFocusItem }) => {
   const employee = useEmployee();
   const [search, setSearch] = useState('');
 
@@ -105,7 +117,7 @@ const Preview: React.FC<Props> = ({ onShowAll, onFocusItem }) => {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
         {preview.length === 0
           ? <div style={{ textAlign: 'center', color: '#848282', fontSize: '13px', padding: '12px' }}>לא נמצאו תוצאות</div>
-          : preview.map(obj => <ObjectRow key={obj.id} obj={obj} onFocus={() => onFocusItem?.(obj.id, demoUrl(obj))} />)
+          : preview.map(obj => <ObjectRow key={obj.id} obj={obj} onFocus={() => onFocusItem?.(obj.id, demoUrl(obj))} onEdit={openService && (() => openService(editServiceCall(obj, employee.id)))} />)
         }
       </div>
 

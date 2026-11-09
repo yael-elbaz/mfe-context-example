@@ -14,8 +14,6 @@ import SherutimWrapper from './components/SherutimWrapper';
 import { useOpenService } from './hooks/useOpenService';
 import { useEmployeePickerPopup } from './hooks/useEmployeePickerPopup';
 import EmployeePickerPopup from './components/EmployeePickerPopup';
-import { useServiceOverlay } from './hooks/useServiceOverlay';
-import ServiceOverlay from './components/overlay/ServiceOverlay';
 import SelectEmployeePage from './components/SelectEmployeePage';
 import HomePage from './components/home/HomePage';
 import { mfe } from './components/MfeSlot';
@@ -57,8 +55,7 @@ const Padded: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 
 const RouterApp: React.FC = () => {
   const { waitForEmployee, pickerProps } = useEmployeePickerPopup();
-  const { showOverlay, overlayProps } = useServiceOverlay();
-  const { openService } = useOpenService(waitForEmployee, showOverlay);
+  const { openService } = useOpenService(waitForEmployee);
   const navigate = useNavigate();
 
   return (
@@ -74,6 +71,7 @@ const RouterApp: React.FC = () => {
               <Route path="/customer-portfolio" element={<Padded><CustomerPortfolioLayout /></Padded>}>
                 <Route index element={<CustomerSherutimPreview openService={openService} />} />
                 <Route path="sherutim" element={<CustomerSherutimFull openService={openService} />} />
+                <Route path="sherutim/:idntSheryut/*" element={<SherutDynamicView portfolio="customer" openService={openService} />} />
               </Route>
             {/* </Route> */}
             <Route path="/sherutim" element={
@@ -85,7 +83,7 @@ const RouterApp: React.FC = () => {
             {/* <Route path="/employee-portfolio" element={<EmployeePortfolioExternalRedirect />}> */}
               <Route  path="/employee-portfolio" element={<Padded><EmployeePortfolioLayout /></Padded>}>
                 <Route index element={<EmployeePortfolioIndex openService={openService} />} />
-                <Route path="sherutim/:idntSheryut/*" element={<SherutDynamicView />} />
+                <Route path="sherutim/:idntSheryut/*" element={<SherutDynamicView portfolio="employee" openService={openService} />} />
                 <Route path=":section/:itemId" element={<ExternalIframeView />} />
                 <Route path=":section" element={<LegacySectionRedirect openService={openService} />} />
               </Route>
@@ -94,8 +92,6 @@ const RouterApp: React.FC = () => {
           </SilentErrorBoundary>
         </main>
       </div>
-      {/* שירות באוברליי — מעל הדף, מתחת לבורר העובד (שירות באוברליי יכול לפתוח אותו) */}
-      <ServiceOverlay {...overlayProps} />
       <EmployeePickerPopup {...pickerProps} />
     </>
   );

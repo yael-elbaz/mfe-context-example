@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { useEmployee } from 'shell/employeeStore';
-import { MOCK_OBJECTS, STATUS_STYLE, DigitalObject, ObjectType, ObjectStatus, DigitalObjectsPreviewState } from './shared';
+import { MOCK_OBJECTS, STATUS_STYLE, DigitalObject, ObjectType, ObjectStatus, DigitalObjectsPreviewState, editServiceCall, OpenService } from './shared';
 import { useIframeFocusEvent } from './useIframeFocusEvent';
 import SectionCard from 'shell/SectionCard';
 import FilterButton from './FilterButton';
 
 interface Props {
   employeeId?: string;
+  // "עריכה" ברשומה פותחת שירות (אוברליי) — ה-shell מחליט איך
+  openService?: OpenService;
   // "חזרה" — ה-shell מחליט לאן חוזרים (תיק העובד)
   backToPreview?: () => void;
   onFocusItem?: (id: string, iframeUrl?: string) => void;
@@ -113,7 +115,7 @@ const FilterBar: React.FC<FilterBarProps> = ({ typeFilter, setTypeFilter, status
   </aside>
 );
 
-const ObjectRow: React.FC<{ obj: DigitalObject; onFocus?: () => void }> = ({ obj, onFocus }) => {
+const ObjectRow: React.FC<{ obj: DigitalObject; onFocus?: () => void; onEdit?: () => void }> = ({ obj, onFocus, onEdit }) => {
   const s = STATUS_STYLE[obj.status];
   return (
     <div style={{
@@ -140,17 +142,27 @@ const ObjectRow: React.FC<{ obj: DigitalObject; onFocus?: () => void }> = ({ obj
         color: s.color,
         textAlign: 'center',
       }}>{obj.status}</span>
-      <button
-        onClick={onFocus}
-        style={{ background: 'none', border: '1px solid #1E3BA2', color: '#1E3BA2', borderRadius: '6px', padding: '4px 12px', cursor: 'pointer', fontSize: '12px', whiteSpace: 'nowrap' }}
-      >
-        התמקד
-      </button>
+      <div style={{ display: 'flex', gap: '6px' }}>
+        {onEdit && (
+          <button
+            onClick={onEdit}
+            style={{ background: '#1E3BA2', border: '1px solid #1E3BA2', color: '#fff', borderRadius: '6px', padding: '4px 12px', cursor: 'pointer', fontSize: '12px', whiteSpace: 'nowrap' }}
+          >
+            עריכה
+          </button>
+        )}
+        <button
+          onClick={onFocus}
+          style={{ background: 'none', border: '1px solid #1E3BA2', color: '#1E3BA2', borderRadius: '6px', padding: '4px 12px', cursor: 'pointer', fontSize: '12px', whiteSpace: 'nowrap' }}
+        >
+          התמקד
+        </button>
+      </div>
     </div>
   );
 };
 
-const Full: React.FC<Props> = ({ backToPreview, onFocusItem, previewState }) => {
+const Full: React.FC<Props> = ({ openService, backToPreview, onFocusItem, previewState }) => {
   const employee = useEmployee();
 
   // בסביבה האמיתית: ה-URL מגיע מאירוע ה-iframe ונשלח הלאה אל ה-Detail.
@@ -256,7 +268,7 @@ const Full: React.FC<Props> = ({ backToPreview, onFocusItem, previewState }) => 
       <div style={{ flex: '1 1 0', minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '6px' }}>
         {filtered.length === 0
           ? <div style={{ textAlign: 'center', color: '#848282', fontSize: '14px', padding: '32px' }}>לא נמצאו פריטים</div>
-          : filtered.map(obj => <ObjectRow key={obj.id} obj={obj} onFocus={() => onFocusItem?.(obj.id, demoUrl(obj))} />)
+          : filtered.map(obj => <ObjectRow key={obj.id} obj={obj} onFocus={() => onFocusItem?.(obj.id, demoUrl(obj))} onEdit={openService && (() => openService(editServiceCall(obj, employee.id)))} />)
         }
       </div>
       </div>

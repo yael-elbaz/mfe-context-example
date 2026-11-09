@@ -2,6 +2,8 @@ import { toObjectTypeList } from '../types/openService';
 import type { Service, ServiceSrc, DigitalService, ResolvedRoute, OverlaySize } from '../types/openService';
 import { Helper } from '../utils/urlHelper';
 import { resolveBlankUrl } from './openInBlank';
+import type { SherutMfeConfig } from './sherutimService';
+import { useSelectedPersonStore } from '../store/personStore';
 
 function toScalar(v: string | string[] | undefined): string | undefined {
   return Array.isArray(v) ? v[0] : v;
@@ -59,35 +61,32 @@ export async function resolveRoute(flat: DigitalService & Record<string, any>): 
   }
 
   const qs = Helper.buildQParam(flat.sherutimUrlParams);
-  const mfeConfig = {
+  // הגדרות התצוגה (אוברליי / דף מלא) עוברות יחד עם ה-mfeConfig — SherutDynamicView מחליט לפיהן
+  const mfeConfig: SherutMfeConfig = {
     remoteUrl: flat.serviceSrc?.remoteUrl ?? '',
-    scope:     flat.serviceSrc?.scope     ?? '',
-    module:    flat.serviceSrc?.module    ?? '',
+    scope:     toScalar(flat.serviceSrc?.scope)  ?? '',
+    module:    toScalar(flat.serviceSrc?.module) ?? '',
+    ...(flat.isOverlay && {
+      displaySettings: 'overlay' as const,
+      overlaySize: toOverlaySize(flat.overlaySize),
+      title: flat.textMenuItem || String(flat.title ?? ''),
+    }),
   };
   const serviceId = getServiceId(flat);
   const url = flat.objectType == null
     ? Helper.buildUrl(`sherutim/${flat.idntMenuItem}`, qs)
-    : Helper.buildUrl(`/employee-portfolio/sherutim/${serviceId}`, qs);
-
-  if (flat.isOverlay) {
-    return {
-      url,
-      openType: 'overlay',
-      overlay: {
-        serviceId,
-        title: flat.textMenuItem || String(flat.title ?? ''),
-        mfeConfig: {
-          remoteUrl: mfeConfig.remoteUrl,
-          scope: toScalar(mfeConfig.scope) ?? '',
-          module: toScalar(mfeConfig.module) ?? '',
-        },
-        params: { ...flat, idntSheryut: serviceId },
-        size: toOverlaySize(flat.overlaySize),
-      },
-    };
-  }
+    : Helper.buildUrl(`${portfolioRoot(flat.personType)}/sherutim/${serviceId}`, qs);
 
   return { url, state: { mfeConfig }, openType: 'navigate' };
+}
+
+/**
+ * התיק שהשירות נפתח בתוכו — לפי סוג האדם: זה שנבחר עכשיו בבורר (personType),
+ * או זה שכבר טעון בתיק הפתוח.
+ */
+function portfolioRoot(personType: unknown): string {
+  const type = personType ?? useSelectedPersonStore.getState().person?.type;
+  return type === 'customer' ? '/customer-portfolio' : '/employee-portfolio';
 }
 
 /**

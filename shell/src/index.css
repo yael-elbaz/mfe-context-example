@@ -65,6 +65,13 @@
   --color-portfolio-header-bg: #E0E8F1;
   --color-field-bg:     #F5F5F5;  /* Gray_3 — רקע שדה החיפוש בהדר */
   --color-field-border: #C5CBDD;  /* Gray_2 — מסגרת שדה החיפוש */
+
+  /* אוברליי שירות — הבהוב כשמנסים לפתוח אוברליי שני (שני פולסים) */
+  --animate-overlay-flash: overlay-flash 0.4s ease-in-out 2;
+  @keyframes overlay-flash {
+    0%, 100% { opacity: 0; }
+    50%      { opacity: 1; }
+  }
 }
 
 /* ------------------------------------------------------------------

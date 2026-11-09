@@ -34,17 +34,20 @@ export class Helper {
     return window.btoa(encodeURIComponent(Helper.getObjQueryParams(params))); // URI-encode then Base64
   }
 
-  // builds the full q=<encoded> query param:
-  // reads existing params from q in the current URL, merges extra on top, re-encodes
+  // builds the query string for the next page:
+  // keeps the current URL's plain params (employeeId, …) as they are,
+  // reads existing params from q in the current URL, merges extra on top, re-encodes into q=
   static buildQParam(extra?: string): string {
+    const plain = new URLSearchParams(window.location.search);                         // current plain params
+    plain.delete('q');                                                                 // q is rebuilt below
     const currentQ = Helper.getQueryParams();                                           // get raw Base64 q from current URL
     const current  = currentQ ? Helper.getQueryParamsAsObject(Helper.decodeQueryString(currentQ)) : {}; // decode → parse
     const extras   = extra ? Helper.getQueryParamsAsObject(extra) : {};                // parse sherutimUrlParams
 
     const merged = { ...current, ...extras };                                          // extra keys win on conflict
-    if (Object.keys(merged).length === 0) return '';
+    if (Object.keys(merged).length > 0) plain.set('q', Helper.encodeQueryString(merged)); // re-encode and wrap in q=
 
-    return `q=${Helper.encodeQueryString(merged)}`;                                    // re-encode and wrap in q=
+    return plain.toString();
   }
 
   // appends query string to path, only if non-empty
