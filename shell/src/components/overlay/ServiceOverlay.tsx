@@ -2,6 +2,11 @@ import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { OverlaySize } from '../../types/openService';
 import { useDraggable } from './useDraggable';
 import { useOverlayStore } from '../../store/overlayStore';
+import './overlay.css';
+
+// קלאסים בתחביר שעובד גם ב-Tailwind 3.4 וגם ב-v4 (ערכים שרירותיים, בלי טוקנים מ-@theme),
+// כדי שאפשר יהיה להעתיק את התיקייה לפרויקט אחר בלי לגעת ב-tailwind.config.
+const HEADING_COLOR = 'text-[#1E3BA2]';
 
 const NOTICE_MS = 2000;
 
@@ -87,14 +92,14 @@ const ServiceOverlay: React.FC<ServiceOverlayProps> = ({ title, initialSize, Com
         dir="rtl"
         style={dragStyle}
         onKeyDown={onKeyDown}
-        className={`fixed bottom-6 left-6 z-[501] flex translate-x-(--drag-x) translate-y-(--drag-y) max-h-[calc(100vh_-_48px)] max-w-[calc(100vw_-_48px)] flex-col overflow-hidden rounded-xl border border-[#E2E8F0] bg-white shadow-[0_8px_32px_rgba(0,0,0,0.18)] outline-none ${SIZE_CLASS[size]}`}
+        className={`fixed bottom-6 left-6 z-[501] flex translate-x-[var(--drag-x)] translate-y-[var(--drag-y)] max-h-[calc(100vh_-_48px)] max-w-[calc(100vw_-_48px)] flex-col overflow-hidden rounded-xl border border-[#E2E8F0] bg-white shadow-[0_8px_32px_rgba(0,0,0,0.18)] outline-none ${SIZE_CLASS[size]}`}
       >
         {/* הבהוב — מסגרת כחולה מעל החלון; key מתחיל את האנימציה מחדש בכל ניסיון */}
         {notice && (
           <div
             key={nudgeCount}
             aria-hidden="true"
-            className="pointer-events-none absolute inset-0 z-10 rounded-xl opacity-0 shadow-[inset_0_0_0_3px_#4395FF] animate-overlay-flash"
+            className="pointer-events-none absolute inset-0 z-10 rounded-xl opacity-0 shadow-[inset_0_0_0_3px_#4395FF] animate-[overlay-flash_0.4s_ease-in-out_2]"
           />
         )}
 
@@ -104,7 +109,7 @@ const ServiceOverlay: React.FC<ServiceOverlayProps> = ({ title, initialSize, Com
           {...handleProps}
           className="flex shrink-0 cursor-move touch-none items-center justify-between gap-3 border-b border-[#E2E8F0] px-4 py-3 select-none"
         >
-          <h2 id="service-overlay-title" className="m-0 truncate text-base font-medium text-blue-heading">
+          <h2 id="service-overlay-title" className={`m-0 truncate text-base font-medium ${HEADING_COLOR}`}>
             {title || 'שירות'}
           </h2>
           <div className="flex shrink-0 items-center gap-1">
@@ -148,7 +153,7 @@ const ServiceOverlay: React.FC<ServiceOverlayProps> = ({ title, initialSize, Com
               <pre className="mt-2 whitespace-pre-wrap text-xs">{error}</pre>
             </div>
           ) : !Component ? (
-            <div className="p-12 text-center text-blue-heading">⏳ טוען שירות...</div>
+            <div className={`p-12 text-center ${HEADING_COLOR}`}>⏳ טוען שירות...</div>
           ) : (
             <OverlayErrorBoundary>
               <Component

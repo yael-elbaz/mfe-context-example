@@ -1,0 +1,6 @@
+/* אוברליי שירות — הבהוב כשמנסים לפתוח אוברליי שני (שני פולסים).
+   CSS רגיל ולא @theme / tailwind.config — כך התיקייה עובדת גם ב-Tailwind 3.4 וגם ב-v4 בלי הגדרות. */
+@keyframes overlay-flash {
+  0%, 100% { opacity: 0; }
+  50%      { opacity: 1; }
+}
