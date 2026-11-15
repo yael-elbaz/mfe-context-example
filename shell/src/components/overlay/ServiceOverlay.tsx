@@ -2,6 +2,7 @@ import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { OverlaySize } from '../../types/openService';
 import { useDraggable } from './useDraggable';
 import { useOverlayStore } from '../../store/overlayStore';
+import { useIsMobile } from './useIsMobile';
 import './overlay.css';
 
 // קלאסים בתחביר שעובד גם ב-Tailwind 3.4 וגם ב-v4 (ערכים שרירותיים, בלי טוקנים מ-@theme),
@@ -16,6 +17,8 @@ const SIZE_CLASS: Record<OverlaySize, string> = {
   m: 'w-[640px] h-[600px]',
   l: 'w-[960px] h-[800px]',
 };
+
+const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 
 export interface ServiceOverlayProps {
@@ -47,6 +50,8 @@ class OverlayErrorBoundary extends React.Component<{ children: React.ReactNode }
  * גודל הבסיס (s/m/l) מגיע מהגדרות השירות או מתוך השירות (onResize).
  * כשגודל הבסיס s או m — כפתור בשורת הכותרת מגדיל את החלון ל-L ומחזיר לגודל הבסיס.
  * כפתור מזעור משאיר רק את פס הכותרת בתחתית המסך; לחיצה עליו (או על הפס) מחזירה את החלון.
+ * מובייל (< 768px): מסך מלא שעולה מלמטה, בלי גרירה והגדלה, הדף מאחור נעול; ממוזער = פס ברוחב המסך.
+ *   כפתור "חזור" של הטלפון סוגר — לשירות יש route משלו בהיסטוריה.
  * ניסיון לפתוח אוברליי שני (nudgeCount ב-overlayStore) — החלון מהבהב ומוצגת הודעה.
  */
 const ServiceOverlay: React.FC<ServiceOverlayProps> = ({ title, initialSize, Component, error, serviceProps, onClose }) => {
@@ -71,6 +76,9 @@ const ServiceOverlay: React.FC<ServiceOverlayProps> = ({ title, initialSize, Com
     }
   };
   const { style: dragStyle, handleProps, clampIntoView } = useDraggable(windowRef);
+  // מובייל: מסך מלא, בלי גרירה ובלי הגדלה. החלון מכסה את הדף — ולכן מתנהג כמודאלי.
+  const isMobile = useIsMobile();
+  const coversPage = isMobile && !minimized;
   const nudgeCount = useOverlayStore((s) => s.nudgeCount);
   const [notice, setNotice] = useState(false);
   // הערך בזמן הפתיחה — מהבהבים רק על ניסיונות שקרו אחריה
@@ -79,9 +87,17 @@ const ServiceOverlay: React.FC<ServiceOverlayProps> = ({ title, initialSize, Com
   // שינוי גודל שומר על הפינה השמאלית התחתונה; אם החלון יצא מהמסך — מחזירים אותו פנימה
   // (בזמן מזעור לא — שם ה-translate מבוטל והמדידה הייתה מקלקלת את המיקום השמור)
   useLayoutEffect(() => {
-    if (minimized) return;
+    if (minimized || isMobile) return;
     clampIntoView(titleBarRef.current?.offsetHeight ?? 0);
-  }, [size, expanded, minimized, clampIntoView]);
+  }, [size, expanded, minimized, isMobile, clampIntoView]);
+
+  // מובייל — הדף שמאחור לא נגלל כשהחלון מכסה אותו
+  useEffect(() => {
+    if (!coversPage) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, [coversPage]);
 
   useEffect(() => {
     if (nudgeCount === nudgeAtOpen.current) return;
@@ -98,25 +114,50 @@ const ServiceOverlay: React.FC<ServiceOverlayProps> = ({ title, initialSize, Com
   }, []);
 
   // Esc סוגר רק כשהפוקוס בתוך החלון — אחרת הוא שייך לדף שמאחור
+  // במובייל (החלון מכסה את הדף) — Tab מסתובב בתוך החלון ולא יוצא לדף המוסתר
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Escape') onClose();
+    if (e.key !== 'Tab' || !coversPage || !windowRef.current) return;
+    const items = Array.from(windowRef.current.querySelectorAll<HTMLElement>(FOCUSABLE)).filter((el) => el.offsetParent !== null);
+    if (items.length === 0) return;
+    const first = items[0];
+    const last = items[items.length - 1];
+    const active = document.activeElement;
+    if (e.shiftKey && (active === first || active === windowRef.current)) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && active === last) {
+      e.preventDefault();
+      first.focus();
+    }
   };
+
+  const windowClass = isMobile
+    ? minimized
+      ? 'inset-x-0 bottom-0 w-full rounded-t-xl border-x-0 border-b-0'
+      : 'inset-0 h-dvh w-full border-0 motion-safe:animate-[overlay-slide-up_0.25s_ease-out]'
+    : minimized
+      ? 'bottom-0 left-6 w-[280px] max-w-[calc(100vw_-_48px)] rounded-t-xl border-b-0'
+      : `bottom-6 left-6 translate-x-[var(--drag-x)] translate-y-[var(--drag-y)] max-h-[calc(100vh_-_48px)] max-w-[calc(100vw_-_48px)] rounded-xl ${SIZE_CLASS[expanded ? 'l' : size]}`;
+
+  // כפתורי הכותרת — 44px במובייל (יעד מגע), 32px בדסקטופ
+  const iconBtn = `flex ${isMobile ? 'size-11' : 'size-8'} cursor-pointer items-center justify-center rounded-full border-none bg-transparent text-[#00033D] hover:bg-[#D5DBEA]`;
+
+  // אזורים בטוחים (notch / פס הבית) — רק במובייל
+  const titleBarSafeArea = !isMobile ? '' : minimized ? 'pb-[max(12px,env(safe-area-inset-bottom))]' : 'pt-[max(12px,env(safe-area-inset-top))]';
 
   return (
     <>
       <div
         ref={windowRef}
         role="dialog"
+        aria-modal={coversPage || undefined}
         aria-labelledby="service-overlay-title"
         tabIndex={-1}
         dir="rtl"
         style={dragStyle}
         onKeyDown={onKeyDown}
-        className={`fixed left-6 z-[501] flex max-w-[calc(100vw_-_48px)] flex-col overflow-hidden border border-[#E2E8F0] bg-white shadow-[0_8px_32px_rgba(0,0,0,0.18)] outline-none ${
-          minimized
-            ? 'bottom-0 w-[280px] rounded-t-xl border-b-0'
-            : `bottom-6 translate-x-[var(--drag-x)] translate-y-[var(--drag-y)] max-h-[calc(100vh_-_48px)] rounded-xl ${SIZE_CLASS[expanded ? 'l' : size]}`
-        }`}
+        className={`fixed z-[501] flex flex-col overflow-hidden border border-[#E2E8F0] bg-white shadow-[0_8px_32px_rgba(0,0,0,0.18)] outline-none ${windowClass}`}
       >
         {/* הבהוב — מסגרת כחולה מעל החלון; key מתחיל את האנימציה מחדש בכל ניסיון */}
         {notice && (
@@ -130,13 +171,13 @@ const ServiceOverlay: React.FC<ServiceOverlayProps> = ({ title, initialSize, Com
         {/* שורת כותרת — ידית הגרירה; במצב ממוזער לחיצה עליה מחזירה את החלון */}
         <div
           ref={titleBarRef}
-          {...(minimized ? {} : handleProps)}
+          {...(minimized || isMobile ? {} : handleProps)}
           onClick={(e) => {
             if (minimized && !(e.target as HTMLElement).closest('button')) setMinimized(false);
           }}
           className={`flex shrink-0 touch-none items-center justify-between gap-3 bg-[#E8ECF4] px-4 py-3 select-none ${
-            minimized ? 'cursor-pointer' : 'cursor-move border-b border-[#C5CBDD]'
-          }`}
+            minimized ? 'cursor-pointer' : `border-b border-[#C5CBDD] ${isMobile ? '' : 'cursor-move'}`
+          } ${titleBarSafeArea}`}
         >
           <h2 id="service-overlay-title" className={`m-0 truncate text-base font-medium ${HEADING_COLOR}`}>
             {title || 'שירות'}
@@ -149,20 +190,20 @@ const ServiceOverlay: React.FC<ServiceOverlayProps> = ({ title, initialSize, Com
               aria-pressed={minimized}
               aria-label={minimized ? 'החזרת החלון' : 'מזעור'}
               title={minimized ? 'החזרת החלון' : 'מזעור'}
-              className="flex size-8 cursor-pointer items-center justify-center rounded-full border-none bg-transparent text-[#00033D] hover:bg-[#D5DBEA]"
+              className={iconBtn}
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
                 <path d="M6 18h12" />
               </svg>
             </button>
-            {/* הגדלה ל-L — רק כשגודל הבסיס s או m */}
-            {size !== 'l' && <button
+            {/* הגדלה ל-L — רק כשגודל הבסיס s או m, ולא במובייל (שם החלון כבר מסך מלא) */}
+            {size !== 'l' && !isMobile && <button
               type="button"
               onClick={toggleExpanded}
               aria-pressed={expanded && !minimized}
               aria-label={expanded && !minimized ? 'חזרה לגודל רגיל' : 'הגדלה'}
               title={expanded && !minimized ? 'חזרה לגודל רגיל' : 'הגדלה'}
-              className="flex size-8 cursor-pointer items-center justify-center rounded-full border-none bg-transparent text-[#00033D] hover:bg-[#D5DBEA]"
+              className={iconBtn}
             >
               {expanded && !minimized ? (
                 // הקטנה — חיצים פנימה
@@ -180,7 +221,7 @@ const ServiceOverlay: React.FC<ServiceOverlayProps> = ({ title, initialSize, Com
               type="button"
               onClick={onClose}
               aria-label="סגירה"
-              className="flex size-8 cursor-pointer items-center justify-center rounded-full border-none bg-transparent text-xl leading-none text-[#00033D] hover:bg-[#D5DBEA]"
+              className={`${iconBtn} text-xl leading-none`}
             >
               ×
             </button>
@@ -195,7 +236,7 @@ const ServiceOverlay: React.FC<ServiceOverlayProps> = ({ title, initialSize, Com
         )}
 
         {/* גוף — השירות ממלא את הגובה וגולל בפנים; במזעור רק מוסתר כדי לא לאבד את מצב השירות */}
-        <div className={`min-h-0 flex-1 overflow-y-auto p-4 ${minimized ? 'hidden' : ''}`}>
+        <div className={`min-h-0 flex-1 overflow-y-auto p-4 ${minimized ? 'hidden' : ''} ${isMobile ? 'pb-[max(16px,env(safe-area-inset-bottom))]' : ''}`}>
           {error ? (
             <div className="rounded-lg bg-[#fff0f0] p-4 text-sm text-[#c00]">
               <strong>שגיאה בטעינת השירות</strong>

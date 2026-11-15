@@ -4,3 +4,9 @@
   0%, 100% { opacity: 0; }
   50%      { opacity: 1; }
 }
+
+/* מובייל — החלון עולה מלמטה בפתיחה */
+@keyframes overlay-slide-up {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
