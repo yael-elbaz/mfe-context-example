@@ -17,7 +17,6 @@ const SIZE_CLASS: Record<OverlaySize, string> = {
   l: 'w-[960px] h-[800px]',
 };
 
-const SIZES: OverlaySize[] = ['s', 'm', 'l'];
 
 export interface ServiceOverlayProps {
   title: string;
@@ -45,13 +44,32 @@ class OverlayErrorBoundary extends React.Component<{ children: React.ReactNode }
 /**
  * חלון השירות באוברליי: נפתח בפינה השמאלית התחתונה. לא מודאלי — הדף שמאחור נשאר פעיל.
  * מרונדר מתוך SherutDynamicView — חי כל עוד ה-route של השירות פתוח.
- * הגודל משתנה מהמתג בשורת הכותרת, או מתוך השירות (onResize).
+ * גודל הבסיס (s/m/l) מגיע מהגדרות השירות או מתוך השירות (onResize).
+ * כשגודל הבסיס s או m — כפתור בשורת הכותרת מגדיל את החלון ל-L ומחזיר לגודל הבסיס.
+ * כפתור מזעור משאיר רק את פס הכותרת בתחתית המסך; לחיצה עליו (או על הפס) מחזירה את החלון.
  * ניסיון לפתוח אוברליי שני (nudgeCount ב-overlayStore) — החלון מהבהב ומוצגת הודעה.
  */
 const ServiceOverlay: React.FC<ServiceOverlayProps> = ({ title, initialSize, Component, error, serviceProps, onClose }) => {
   const windowRef = useRef<HTMLDivElement>(null);
   const titleBarRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState<OverlaySize>(initialSize);
+  const [expanded, setExpanded] = useState(false);
+  // ממוזער — רק פס הכותרת נשאר, צמוד לתחתית המסך (כמו טיוטה ב-Gmail). השירות נשאר טעון.
+  const [minimized, setMinimized] = useState(false);
+  // השירות קובע גודל בסיס (s/m/l) — זה גם מבטל הגדלה
+  const resizeFromService = (s: OverlaySize) => {
+    setSize(s);
+    setExpanded(false);
+  };
+  // הגדלה מתוך מצב ממוזער — פותחת את החלון ישר בגודל L
+  const toggleExpanded = () => {
+    if (minimized) {
+      setMinimized(false);
+      setExpanded(true);
+    } else {
+      setExpanded((v) => !v);
+    }
+  };
   const { style: dragStyle, handleProps, clampIntoView } = useDraggable(windowRef);
   const nudgeCount = useOverlayStore((s) => s.nudgeCount);
   const [notice, setNotice] = useState(false);
@@ -59,9 +77,11 @@ const ServiceOverlay: React.FC<ServiceOverlayProps> = ({ title, initialSize, Com
   const nudgeAtOpen = useRef(nudgeCount);
 
   // שינוי גודל שומר על הפינה השמאלית התחתונה; אם החלון יצא מהמסך — מחזירים אותו פנימה
+  // (בזמן מזעור לא — שם ה-translate מבוטל והמדידה הייתה מקלקלת את המיקום השמור)
   useLayoutEffect(() => {
+    if (minimized) return;
     clampIntoView(titleBarRef.current?.offsetHeight ?? 0);
-  }, [size, clampIntoView]);
+  }, [size, expanded, minimized, clampIntoView]);
 
   useEffect(() => {
     if (nudgeCount === nudgeAtOpen.current) return;
@@ -92,7 +112,11 @@ const ServiceOverlay: React.FC<ServiceOverlayProps> = ({ title, initialSize, Com
         dir="rtl"
         style={dragStyle}
         onKeyDown={onKeyDown}
-        className={`fixed bottom-6 left-6 z-[501] flex translate-x-[var(--drag-x)] translate-y-[var(--drag-y)] max-h-[calc(100vh_-_48px)] max-w-[calc(100vw_-_48px)] flex-col overflow-hidden rounded-xl border border-[#E2E8F0] bg-white shadow-[0_8px_32px_rgba(0,0,0,0.18)] outline-none ${SIZE_CLASS[size]}`}
+        className={`fixed left-6 z-[501] flex max-w-[calc(100vw_-_48px)] flex-col overflow-hidden border border-[#E2E8F0] bg-white shadow-[0_8px_32px_rgba(0,0,0,0.18)] outline-none ${
+          minimized
+            ? 'bottom-0 w-[280px] rounded-t-xl border-b-0'
+            : `bottom-6 translate-x-[var(--drag-x)] translate-y-[var(--drag-y)] max-h-[calc(100vh_-_48px)] rounded-xl ${SIZE_CLASS[expanded ? 'l' : size]}`
+        }`}
       >
         {/* הבהוב — מסגרת כחולה מעל החלון; key מתחיל את האנימציה מחדש בכל ניסיון */}
         {notice && (
@@ -103,35 +127,60 @@ const ServiceOverlay: React.FC<ServiceOverlayProps> = ({ title, initialSize, Com
           />
         )}
 
-        {/* שורת כותרת — ידית הגרירה */}
+        {/* שורת כותרת — ידית הגרירה; במצב ממוזער לחיצה עליה מחזירה את החלון */}
         <div
           ref={titleBarRef}
-          {...handleProps}
-          className="flex shrink-0 cursor-move touch-none items-center justify-between gap-3 border-b border-[#E2E8F0] px-4 py-3 select-none"
+          {...(minimized ? {} : handleProps)}
+          onClick={(e) => {
+            if (minimized && !(e.target as HTMLElement).closest('button')) setMinimized(false);
+          }}
+          className={`flex shrink-0 touch-none items-center justify-between gap-3 bg-[#E8ECF4] px-4 py-3 select-none ${
+            minimized ? 'cursor-pointer' : 'cursor-move border-b border-[#C5CBDD]'
+          }`}
         >
           <h2 id="service-overlay-title" className={`m-0 truncate text-base font-medium ${HEADING_COLOR}`}>
             {title || 'שירות'}
           </h2>
           <div className="flex shrink-0 items-center gap-1">
-            {SIZES.map((s) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => setSize(s)}
-                aria-pressed={size === s}
-                aria-label={`גודל ${s.toUpperCase()}`}
-                className={`flex size-7 cursor-pointer items-center justify-center rounded-md border-none text-xs font-medium ${
-                  size === s ? 'bg-[#4395FF] text-white' : 'bg-transparent text-[#00033D] hover:bg-[#F8F9FD]'
-                }`}
-              >
-                {s.toUpperCase()}
-              </button>
-            ))}
+            {/* מזעור / החזרה */}
+            <button
+              type="button"
+              onClick={() => setMinimized((v) => !v)}
+              aria-pressed={minimized}
+              aria-label={minimized ? 'החזרת החלון' : 'מזעור'}
+              title={minimized ? 'החזרת החלון' : 'מזעור'}
+              className="flex size-8 cursor-pointer items-center justify-center rounded-full border-none bg-transparent text-[#00033D] hover:bg-[#D5DBEA]"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                <path d="M6 18h12" />
+              </svg>
+            </button>
+            {/* הגדלה ל-L — רק כשגודל הבסיס s או m */}
+            {size !== 'l' && <button
+              type="button"
+              onClick={toggleExpanded}
+              aria-pressed={expanded && !minimized}
+              aria-label={expanded && !minimized ? 'חזרה לגודל רגיל' : 'הגדלה'}
+              title={expanded && !minimized ? 'חזרה לגודל רגיל' : 'הגדלה'}
+              className="flex size-8 cursor-pointer items-center justify-center rounded-full border-none bg-transparent text-[#00033D] hover:bg-[#D5DBEA]"
+            >
+              {expanded && !minimized ? (
+                // הקטנה — חיצים פנימה
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7" />
+                </svg>
+              ) : (
+                // הגדלה — חיצים החוצה
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
+                </svg>
+              )}
+            </button>}
             <button
               type="button"
               onClick={onClose}
               aria-label="סגירה"
-              className="flex size-8 cursor-pointer items-center justify-center rounded-full border-none bg-transparent text-xl leading-none text-[#00033D] hover:bg-[#F8F9FD]"
+              className="flex size-8 cursor-pointer items-center justify-center rounded-full border-none bg-transparent text-xl leading-none text-[#00033D] hover:bg-[#D5DBEA]"
             >
               ×
             </button>
@@ -145,8 +194,8 @@ const ServiceOverlay: React.FC<ServiceOverlayProps> = ({ title, initialSize, Com
           </div>
         )}
 
-        {/* גוף — השירות ממלא את הגובה וגולל בפנים */}
-        <div className="min-h-0 flex-1 overflow-y-auto p-4">
+        {/* גוף — השירות ממלא את הגובה וגולל בפנים; במזעור רק מוסתר כדי לא לאבד את מצב השירות */}
+        <div className={`min-h-0 flex-1 overflow-y-auto p-4 ${minimized ? 'hidden' : ''}`}>
           {error ? (
             <div className="rounded-lg bg-[#fff0f0] p-4 text-sm text-[#c00]">
               <strong>שגיאה בטעינת השירות</strong>
@@ -160,7 +209,7 @@ const ServiceOverlay: React.FC<ServiceOverlayProps> = ({ title, initialSize, Com
                 {...serviceProps}
                 displayMode="overlay"
                 onClose={onClose}
-                onResize={setSize}
+                onResize={resizeFromService}
               />
             </OverlayErrorBoundary>
           )}
