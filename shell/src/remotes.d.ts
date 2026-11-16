@@ -27,6 +27,8 @@ declare module 'mfe_digital_objects/Preview' {
     employeeId?: string;
     onShowAll?: (state?: unknown) => void;
     onFocusItem?: (id: string, iframeUrl?: string) => void;
+    search?: string;
+    onSearchChange?: (value: string) => void;
   }>;
   export default Preview;
 }
@@ -38,6 +40,8 @@ declare module 'mfe_digital_objects/Full' {
     backToPreview?: () => void;
     onFocusItem?: (id: string, iframeUrl?: string) => void;
     previewState?: unknown;
+    search?: string;
+    onSearchChange?: (value: string) => void;
   }>;
   export default Full;
 }

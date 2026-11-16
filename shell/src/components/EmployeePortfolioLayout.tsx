@@ -3,6 +3,7 @@ import { Outlet, useSearchParams, useLocation, useNavigate } from 'react-router-
 import {useMatch } from 'react-router-dom';
 import { useSelectedPersonStore, useCurrentEmployee, type EmployeeProfile } from '../store/personStore';
 import { Helper } from '../utils/urlHelper';
+import { useClearUrlSearchOnChange } from '../hooks/useUrlSearch';
 import { getSherutMfeConfig, type SherutMfeConfig } from '../services/sherutimService';
 import SideNav from './SideNav';
 import EmployeePortfolioHeader from './EmployeePortfolioHeader';
@@ -29,10 +30,15 @@ const EmployeePortfolioLayout: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [notFound, setNotFound] = useState(false);
 
-  const sherutMatch = useMatch('/employee-portfolio/sherutim/:idntSheryut/*');
-  const idntSheryut = sherutMatch?.params.idntSheryut ?? null;
-  // מקטע במצב מלא (/employee-portfolio/:section) — המסגרת בגובה קבוע והגלילה בתוך המקטע, לא בעמוד
-  const isSectionFull = !!useMatch('/employee-portfolio/:section');
+  useClearUrlSearchOnChange(employeeId);
+
+  // שירות כדף מלא, או שירות אוברליי מעל האובייקטים הדיגיטליים
+  const sherutPageMatch = useMatch('/employee-portfolio/sherutim/:idntSheryut/*');
+  const sherutOverlayMatch = useMatch('/employee-portfolio/digital-objects/sherutim/:idntSheryut/*');
+  const idntSheryut = (sherutPageMatch ?? sherutOverlayMatch)?.params.idntSheryut ?? null;
+  // מקטע במצב מלא (/employee-portfolio/:section) — המסגרת בגובה קבוע והגלילה בתוך המקטע, לא בעמוד.
+  // גם כשאוברליי פתוח מעל digital-objects — אחרת הגובה קופץ בפתיחה
+  const isSectionFull = !!useMatch('/employee-portfolio/:section') || !!sherutOverlayMatch;
   const [mfeConfig, setMfeConfig] = useState<SherutMfeConfig | null>(null);
 
   useEffect(() => {

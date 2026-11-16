@@ -1,5 +1,16 @@
+import { useState } from 'react';
+
 export type ObjectType = 'ציוד' | 'רישיון תוכנה' | 'הרשאת מערכת';
 export type ObjectStatus = 'פעיל' | 'בבדיקה' | 'מנוטרל';
+
+/**
+ * החיפוש החופשי: בשליטת ה-shell כשהוא מעביר onSearchChange (נשמר אצלו ב-URL ועובר עם הניווט),
+ * אחרת state מקומי — הרצה עצמאית (:3004) ו-shell ישן ממשיכים לעבוד.
+ */
+export function useSearchValue(search?: string, onSearchChange?: (value: string) => void): [string, (value: string) => void] {
+  const [local, setLocal] = useState('');
+  return onSearchChange ? [search ?? '', onSearchChange] : [local, setLocal];
+}
 
 /**
  * מה שה-Preview מעביר ל-Full דרך onShowAll(state) — ה-shell רק מעביר אותו הלאה כ-previewState.

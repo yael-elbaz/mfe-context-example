@@ -73,9 +73,11 @@ export async function resolveRoute(flat: DigitalService & Record<string, any>): 
     }),
   };
   const serviceId = getServiceId(flat);
+  // שירות אוברליי נפתח תמיד מעל האובייקטים הדיגיטליים — ילד של ה-route שלהם (SPEC-overlay-nested-route)
+  const base = `${portfolioRoot(flat.personType)}${flat.isOverlay ? '/digital-objects' : ''}`;
   const url = flat.objectType == null
     ? Helper.buildUrl(`sherutim/${flat.idntMenuItem}`, qs)
-    : Helper.buildUrl(`${portfolioRoot(flat.personType)}/sherutim/${serviceId}`, qs);
+    : Helper.buildUrl(`${base}/sherutim/${serviceId}`, qs);
 
   return { url, state: { mfeConfig }, openType: 'navigate' };
 }

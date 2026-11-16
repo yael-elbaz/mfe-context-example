@@ -11,6 +11,7 @@ import LegacySectionRedirect from './components/LegacySectionRedirect';
 import EmployeePortfolioExternalRedirect from './components/EmployeePortfolioExternalRedirect';
 import { SherutDynamicView } from './sections/SherutDynamicView';
 import SherutimWrapper from './components/SherutimWrapper';
+import DigitalObjectsPage from './components/DigitalObjectsPage';
 import { useOpenService } from './hooks/useOpenService';
 import { useEmployeePickerPopup } from './hooks/useEmployeePickerPopup';
 import EmployeePickerPopup from './components/EmployeePickerPopup';
@@ -71,6 +72,10 @@ const RouterApp: React.FC = () => {
               <Route path="/customer-portfolio" element={<Padded><CustomerPortfolioLayout /></Padded>}>
                 <Route index element={<CustomerSherutimPreview openService={openService} />} />
                 <Route path="sherutim" element={<CustomerSherutimFull openService={openService} />} />
+                {/* שירותי אוברליי — ילד של digital-objects, כך שהדף שמתחת לא נטען מחדש */}
+                <Route path="digital-objects" element={<DigitalObjectsPage portfolio="customer" openService={openService} />}>
+                  <Route path="sherutim/:idntSheryut/*" element={<SherutDynamicView portfolio="customer" overlayRoute openService={openService} />} />
+                </Route>
                 <Route path="sherutim/:idntSheryut/*" element={<SherutDynamicView portfolio="customer" openService={openService} />} />
               </Route>
             {/* </Route> */}
@@ -83,6 +88,10 @@ const RouterApp: React.FC = () => {
             {/* <Route path="/employee-portfolio" element={<EmployeePortfolioExternalRedirect />}> */}
               <Route  path="/employee-portfolio" element={<Padded><EmployeePortfolioLayout /></Padded>}>
                 <Route index element={<EmployeePortfolioIndex openService={openService} />} />
+                {/* שירותי אוברליי — ילד של digital-objects, כך שהדף שמתחת לא נטען מחדש. לפני :section */}
+                <Route path="digital-objects" element={<DigitalObjectsPage portfolio="employee" openService={openService} />}>
+                  <Route path="sherutim/:idntSheryut/*" element={<SherutDynamicView portfolio="employee" overlayRoute openService={openService} />} />
+                </Route>
                 <Route path="sherutim/:idntSheryut/*" element={<SherutDynamicView portfolio="employee" openService={openService} />} />
                 <Route path=":section/:itemId" element={<ExternalIframeView />} />
                 <Route path=":section" element={<LegacySectionRedirect openService={openService} />} />

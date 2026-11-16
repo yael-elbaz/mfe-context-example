@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Outlet, useSearchParams } from 'react-router-dom';
 import { useSelectedPersonStore, useCurrentCustomer, type CustomerProfile } from '../store/personStore';
 import { Helper } from '../utils/urlHelper';
+import { useClearUrlSearchOnChange } from '../hooks/useUrlSearch';
 
 const CUSTOMERS: Record<string, Omit<CustomerProfile, 'type'>> = {
   'C001': { id: 'C001', firstName: 'משה',   lastName: 'ישראלי',  email: 'moshe@mail.co.il',  phone: '050-1111111', address: 'רחוב הרצל 10', city: 'תל אביב',  memberSince: '2019' },
@@ -76,6 +77,8 @@ const CustomerPortfolioLayout: React.FC = () => {
   const customer = useCurrentCustomer();
   const [loading, setLoading] = useState(false);
   const [notFound, setNotFound] = useState(false);
+
+  useClearUrlSearchOnChange(customerId);
 
   useEffect(() => {
     if (!customerId) return;

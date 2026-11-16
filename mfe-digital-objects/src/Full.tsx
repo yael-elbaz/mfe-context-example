@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useEmployee } from 'shell/employeeStore';
-import { MOCK_OBJECTS, STATUS_STYLE, DigitalObject, ObjectType, ObjectStatus, DigitalObjectsPreviewState, editServiceCall, OpenService } from './shared';
+import { MOCK_OBJECTS, STATUS_STYLE, DigitalObject, ObjectType, ObjectStatus, DigitalObjectsPreviewState, editServiceCall, OpenService, useSearchValue } from './shared';
 import { useIframeFocusEvent } from './useIframeFocusEvent';
 import SectionCard from 'shell/SectionCard';
 import FilterButton from './FilterButton';
@@ -14,6 +14,9 @@ interface Props {
   onFocusItem?: (id: string, iframeUrl?: string) => void;
   // ה-state שה-Preview העביר ב-onShowAll (למשל { filtersOpen: true } מכפתור "סינון מורחב")
   previewState?: DigitalObjectsPreviewState;
+  // חיפוש חופשי בשליטת ה-shell (URL). בלי onSearchChange — state מקומי
+  search?: string;
+  onSearchChange?: (value: string) => void;
 }
 
 // דמו בלבד: URL להטמעה מקומית ב-iframe, במקום ה-URL האמיתי מאירוע ה-iframe.
@@ -162,12 +165,12 @@ const ObjectRow: React.FC<{ obj: DigitalObject; onFocus?: () => void; onEdit?: (
   );
 };
 
-const Full: React.FC<Props> = ({ openService, backToPreview, onFocusItem, previewState }) => {
+const Full: React.FC<Props> = ({ openService, backToPreview, onFocusItem, previewState, search: hostSearch, onSearchChange }) => {
   const employee = useEmployee();
 
   // בסביבה האמיתית: ה-URL מגיע מאירוע ה-iframe ונשלח הלאה אל ה-Detail.
   useIframeFocusEvent(onFocusItem);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useSearchValue(hostSearch, onSearchChange);
   const [typeFilter, setTypeFilter] = useState<ObjectType | 'הכל'>('הכל');
   const [statuses, setStatuses] = useState<ObjectStatus[]>([]);
   const [year, setYear] = useState('');

@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useEmployee } from 'shell/employeeStore';
-import { MOCK_OBJECTS, STATUS_STYLE, DigitalObject, DigitalObjectsPreviewState, editServiceCall, OpenService } from './shared';
+import { MOCK_OBJECTS, STATUS_STYLE, DigitalObject, DigitalObjectsPreviewState, editServiceCall, OpenService, useSearchValue } from './shared';
 import { useIframeFocusEvent } from './useIframeFocusEvent';
 import SectionCard from 'shell/SectionCard';
 import FilterButton from './FilterButton';
@@ -22,6 +22,9 @@ interface Props {
   // מעבר למצב מלא; state מגיע ל-Full כ-previewState (ראו DigitalObjectsPreviewState)
   onShowAll?: (state?: DigitalObjectsPreviewState) => void;
   onFocusItem?: (id: string, iframeUrl?: string) => void;
+  // חיפוש חופשי בשליטת ה-shell (URL) — כך הוא עובר ל-Full כשנפתח שירות אוברליי. בלי onSearchChange — state מקומי
+  search?: string;
+  onSearchChange?: (value: string) => void;
 }
 
 const ObjectRow: React.FC<{ obj: DigitalObject; onFocus?: () => void; onEdit?: () => void }> = ({ obj, onFocus, onEdit }) => {
@@ -70,9 +73,9 @@ const ObjectRow: React.FC<{ obj: DigitalObject; onFocus?: () => void; onEdit?: (
   );
 };
 
-const Preview: React.FC<Props> = ({ openService, onShowAll, onFocusItem }) => {
+const Preview: React.FC<Props> = ({ openService, onShowAll, onFocusItem, search: hostSearch, onSearchChange }) => {
   const employee = useEmployee();
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useSearchValue(hostSearch, onSearchChange);
 
   // בסביבה האמיתית: ה-URL מגיע מאירוע ה-iframe ונשלח הלאה אל ה-Detail.
   useIframeFocusEvent(onFocusItem);

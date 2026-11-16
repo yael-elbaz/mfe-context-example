@@ -22,6 +22,9 @@ export interface SectionProps {
   rows?: number;
   // כרטיסים נמוכים (נתמך ב-sherutim Preview)
   compact?: boolean;
+  // חיפוש חופשי בשליטת ה-shell (נשמר ב-URL) — נתמך ב-digital-objects. בלי onSearchChange ה-MFE שומר אותו מקומית
+  search?: string;
+  onSearchChange?: (value: string) => void;
 }
 
 export interface Section {

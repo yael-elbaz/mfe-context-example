@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { useSelectedPerson } from '../store/personStore';
 import { getSherutMfeConfig, type SherutMfeConfig } from '../services/sherutimService';
 import { loadRemoteModule } from '../utils/dynamicFederation';
@@ -30,22 +30,33 @@ function useSherutConfig(id: string): SherutMfeConfig | null {
 interface Props {
   /** התיק שה-route נמצא בתוכו. בלי תיק — השירות תמיד נפתח כדף מלא, גם אם הוגדר כאוברליי */
   portfolio?: 'employee' | 'customer';
-  /** לאובייקטים הדיגיטליים שמתחת לאוברליי — יכולים לפתוח שירות */
+  /**
+   * ה-route הוא ילד של digital-objects (…/digital-objects/sherutim/:id) — המקום של שירותי אוברליי.
+   * אם ההגדרות לא תואמות ל-route (קישור ישן / משותף) — מפנים ל-route הנכון.
+   */
+  overlayRoute?: boolean;
+  /** לשירות שנפתח כדף מלא */
   openService?: OpenService;
 }
 
-export const SherutDynamicView: React.FC<Props> = ({ portfolio, openService }) => {
-  const { idntSheryut } = useParams<{ idntSheryut?: string }>();
+export const SherutDynamicView: React.FC<Props> = ({ portfolio, overlayRoute = false }) => {
+  const { idntSheryut, '*': rest } = useParams<{ idntSheryut?: string; '*': string }>();
   const id = idntSheryut ?? '';
   const navigate = useNavigate();
   const location = useLocation();
   const person = useSelectedPerson();
   const mfeConfig = useSherutConfig(id);
+  const root = portfolio ? `/${portfolio}-portfolio` : '';
 
-  // חזרה / סגירה — לדף הבית של התיק, עם אותם פרמטרים (employeeId / customerId)
+  // דף מלא: חזרה לדף הבית של התיק. אוברליי: נשארים על האובייקטים הדיגיטליים (ההורה — לא נטען מחדש).
+  // אותם פרמטרים בשני המקרים (employeeId / customerId / doSearch / q)
   const goBack = useCallback(
-    () => navigate(portfolio ? `/${portfolio}-portfolio${location.search}` : '/'),
-    [navigate, portfolio, location.search],
+    () => navigate(
+      !portfolio ? '/'
+        : overlayRoute ? `${root}/digital-objects${location.search}`
+        : `${root}${location.search}`,
+    ),
+    [navigate, portfolio, overlayRoute, root, location.search],
   );
 
   const [phase, setPhase] = useState<Phase>('module');
@@ -82,11 +93,16 @@ export const SherutDynamicView: React.FC<Props> = ({ portfolio, openService }) =
   // אוברליי — רק בתוך תיק: האובייקטים הדיגיטליים מתחת, השירות בחלון צף מעליהם. אחרת — דף מלא.
   const isOverlay = mfeConfig.displaySettings === 'overlay' && !!portfolio;
 
+  // ההגדרות וה-route לא תואמים — מפנים, ומעבירים את ה-mfeConfig כדי לא לטעון שוב
+  if (isOverlay !== overlayRoute && portfolio) {
+    const tail = rest ? `/${rest}` : '';
+    const to = `${root}${isOverlay ? '/digital-objects' : ''}/sherutim/${id}${tail}${location.search}`;
+    return <Navigate to={to} replace state={{ ...(location.state as object | null), mfeConfig }} />;
+  }
+
   return isOverlay ? (
     <SherutOverlayView
       serviceId={id}
-      portfolio={portfolio!}
-      openService={openService}
       title={mfeConfig.title ?? ''}
       initialSize={mfeConfig.overlaySize ?? 'm'}
       Component={phase === 'done' ? DynamicComponent : null}
