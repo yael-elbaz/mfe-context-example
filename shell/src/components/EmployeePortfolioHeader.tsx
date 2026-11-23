@@ -1,5 +1,8 @@
 import React from 'react';
 import type { EmployeeProfile } from '../store/personStore';
+import type { PersonType } from '../types/openService';
+import { SWITCHABLE } from '../hooks/usePersonSwitch';
+import PersonSwitchButton from './PersonSwitchButton';
 
 const SummaryField: React.FC<{ label: string; value: string }> = ({ label, value }) => (
   <div className="flex min-w-0 flex-col">
@@ -11,6 +14,8 @@ const SummaryField: React.FC<{ label: string; value: string }> = ({ label, value
 interface Props {
   employee: EmployeeProfile | null;
   onClose: () => void;
+  /** נבחר אדם אחר בחלונית "החלפה" — התיק נשאר פתוח ומתעדכן */
+  onSwitch: (idnt: string, personType: PersonType) => void;
   /** טאבי העובד והמידע של הטאב הפעיל — מוצגים תמיד מתחת להדר */
   children: React.ReactNode;
 }
@@ -21,7 +26,7 @@ interface Props {
  * שורה 2 — טאבי העובד והמידע של הטאב הפעיל, גלויים תמיד (בלי ריחוף/לחיצה).
  * ההדר כולו נדבק לראש המסך בגלילה.
  */
-const EmployeePortfolioHeader: React.FC<Props> = ({ employee, onClose, children }) => (
+const EmployeePortfolioHeader: React.FC<Props> = ({ employee, onClose, onSwitch, children }) => (
   <div className="sticky top-[calc(var(--header-height)_+_16px)] z-20">
     <div className="flex items-center justify-between gap-4 border-b border-gray-2 bg-portfolio-header-bg px-6 py-3">
       {employee ? (
@@ -47,14 +52,21 @@ const EmployeePortfolioHeader: React.FC<Props> = ({ employee, onClose, children 
         <span className="text-base text-navy/70">⏳ טוען תיק עובד...</span>
       )}
 
-      <button
-        type="button"
-        onClick={onClose}
-        className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg px-2 py-1 text-base text-navy/70 hover:bg-white/40 hover:text-navy"
-      >
-        <span className="whitespace-nowrap">סגירת תיק</span>
-        <span aria-hidden className="text-lg leading-none">×</span>
-      </button>
+      <div className="flex shrink-0 items-center gap-2">
+        <PersonSwitchButton
+          onPick={onSwitch}
+          objectType={SWITCHABLE}
+          buttonClassName="px-3 py-1 hover:bg-white/40"
+        />
+        <button
+          type="button"
+          onClick={onClose}
+          className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg px-2 py-1 text-base text-navy/70 hover:bg-white/40 hover:text-navy"
+        >
+          <span className="whitespace-nowrap">סגירת תיק</span>
+          <span aria-hidden className="text-lg leading-none">×</span>
+        </button>
+      </div>
     </div>
 
     <div className="border-b border-gray-2 bg-white px-6 pt-1 pb-3">

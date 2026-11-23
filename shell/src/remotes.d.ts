@@ -7,6 +7,7 @@ declare module 'mfe_search_employee/App' {
   const App: React.ComponentType<{
     onSelected?: (idnt: string, personType: import('./types/openService').PersonType) => void;
     objectType?: import('./types/openService').PersonType[] | null;
+    placeholder?: string;
   }>;
   export default App;
 }

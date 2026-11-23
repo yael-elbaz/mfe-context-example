@@ -2,7 +2,6 @@ import React, { lazy, Suspense, useEffect, useState } from 'react';
 import type { EmployeePickerPopupProps } from '../hooks/useEmployeePickerPopup';
 import type { PersonType } from '../types/openService';
 import iconClose from '../assets/icons/icon-close.svg';
-import iconSearch from '../assets/icons/icon-search.svg';
 
 const SearchEmployeeMFE = lazy(() => import('mfe_search_employee/App'));
 
@@ -24,7 +23,8 @@ const EmployeePickerPopup: React.FC<EmployeePickerPopupProps> = ({ open, objectT
   if (!open) return null;
 
   const submit = () => {
-    if (picked) onSelected(picked.idnt, picked.personType);
+    if (picked)
+       onSelected(picked.idnt, picked.personType);
   };
 
   return (
@@ -63,7 +63,7 @@ const EmployeePickerPopup: React.FC<EmployeePickerPopupProps> = ({ open, objectT
                 אתר אדם
               </span>
 
-              {/* מחלקת הנטרול של מעטפת ה-MFE מוגדרת ב-index.css */}
+              {/* employee-picker-mfe — רוחב מלא ל-MFE, מוגדר ב-index.css */}
               <div className="employee-picker-mfe relative w-full shrink-0">
                 <Suspense
                   fallback={
@@ -77,11 +77,6 @@ const EmployeePickerPopup: React.FC<EmployeePickerPopupProps> = ({ open, objectT
                     objectType={objectType}
                   />
                 </Suspense>
-                <img
-                  src={iconSearch}
-                  alt=""
-                  className="pointer-events-none absolute top-[20px] right-[16px] size-[24px]"
-                />
               </div>
             </div>
 

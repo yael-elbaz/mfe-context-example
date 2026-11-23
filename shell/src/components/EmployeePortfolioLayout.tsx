@@ -7,6 +7,8 @@ import { useClearUrlSearchOnChange } from '../hooks/useUrlSearch';
 import { getSherutMfeConfig, type SherutMfeConfig } from '../services/sherutimService';
 import SideNav from './SideNav';
 import EmployeePortfolioHeader from './EmployeePortfolioHeader';
+import ConfirmDialog from './ConfirmDialog';
+import { usePersonSwitch } from '../hooks/usePersonSwitch';
 
 const EmployeePortfolioMFE = lazy(() => import('mfe_employee_portfolio/App'));
 const SearchPersonMFE = lazy(() => import('mfe_search_employee/App'));
@@ -31,6 +33,7 @@ const EmployeePortfolioLayout: React.FC = () => {
   const [notFound, setNotFound] = useState(false);
 
   useClearUrlSearchOnChange(employeeId);
+  const { switchTo, confirmDialogProps } = usePersonSwitch('employee', employeeId);
 
   // שירות כדף מלא, או שירות אוברליי מעל האובייקטים הדיגיטליים
   const sherutPageMatch = useMatch('/employee-portfolio/sherutim/:idntSheryut/*');
@@ -52,7 +55,7 @@ const EmployeePortfolioLayout: React.FC = () => {
     setLoading(true);
     setIsLoadingPerson(true);
     setNotFound(false);
-    setTimeout(() => {
+    const timer = setTimeout(() => {
       const raw = PROFILES[employeeId] ?? null;
       if (!raw) {
         setLoading(false);
@@ -64,6 +67,8 @@ const EmployeePortfolioLayout: React.FC = () => {
       setLoading(false);
       setIsLoadingPerson(false);
     }, 400);
+    // החלפה מהירה A→B — הטעינה של A מבוטלת ולא דורסת את B בסטור (עם API אמיתי: AbortController)
+    return () => clearTimeout(timer);
   }, [employeeId]);
 
   // Clear store only when the layout fully unmounts, not on sub-route changes
@@ -89,7 +94,7 @@ const EmployeePortfolioLayout: React.FC = () => {
         isSectionFull ? 'h-[calc(100vh_-_var(--header-height)_-_40px)]' : 'min-h-[calc(100vh_-_var(--header-height)_-_40px)]'
       }`}>
         {/* הדר פנימי: פרטי הזיהוי של העובד, ומתחתיו הטאבים והמידע של הטאב הפעיל */}
-        <EmployeePortfolioHeader employee={loading ? null : employee} onClose={closePortfolio}>
+        <EmployeePortfolioHeader employee={loading ? null : employee} onClose={closePortfolio} onSwitch={switchTo}>
           {loading ? (
             <div className="p-5 text-center text-[#888]">⏳ טוען...</div>
           ) : (
@@ -112,12 +117,15 @@ const EmployeePortfolioLayout: React.FC = () => {
           ) : loading || !employee ? (
             <div className="p-12 text-center text-blue-heading">⏳ טוען נתוני עובד...</div>
           ) : (
-            <div className="flex min-h-0 flex-1 flex-col [&>*]:min-h-0 [&>*]:flex-1">
+            // key — במעבר לעובד אחר התוכן נבנה מחדש ולא נשאר בו state של העובד הקודם
+            <div key={employeeId} className="flex min-h-0 flex-1 flex-col [&>*]:min-h-0 [&>*]:flex-1">
               <Outlet context={{ mfeConfig }} />
             </div>
           )}
         </div>
       </section>
+
+      <ConfirmDialog {...confirmDialogProps} />
     </div>
   );
 };

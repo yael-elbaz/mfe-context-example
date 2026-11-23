@@ -1,149 +1,79 @@
-# Spec: Change Employee Within EmployeePortfolioLayout
+# Spec: החלפת אדם בתוך התיק
 
-## Goal
+## מטרה
 
-While the user is inside the portfolio (employee profile visible, or a sherut open),
-they can switch to a different employee without navigating back to the home page.
-The currently open sherut stays open and reloads for the new employee.
-`EmployeePortfolioMFE` updates automatically.
+מתוך תיק עובד או לקוח אפשר להחליף לאדם אחר בלי לצאת מהתיק.
+אם פתוח שירות (כדף מלא או כאוברליי), הוא נשאר פתוח ונטען מחדש עבור האדם החדש.
 
 ---
 
-## Placement
+## עיקרון: ה-URL הוא מקור האמת
 
-`SearchPersonMFE` is rendered **above `EmployeePortfolioMFE`** inside the existing
-left column (25% sticky panel) of `EmployeePortfolioLayout`.
+כפתור ההחלפה **לא** קורא ל-`setSelectedPerson`. הוא משנה רק את הפרמטר ב-URL
+(`employeeId` / `customerId`), וה-Layout טוען את האדם ומעדכן את `personStore`. הסטור הוא השתקפות של ה-URL.
 
-No popup. No new route. The search is always visible while inside the portfolio.
-
----
-
-## UI Sketch
+כך רענון, קישור ישיר וכפתור "אחורה" עובדים, ויש מסלול טעינה אחד בלבד.
 
 ```
-EmployeePortfolioLayout
-┌──────────────────────────────────────────────────────────────┐
-│  ┌──────────────────┐  ┌────────────────────────────────────┐ │
-│  │                  │  │                                    │ │
-│  │ SearchPersonMFE  │  │   <Outlet>                         │ │
-│  │ (compact search) │  │                                    │ │
-│  │                  │  │   EmployeePortfolioIndex           │ │
-│  ├──────────────────┤  │     OR                             │ │
-│  │                  │  │   SherutDynamicView ← stays open   │ │
-│  │ EmployeePortfolio│  │                                    │ │
-│  │ MFE              │  │                                    │ │
-│  │ (profile card)   │  │                                    │ │
-│  │                  │  │                                    │ │
-│  └──────────────────┘  └────────────────────────────────────┘ │
-│  ← 25% sticky panel →  ←──────── flex: 1 ────────────────────┘
-└──────────────────────────────────────────────────────────────┘
-```
-
-Both panels are inside the same sticky left column — `SearchPersonMFE` on top,
-`EmployeePortfolioMFE` below it. The right column (`<Outlet>`) is untouched.
-
----
-
-## onSelected Logic — Smart URL Navigation
-
-When the user picks a person from `SearchPersonMFE` inside the layout, the callback
-inspects the **current pathname** to decide where to navigate:
-
-```ts
-const onSelected = (id: string, personType: PersonType) => {
-  if (personType === 'customer') {
-    navigate(`/customer-portfolio?customerId=${id}`);
-    return;
-  }
-
-  // employee — preserve the sherut route if one is open
-  const sherutMatch = pathname.match(/\/sherutim\/([^/?]+)/);
-  if (sherutMatch) {
-    // stay on the same sherut, swap employeeId only
-    navigate(`/employee-portfolio/sherutim/${sherutMatch[1]}?employeeId=${id}`);
-  } else {
-    navigate(`/employee-portfolio?employeeId=${id}`);
-  }
-};
-```
-
-The URL is the only thing that changes. The layout's existing `useEffect([employeeId])`
-does the rest.
-
----
-
-## Automatic Update Chain
-
-No new logic is needed beyond the `onSelected` above.
-The existing chain handles everything:
-
-```
-onSelected(newId, 'employee')
-        │
-        ▼
-navigate(... ?employeeId=newId)        ← URL changes
-        │
-        ▼
-EmployeePortfolioLayout useEffect([employeeId]) fires
-  └─ setLoading(true)
-  └─ fetch PROFILES[newId]
-  └─ setSelectedPerson({ type: 'employee', ...newProfile })
-  └─ setLoading(false)
-        │
-        ▼
-personStore updated
-  ├─ EmployeePortfolioMFE re-renders   ← shows new employee profile
-  └─ any consumer of useCurrentEmployee re-renders
-        │
-        ▼
-<Outlet> stays mounted (same route)
-  └─ SherutDynamicView reads employeeId from useSearchParams()
-  └─ rerenders / refetches sherut data for the new employee
+[החלפה] → PersonSwitchButton → (שירות פתוח? → ConfirmDialog) → navigate(?employeeId=חדש)
+                                                                       ↓
+                                       Layout: useEffect([employeeId]) → setSelectedPerson
+                                                                       ↓
+                                       הדר + EmployeePortfolioMFE + Outlet מתעדכנים
 ```
 
 ---
 
-## SearchPersonMFE Props in This Context
+## התנהגות
 
-```ts
-<SearchPersonMFE
-  onSelected={onSelected}
-  // no objectType filter — show both employees and customers
-/>
-```
+| מצב | התנהגות |
+|---|---|
+| נבחר אדם מאותו סוג | רק הפרמטר משתנה. ה-pathname וה-`location.state` (בו נמצא `mfeConfig` של שירות) נשמרים |
+| נבחר אדם מסוג אחר (עובד ↔ לקוח) | מעבר לראש התיק של הסוג השני. שירות פתוח נסגר |
+| נבחר אותו אדם | לא קורה כלום |
+| שירות פתוח (`/sherutim/:id` בנתיב) | אחרי הבחירה ולפני הניווט מוצג דיאלוג אישור. ביטול — לא קורה כלום |
+| "אחורה" בדפדפן | חוזר לאדם הקודם (ההחלפה היא push). **ללא** אישור: `useBlocker` דורש data router, והאפליקציה על `BrowserRouter` |
+| החלפה מהירה A→B | טעינת A מבוטלת ב-cleanup של ה-effect ולא דורסת את B בסטור |
+| state של האדם הקודם | עטיפת ה-`Outlet` מקבלת `key={personId}`, כך שהתוכן נבנה מחדש |
+| `doSearch` ב-URL | מתנקה בהחלפה (`useClearUrlSearchOnChange`, קיים) |
 
-If the product only allows employee switching from within the portfolio,
-pass `objectType={['employee']}` to hide customer results.
-
----
-
-## File Changes
-
-| File | Change |
-|------|--------|
-| `shell/src/components/EmployeePortfolioLayout.tsx` | Add `SearchPersonMFE` above `EmployeePortfolioMFE` in the left column; add `onSelected` with sherut-aware navigation |
-
-No other files change.
-`EmployeePortfolioMFE`, `SherutDynamicView`, `personStore`, and `openService` are untouched.
+### למה אישור בכל שירות פתוח
+המעטפת לא יודעת מה קורה בתוך שירות, ולכן לא יודעת אם יש בו שינויים שלא נשמרו.
+בהמשך אפשר להוסיף חוזה אופציונלי (`onDirtyChange`) כדי לשאול רק כשבאמת יש שינויים.
 
 ---
 
-## What Does NOT Change
+## חוזה לשירותים
 
-- `SelectEmployeePage` on the home page — unchanged, still navigates to `/employee-portfolio`
-- `EmployeePickerPopup` — still used by `openService` when no person is in the store
-- `personStore` — no new fields or actions
-- `SherutDynamicView` — already reads `employeeId` from `useSearchParams()`; it naturally
-  reacts when the URL param changes
-- Routing structure — no new routes
+שירות יכול לקבל את האדם הנוכחי באחת משתי דרכים:
+- **props**: `SherutDynamicView` מעביר `employeeId` מהסטור. מתאים לשירות שצריך לרוץ גם לבד או מצוות אחר.
+- **האזנה ל-`shell/personStore`**: חשוף ב-federation, ו-`zustand` מוגדר כ-singleton. מתאים לשירות פנימי.
+
+בשני המקרים השירות **חייב**:
+1. להגיב לשינוי ב-id ולא רק ב-mount (`useEffect(() => load(), [personId])`).
+2. להאזין ל-id ולא לכל האובייקט (`s => s.person?.id`).
+3. לא לטעון כש-`isLoadingPerson` הוא `true` או כשה-id ריק.
 
 ---
 
-## Edge Cases
+## UI
 
-| Scenario | Behaviour |
-|----------|-----------|
-| User picks same employee again | URL unchanged → no re-fetch (React Router deduplicates) |
-| User picks a customer from within the employee portfolio | Navigate to `/customer-portfolio?customerId=X` (leave employee portfolio entirely) |
-| `PROFILES[newId]` not found | Layout sets `notFound = true`; existing "עובד לא נמצא" message shown; sherut outlet hidden |
-| Sherut is loading when employee is switched | `employeeId` change triggers new layout fetch; `SherutDynamicView` re-mounts with new params |
+- **תיק עובד**: כפתור "החלפה" בהדר של התיק (`EmployeePortfolioHeader`), ליד "סגירת תיק".
+- **תיק לקוח**: כפתור "החלפה" מעל כרטיס הלקוח.
+- **הבחירה**: לחיצה על "החלפה" פותחת חלונית קטנה צמודה לכפתור (`PersonSwitchButton`), ובה רק רכיב איתור אדם (`mfe_search_employee`, עובדים ולקוחות).
+  החלונית לא מודאלית: בלי רקע כהה, והדף נשאר גלוי. בחירה מחליפה מיד, בלי כפתור אישור. לחיצה מחוץ לחלונית או Esc סוגרות אותה.
+  התצוגה מופרדת מהלוגיקה: `PersonSwitchButton` רק מחזיר את האדם שנבחר (`onPick`), ו-`switchTo` ב-hook מבצע את ההחלפה.
+
+---
+
+## קבצים
+
+| קובץ | תפקיד |
+|---|---|
+| `shell/src/hooks/usePersonSwitch.ts` | `switchTo(idnt, personType)`: אישור וניווט |
+| `shell/src/components/PersonSwitchButton.tsx` | כפתור "החלפה" + חלונית איתור אדם |
+| `shell/src/hooks/useConfirmDialog.ts` | דיאלוג אישור מבוסס Promise |
+| `shell/src/components/ConfirmDialog.tsx` | התצוגה של דיאלוג האישור |
+| `shell/src/components/EmployeePortfolioHeader.tsx` | prop בשם `onSwitch(idnt, personType)` ו-`PersonSwitchButton` |
+| `shell/src/components/EmployeePortfolioLayout.tsx` | חיבור ה-hook, ביטול טעינה ישנה, `key` על ה-Outlet |
+| `shell/src/components/CustomerPortfolioLayout.tsx` | אותו דבר לתיק לקוח |

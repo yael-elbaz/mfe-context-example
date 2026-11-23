@@ -68,37 +68,12 @@
 }
 
 /* ------------------------------------------------------------------
-   EmployeePickerPopup — נטרול המעטפת של mfe_search_employee
-   ה-MFE מרנדר כרטיס לבן וכותרת פנימית משלו, עם inline styles (ולכן !important).
-   כאן אנחנו מסירים אותם ומעצבים את שדה החיפוש לפי הפיגמה.
-   שביר מול שינוי מבנה ה-DOM ב-MFE — אם החיפוש נראה שבור, זה המקום הראשון לבדוק.
+   EmployeePickerPopup — mfe_search_employee כבר מרנדר את שדה החיפוש לפי הפיגמה
+   (64px, מסגרת כחולה, אייקון), ולכן כאן רק פורסים אותו לרוחב מלא.
+   לא להסתיר/לעצב ילדים לפי מיקום (first-child וכו') — זה שבר את השדה כשמבנה ה-MFE השתנה.
    ------------------------------------------------------------------ */
 .employee-picker-mfe > div {
-  background: transparent !important;
-  padding: 0 !important;
-  box-shadow: none !important;
-  border-radius: 0 !important;
-}
-
-/* הכותרת הפנימית "🔍 חיפוש עובד" + האימייל — מוסתרת, יש כותרת בפופאפ */
-.employee-picker-mfe > div > div:first-child {
-  display: none !important;
-}
-
-/* מיכל החיפוש ברוחב מלא במקום max-width: 400px */
-.employee-picker-mfe > div > div:last-child {
   max-width: none !important;
-}
-
-/* שדה החיפוש לפי הפיגמה: 64px, מסגרת כחולה, מקום לאייקון בימין */
-.employee-picker-mfe input {
-  height: 64px !important;
-  width: 100% !important;
-  border: 1px solid var(--color-blue-outline) !important;
-  border-radius: 8px !important;
-  padding: 12px 52px 12px 16px !important;
-  font-size: 16px !important;
-  text-align: right !important;
 }
 
 /* סרגל גלילה דק (2px) לרשימות בדף הבית — לפי Group 794 בעיצוב */

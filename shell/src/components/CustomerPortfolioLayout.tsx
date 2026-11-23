@@ -3,6 +3,9 @@ import { Outlet, useSearchParams } from 'react-router-dom';
 import { useSelectedPersonStore, useCurrentCustomer, type CustomerProfile } from '../store/personStore';
 import { Helper } from '../utils/urlHelper';
 import { useClearUrlSearchOnChange } from '../hooks/useUrlSearch';
+import { usePersonSwitch, SWITCHABLE } from '../hooks/usePersonSwitch';
+import PersonSwitchButton from './PersonSwitchButton';
+import ConfirmDialog from './ConfirmDialog';
 
 const CUSTOMERS: Record<string, Omit<CustomerProfile, 'type'>> = {
   'C001': { id: 'C001', firstName: 'משה',   lastName: 'ישראלי',  email: 'moshe@mail.co.il',  phone: '050-1111111', address: 'רחוב הרצל 10', city: 'תל אביב',  memberSince: '2019' },
@@ -79,6 +82,7 @@ const CustomerPortfolioLayout: React.FC = () => {
   const [notFound, setNotFound] = useState(false);
 
   useClearUrlSearchOnChange(customerId);
+  const { switchTo, confirmDialogProps } = usePersonSwitch('customer', customerId);
 
   useEffect(() => {
     if (!customerId) return;
@@ -86,7 +90,7 @@ const CustomerPortfolioLayout: React.FC = () => {
     setLoading(true);
     setIsLoadingPerson(true);
     setNotFound(false);
-    setTimeout(() => {
+    const timer = setTimeout(() => {
       const raw = CUSTOMERS[customerId] ?? null;
       if (!raw) {
         setLoading(false);
@@ -98,6 +102,8 @@ const CustomerPortfolioLayout: React.FC = () => {
       setLoading(false);
       setIsLoadingPerson(false);
     }, 400);
+    // החלפה מהירה A→B — הטעינה של A מבוטלת ולא דורסת את B בסטור
+    return () => clearTimeout(timer);
   }, [customerId]);
 
   // Clear store only when the layout fully unmounts, not on sub-route changes
@@ -111,6 +117,14 @@ const CustomerPortfolioLayout: React.FC = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'row', gap: '24px', alignItems: 'flex-start', direction: 'rtl' }}>
       <div style={{ width: '25%', flexShrink: 0, position: 'sticky', top: '108px' }}>
+        <div className="mb-3">
+          <PersonSwitchButton
+            onPick={switchTo}
+            objectType={SWITCHABLE}
+            buttonClassName="w-full bg-white px-3 py-2 hover:bg-[#F8F9FD]"
+            panelClassName="right-0"
+          />
+        </div>
         {loading ? (
           <div style={{ padding: '48px', textAlign: 'center', color: '#888' }}>⏳ טוען...</div>
         ) : (
@@ -127,9 +141,14 @@ const CustomerPortfolioLayout: React.FC = () => {
             ⏳ טוען נתוני לקוח...
           </div>
         ) : (
-          <Outlet />
+          // key — במעבר ללקוח אחר התוכן נבנה מחדש ולא נשאר בו state של הלקוח הקודם
+          <div key={customerId}>
+            <Outlet />
+          </div>
         )}
       </div>
+
+      <ConfirmDialog {...confirmDialogProps} />
     </div>
   );
 };
