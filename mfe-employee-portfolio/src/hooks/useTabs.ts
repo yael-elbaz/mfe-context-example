@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import type { TabConfig, TabData } from '../types';
 import { useSelectedUnit } from 'shell/store';
-import { SYNTHETIC_MORE_DATA_TAB_ID, buildMoreDataTab, fetchTabsConfig, fetchTabData } from '../tabsConfig';
+import { SYNTHETIC_MORE_DATA_TAB_ID, buildMoreDataTab, fetchTabsConfig, fetchTabData, type PersonType } from '../tabsConfig';
 
 function resolveActiveTab(
   tabs: TabConfig[],
@@ -50,20 +50,23 @@ export function useTabs(selectedActiveTab?: number) {
   const [moreDataTab, setMoreDataTab] = useState<TabConfig | null>(null);
   const [moreData, setMoreData] = useState<TabData | null>(null);
 
-  // Which tab is open (its data shows in row 2).
+  // Accordion: whether the panel is open, and which single card is expanded.
+  const [isExpanded, setIsExpanded] = useState(false);
   const [openTabId, setOpenTabId] = useState<number | null>(null);
 
   // Loads the base tabs + their data. The caller decides when to run this (drive it
-  // from an effect keyed on the employee). Returns a cleanup that cancels the in-flight
-  // load, so it can be returned straight from a useEffect.
-  const loadBaseTabs = useCallback((employeeId: string) => {
+  // from an effect keyed on the person type + id). The tab menu is per person type;
+  // the data is per person. Returns a cleanup that cancels the in-flight load, so it
+  // can be returned straight from a useEffect.
+  const loadBaseTabs = useCallback((personType: PersonType, employeeId: string) => {
     let cancelled = false;
     setTabsLoading(true);
     setTabsError(false);
     setBaseTabs([]);
     setBaseDataById({});
+    setIsExpanded(false);
 
-    fetchTabsConfig()
+    fetchTabsConfig(personType)
       .then(async normalizedTabs => {
         if (cancelled) return;
         // Always order by `order` ASC.
@@ -77,6 +80,7 @@ export function useTabs(selectedActiveTab?: number) {
 
         // Keep only tabs whose data resolved and is non-empty.
         const visibleTabs: TabConfig[] = [];
+   
         const dataById: Record<number, TabData> = {};
         results.forEach((res, i) => {
           if (res.status === 'fulfilled' && !isTabDataEmpty(res.value)) {
@@ -160,20 +164,35 @@ export function useTabs(selectedActiveTab?: number) {
     setOpenTabId(activeTab?.id ?? null);
   }, [activeTab]);
 
-  // Tab click: open it, or close it if it's already open.
+  // Expand icon at the end of the main row: show/hide the accordion. When opening,
+  // default the active tab's card to open.
+  const toggleExpanded = useCallback(() => {
+    setIsExpanded(prev => {
+      const next = !prev;
+      if (next) setOpenTabId(curr => curr ?? activeTab?.id ?? null);
+      return next;
+    });
+  }, [activeTab]);
+
+  // Accordion card header click: open it, or collapse it if it's already open.
   const toggleCard = useCallback((tab: TabConfig) => {
     setOpenTabId(curr => (curr === tab.id ? null : tab.id));
   }, []);
+
+  const activeTabData = activeTab ? tabDataById[activeTab.id] ?? null : null;
 
   return {
     tabs,
     tabsLoading,
     tabsError,
     activeTab,
+    activeTabData,
     tabDataById,
+    isExpanded,
     openTabId,
     loadBaseTabs,
     loadMoreDataTab,
+    toggleExpanded,
     toggleCard,
   };
 }

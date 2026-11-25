@@ -265,31 +265,40 @@ export function normalizeTab(raw: RawTabConfig): TabConfig {
   };
 }
 
-// The tab menu structure (labels, colors, order, icons) is permanent/global — it's
-// the same for every employee and for the lifetime of the session. Fetch it once and
-// reuse the result so changes to employeeId / extendedTabDataUrl / selectedActiveTab
-// don't trigger a redundant config fetch. Only per-employee tab *data* (fetchTabData)
-// needs to be re-acquired. The cache is cleared on failure so a later mount can retry.
-let tabsConfigCache: Promise<TabConfig[]> | null = null;
+// Person types and their numeric object codes (CODE_SUG_OBJECT). Mirrors the shell's
+// OBJECT_TYPE — duplicated on purpose, MFEs live in separate repos.
+export type PersonType = 'employee' | 'customer' | 'mishtamesh';
+const OBJECT_TYPE_CODE: Record<PersonType, number> = { employee: 1, customer: 2, mishtamesh: 3 };
 
-export function fetchTabsConfig(): Promise<TabConfig[]> {
-  if (!tabsConfigCache) {
-    tabsConfigCache = loadTabsConfig().catch(err => {
-      tabsConfigCache = null;
+// The tab menu structure (labels, colors, order, icons) is fixed per person type —
+// employees, customers etc. each have their own menu, but within a type it's the same
+// for every person and for the lifetime of the session. So the cache is keyed by type:
+// switching between two employees reuses the cached config, switching employee →
+// customer fetches the customer config once. Only per-person tab *data* (fetchTabData)
+// is re-acquired. A type's entry is cleared on failure so a later mount can retry.
+const tabsConfigCache = new Map<PersonType, Promise<TabConfig[]>>();
+
+export function fetchTabsConfig(personType: PersonType): Promise<TabConfig[]> {
+  let cached = tabsConfigCache.get(personType);
+  if (!cached) {
+    cached = loadTabsConfig(personType).catch(err => {
+      tabsConfigCache.delete(personType);
       throw err;
     });
+    tabsConfigCache.set(personType, cached);
   }
   // Hand callers a fresh array copy — loadTabs pushes/sorts into it, and we must not
   // mutate the shared cached array.
-  return tabsConfigCache.then(tabs => [...tabs]);
+  return cached.then(tabs => [...tabs]);
 }
 
-async function loadTabsConfig(): Promise<TabConfig[]> {
+async function loadTabsConfig(personType: PersonType): Promise<TabConfig[]> {
+  const code = OBJECT_TYPE_CODE[personType];
   if (!TABS_CONFIG_URL) {
     await new Promise(r => setTimeout(r, 400));
-    return MOCK_TABS.map(normalizeTab);
+    return MOCK_TABS.filter(t => t.CODE_SUG_OBJECT === code).map(normalizeTab);
   }
-  const { data } = await http.get<RawTabConfig[]>(TABS_CONFIG_URL);
+  const { data } = await http.get<RawTabConfig[]>(TABS_CONFIG_URL, { params: { objectType: code } });
   return data.map(normalizeTab);
 }
 

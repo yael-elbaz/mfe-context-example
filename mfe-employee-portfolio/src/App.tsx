@@ -1,6 +1,6 @@
 import './index.css';
 import React, { useEffect } from 'react';
-import { useEmployee } from 'shell/employeeStore';
+import { useSelectedPerson } from 'shell/personStore';
 import { useTabs } from './hooks/useTabs';
 import TabDetailsPanel from './components/TabDetailsPanel';
 
@@ -19,22 +19,23 @@ interface Props {
  * (טעינה / עובד לא נמצא — PortfolioHeaderFallback ב-shell). ה-MFE מטפל רק בטעינת הטאבים.
  */
 const App: React.FC<Props> = ({ extendedTabDataUrl, selectedActiveTab, headerStart, headerEnd }) => {
-  const employee = useEmployee();
+  const person = useSelectedPerson();
 
   const { tabs, tabsLoading, tabDataById, openTabId, loadBaseTabs, loadMoreDataTab, toggleCard } =
     useTabs(selectedActiveTab);
 
-  // Base tabs depend only on the employee — reload when the employee changes.
+  // Base tabs depend on the person — the menu on its type, the data on its id.
+  // Reload when either changes (the menu itself is cached per type in tabsConfig).
   useEffect(() => {
-    if (!employee?.id) return;
-    return loadBaseTabs(employee.id);
-  }, [employee?.id, loadBaseTabs]);
+    if (!person?.id) return;
+    return loadBaseTabs(person.type, person.id);
+  }, [person?.type, person?.id, loadBaseTabs]);
 
-  // The "more data" tab depends on the employee + the extended-data URL, so it loads
+  // The "more data" tab depends on the person + the extended-data URL, so it loads
   // (or clears) on its own without re-triggering the base-tabs fetch above.
   useEffect(() => {
-    return loadMoreDataTab(employee?.id, extendedTabDataUrl);
-  }, [employee?.id, extendedTabDataUrl, loadMoreDataTab]);
+    return loadMoreDataTab(person?.id, extendedTabDataUrl);
+  }, [person?.id, extendedTabDataUrl, loadMoreDataTab]);
 
   // שגיאה או טאבים ריקים — רק שורה 1 (זהות + החלפה), בלי הודעה.
   return (
