@@ -1,99 +1,93 @@
-import React, { useRef, useState, useEffect, useCallback } from 'react';
+import React, { useRef, useState, useCallback } from 'react';
 import type { TabConfig } from '../types';
+import { useFitChildren } from '../hooks/useFitChildren';
+import { ChevronDownIcon } from './DataChips';
+import Popover from './Popover';
 
 interface Props {
   tabs: TabConfig[];
   openTabId: number | null;
   onSelect: (tab: TabConfig) => void;
-  /** cards — bordered cards (the card variant). underline — flat tabs with a colored underline. */
-  look?: 'cards' | 'underline';
-  /** Alert count per tab id, shown as a red badge on the tab. */
-  badges?: Record<number, number>;
 }
 
-// Horizontal, scrollable row of tabs. Shows left/right arrows only when the
-// tabs overflow the available width.
-const TabStrip: React.FC<Props> = ({ tabs, openTabId, onSelect, look = 'cards', badges }) => {
-  const underline = look === 'underline';
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [overflow, setOverflow] = useState(false);
-
-  const checkOverflow = useCallback(() => {
-    const el = scrollRef.current;
-    if (el) setOverflow(el.scrollWidth > el.clientWidth + 1);
+/** Flat tabs in row 1 of the portfolio card; tabs that don't fit go behind "עוד (N)". */
+const TabStrip: React.FC<Props> = ({ tabs, openTabId, onSelect }) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const [hiddenIds, setHiddenIds] = useState<string[]>([]);
+  const onHiddenChange = useCallback((ids: string[]) => {
+    setHiddenIds(curr => (curr.join(',') === ids.join(',') ? curr : ids));
   }, []);
+  useFitChildren(ref, onHiddenChange, [tabs]);
 
-  useEffect(() => {
-    checkOverflow();
-    const el = scrollRef.current;
-    if (!el) return;
-    const ro = new ResizeObserver(checkOverflow);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [tabs.length, checkOverflow]);
+  const [moreAnchor, setMoreAnchor] = useState<HTMLElement | null>(null);
+  const closeMore = useCallback(() => setMoreAnchor(null), []);
 
-  const scrollBy = (dir: number) =>
-    scrollRef.current?.scrollBy({ left: dir * 220, behavior: 'smooth' });
+  const hiddenTabs = tabs.filter(t => hiddenIds.includes(String(t.id)));
+  const activeIsHidden = hiddenTabs.some(t => t.id === openTabId);
 
-  const Arrow: React.FC<{ dir: number; glyph: string }> = ({ dir, glyph }) => (
-    <button
-      onClick={() => scrollBy(dir)}
-      className="shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-[#F0F2F8] border-0 cursor-pointer text-[#1B2B6B] text-xs"
-    >
-      {glyph}
-    </button>
-  );
+  const tabClass = (active: boolean) =>
+    `flex h-full shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap border-0 border-b-[3px] border-solid bg-transparent px-2.5 py-2 font-[inherit] text-sm ${
+      active ? 'border-b-[#006AFF] font-semibold text-[#006AFF]' : 'border-b-transparent font-medium text-[#4A5568] hover:text-[#00033D]'
+    }`;
 
   return (
-    <div className="flex items-center gap-1" dir="rtl">
-      {overflow && <Arrow dir={1} glyph="›" />}
-
-      <div
-        ref={scrollRef}
-        className={`flex-1 flex flex-row ${underline ? 'gap-1' : 'gap-2'} overflow-x-auto scroll-smooth`}
-        style={{ scrollbarWidth: 'none' }}
-      >
+    <div className="flex h-full min-w-0 flex-1 items-stretch" dir="rtl">
+      {/* flex-1 basis-0 — הרוחב לא תלוי בתוכן, כדי שהמדידה תתייצב */}
+      <div ref={ref} className="flex min-w-0 flex-1 basis-0 items-stretch overflow-hidden">
         {tabs.map(tab => {
           const isOpen = tab.id === openTabId;
-          const alerts = badges?.[tab.id] ?? 0;
           return (
             <button
               key={tab.id}
+              data-key={tab.id}
+              type="button"
               onClick={() => onSelect(tab)}
               aria-pressed={isOpen}
-              className={underline
-                ? 'shrink-0 flex items-center gap-1.5 px-3 pt-2.5 pb-2 border-0 border-b-[3px] border-solid bg-transparent cursor-pointer font-[inherit] whitespace-nowrap hover:bg-[#F0F2F8]'
-                : 'shrink-0 flex items-center gap-2 px-3 py-2 rounded-lg border bg-white cursor-pointer font-[inherit] whitespace-nowrap'}
-              style={underline
-                ? { borderBottomColor: isOpen ? tab.color : 'transparent' }
-                : {
-                    borderColor: isOpen ? tab.color : '#E8EAF0',
-                    borderRightWidth: '4px',
-                    borderRightColor: tab.color,
-                    background: isOpen ? `${tab.color}14` : '#FFFFFF',
-                  }}
+              className={tabClass(isOpen)}
             >
-              {tab.iconUrl && <img src={tab.iconUrl} alt="" className="w-4 h-4" />}
-              <span
-                className={`text-[13px] ${isOpen ? 'font-semibold' : 'font-normal'}`}
-                style={{ color: underline && !isOpen ? '#4A4F66' : tab.color }}
-              >
-                {tab.title || tab.displayName}
-              </span>
-              {alerts > 0 && (
-                <span
-                  title="התראות"
-                  className="grid h-4 min-w-4 place-items-center rounded-full bg-[#E02424] px-1 text-[10px] font-semibold text-white"
-                >
-                  {alerts}
-                </span>
-              )}
+              {tab.iconUrl && <img src={tab.iconUrl} alt="" className="size-[18px]" />}
+              {tab.title || tab.displayName}
             </button>
           );
         })}
       </div>
 
-      {overflow && <Arrow dir={-1} glyph="‹" />}
+      {hiddenTabs.length > 0 && (
+        <button
+          type="button"
+          onClick={e => { const a = e.currentTarget; setMoreAnchor(curr => (curr ? null : a)); }}
+          aria-expanded={!!moreAnchor}
+          aria-haspopup="menu"
+          className={tabClass(activeIsHidden)}
+        >
+          עוד ({hiddenTabs.length})
+          <ChevronDownIcon size={16} className={`transition-transform ${moreAnchor ? 'rotate-180' : ''}`} />
+        </button>
+      )}
+
+      {moreAnchor && (
+        <Popover anchor={moreAnchor} onClose={closeMore}>
+          <div role="menu" className="flex flex-col">
+            {hiddenTabs.map(tab => {
+              const isOpen = tab.id === openTabId;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  role="menuitem"
+                  onClick={() => { onSelect(tab); closeMore(); }}
+                  className={`flex cursor-pointer items-center gap-1.5 rounded-md border-0 bg-transparent px-2 py-1.5 text-right font-[inherit] text-sm hover:bg-[#F7FAFC] ${
+                    isOpen ? 'font-semibold text-[#006AFF]' : 'font-medium text-[#4A5568]'
+                  }`}
+                >
+                  {tab.iconUrl && <img src={tab.iconUrl} alt="" className="size-[18px]" />}
+                  {tab.title || tab.displayName}
+                </button>
+              );
+            })}
+          </div>
+        </Popover>
+      )}
     </div>
   );
 };

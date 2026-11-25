@@ -121,7 +121,7 @@ const CustomerPortfolioLayout: React.FC = () => {
           <PersonSwitchButton
             onPick={switchTo}
             objectType={SWITCHABLE}
-            buttonClassName="w-full bg-white px-3 py-2 hover:bg-[#F8F9FD]"
+            label="החלפת לקוח"
             panelClassName="right-0"
           />
         </div>

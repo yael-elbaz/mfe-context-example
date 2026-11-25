@@ -30,6 +30,8 @@ const EMPLOYEES: Employee[] = [
   { type: 'employee', id: '1006', name: 'נועם אלון',   department: 'IT',    role: 'ארכיטקט מערכות' },
   { type: 'employee', id: '1007', name: 'שירה מזרחי',  department: 'כספים', role: 'רואת חשבון' },
   { type: 'employee', id: '1008', name: 'גל פרידמן',   department: 'IT',    role: 'מפתח Backend' },
+  { type: 'employee', id: '1009', name: 'עומר נחום',   department: 'תפעול', role: 'ראש צוות תפעול' },
+  { type: 'employee', id: '1010', name: 'תמר אדלר',    department: 'לוגיסטיקה', role: 'אחראית תחום רכש' },
 ];
 
 const CUSTOMERS: Customer[] = [

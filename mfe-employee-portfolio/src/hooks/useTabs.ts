@@ -50,8 +50,7 @@ export function useTabs(selectedActiveTab?: number) {
   const [moreDataTab, setMoreDataTab] = useState<TabConfig | null>(null);
   const [moreData, setMoreData] = useState<TabData | null>(null);
 
-  // Accordion: whether the panel is open, and which single card is expanded.
-  const [isExpanded, setIsExpanded] = useState(false);
+  // Which tab is open (its data shows in row 2).
   const [openTabId, setOpenTabId] = useState<number | null>(null);
 
   // Loads the base tabs + their data. The caller decides when to run this (drive it
@@ -63,7 +62,6 @@ export function useTabs(selectedActiveTab?: number) {
     setTabsError(false);
     setBaseTabs([]);
     setBaseDataById({});
-    setIsExpanded(false);
 
     fetchTabsConfig()
       .then(async normalizedTabs => {
@@ -162,35 +160,20 @@ export function useTabs(selectedActiveTab?: number) {
     setOpenTabId(activeTab?.id ?? null);
   }, [activeTab]);
 
-  // Expand icon at the end of the main row: show/hide the accordion. When opening,
-  // default the active tab's card to open.
-  const toggleExpanded = useCallback(() => {
-    setIsExpanded(prev => {
-      const next = !prev;
-      if (next) setOpenTabId(curr => curr ?? activeTab?.id ?? null);
-      return next;
-    });
-  }, [activeTab]);
-
-  // Accordion card header click: open it, or collapse it if it's already open.
+  // Tab click: open it, or close it if it's already open.
   const toggleCard = useCallback((tab: TabConfig) => {
     setOpenTabId(curr => (curr === tab.id ? null : tab.id));
   }, []);
-
-  const activeTabData = activeTab ? tabDataById[activeTab.id] ?? null : null;
 
   return {
     tabs,
     tabsLoading,
     tabsError,
     activeTab,
-    activeTabData,
     tabDataById,
-    isExpanded,
     openTabId,
     loadBaseTabs,
     loadMoreDataTab,
-    toggleExpanded,
     toggleCard,
   };
 }

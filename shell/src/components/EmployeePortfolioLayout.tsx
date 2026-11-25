@@ -6,7 +6,12 @@ import { Helper } from '../utils/urlHelper';
 import { useClearUrlSearchOnChange } from '../hooks/useUrlSearch';
 import { getSherutMfeConfig, type SherutMfeConfig } from '../services/sherutimService';
 import SideNav from './SideNav';
-import EmployeePortfolioHeader from './EmployeePortfolioHeader';
+import {
+  PortfolioCloseButton,
+  PortfolioHeaderFallback,
+  PortfolioIdentity,
+  PortfolioSwitchButton,
+} from './EmployeePortfolioHeader';
 import ConfirmDialog from './ConfirmDialog';
 import { usePersonSwitch } from '../hooks/usePersonSwitch';
 
@@ -22,6 +27,9 @@ const PROFILES: Record<string, Omit<EmployeeProfile, 'type'>> = {
   '1006': { id: '1006', employeeNumber: '1006', tz: '301472958', firstName: 'נועם',  lastName: 'אלון',    yearsInCompany: 7, unit: 'צוות ארכיטקטורה', department: 'IT',  role: 'ארכיטקט מערכות',   email: 'noam.alon@org.co.il',    phone: '050-6789012', image: 'https://i.pravatar.cc/150?img=59', skills: ['System Design', 'Microservices', 'AWS', 'Kubernetes', 'CI/CD'] },
   '1007': { id: '1007', employeeNumber: '1007', tz: '209384715', firstName: 'שירה',  lastName: 'מזרחי',   yearsInCompany: 2, unit: 'צוות חשבונאות',  department: 'כספים', role: 'רואת חשבון',       email: 'shira.mizrahi@org.co.il', phone: '054-7890123', image: 'https://i.pravatar.cc/150?img=38', skills: ['ביקורת', 'IFRS', 'הנהלת חשבונות', 'מס הכנסה'] },
   '1008': { id: '1008', employeeNumber: '1008', tz: '318205496', firstName: 'גל',    lastName: 'פרידמן',  yearsInCompany: 1, unit: 'צוות פיתוח',     department: 'IT',    role: 'מפתח Backend',     email: 'gal.friedman@org.co.il', phone: '050-8901234', image: 'https://i.pravatar.cc/150?img=15', skills: ['Python', 'FastAPI', 'Redis', 'PostgreSQL'] },
+  // עובדים לבדיקת עומס — הרבה נתונים בטאבים (ראו MOCK_TAB_DATA_BY_EMPLOYEE ב-mfe-employee-portfolio)
+  '1009': { id: '1009', employeeNumber: '1009', tz: '036548127', firstName: 'עומר',  lastName: 'נחום',    yearsInCompany: 15, unit: 'מרחב צפון',     department: 'תפעול', role: 'ראש צוות תפעול',   email: 'omer.nahum@org.co.il',   phone: '052-9988776', image: 'https://i.pravatar.cc/150?img=68', skills: ['ניהול צוות', 'לוגיסטיקה', 'בטיחות'] },
+  '1010': { id: '1010', employeeNumber: '1010', tz: '204417735', firstName: 'תמר',   lastName: 'אדלר',    yearsInCompany: 10, unit: 'אגף לוגיסטיקה', department: 'רכש',   role: 'אחראית תחום רכש',  email: 'tamar.adler@org.co.il',  phone: '054-1122334', image: 'https://i.pravatar.cc/150?img=26', skills: ['מכרזים', 'התקשרויות', 'רכש בינלאומי'] },
 };
 
 const EmployeePortfolioLayout: React.FC = () => {
@@ -89,34 +97,36 @@ const EmployeePortfolioLayout: React.FC = () => {
         <SideNav />
       </div>
 
-      {/* מסגרת תיק העובד — שמאל */}
-      <section className={`flex min-w-0 flex-1 flex-col overflow-clip rounded-xl border border-gray-2 border-t-4 border-t-active bg-[#F6F9FC] ${
+      {/* תיק העובד — שמאל */}
+      <section className={`flex min-w-0 flex-1 flex-col ${
         isSectionFull ? 'h-[calc(100vh_-_var(--header-height)_-_40px)]' : 'min-h-[calc(100vh_-_var(--header-height)_-_40px)]'
       }`}>
-        {/* הדר פנימי: פרטי הזיהוי של העובד, ומתחתיו הטאבים והמידע של הטאב הפעיל */}
-        <EmployeePortfolioHeader employee={loading ? null : employee} onClose={closePortfolio} onSwitch={switchTo}>
-          {loading ? (
-            <div className="p-5 text-center text-[#888]">⏳ טוען...</div>
+        {/* סגירת התיק — שורה נפרדת מעל הכרטיס, צמודה לימין. לא sticky — רק הכרטיס נדבק */}
+        <div className="mb-3 flex">
+          <PortfolioCloseButton onClose={closePortfolio} />
+        </div>
+
+        {/* כרטיס התיק: שורה 1 — זהות | טאבים | החלפה, שורה 2 — המידע של הטאב הפעיל. נדבק לראש המסך בגלילה */}
+        <div className="sticky top-[calc(var(--header-height)_+_16px)] z-20 rounded-xl border border-[#E2E8F0] bg-white drop-shadow-[0_2px_5px_rgba(0,3,61,0.06)]">
+          {loading || notFound ? (
+            <PortfolioHeaderFallback state={notFound ? 'notFound' : 'loading'} onSwitch={switchTo} />
           ) : (
-            <Suspense fallback={<div className="p-5">טוען פרופיל עובד...</div>}>
+            <Suspense fallback={<PortfolioHeaderFallback state="loading" onSwitch={switchTo} />}>
               <EmployeePortfolioMFE
-                variant="details"
-                navigate={navigate}
                 extendedTabDataUrl={mfeConfig?.extendedTabDataUrl}
                 selectedActiveTab={mfeConfig?.selectedActiveTab}
+                headerEnd={<PortfolioIdentity person={employee} />}
+                headerStart={<PortfolioSwitchButton onSwitch={switchTo} />}
               />
             </Suspense>
           )}
-        </EmployeePortfolioHeader>
+        </div>
 
-        {/* תוכן התיק */}
+        {/* גוף התיק — 24px מתחת לכרטיס, ישירות על רקע העמוד */}
         {/* min-h-0 לאורך השרשרת — כדי שבמצב מלא המקטע יתכווץ לגובה שנותר ויגלול בפנים */}
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col p-4">
-          {notFound ? (
-            <div className="p-6 text-right text-base text-[#888]">עובד לא נמצא</div>
-          ) : loading || !employee ? (
-            <div className="p-12 text-center text-blue-heading">⏳ טוען נתוני עובד...</div>
-          ) : (
+        {/* בטעינה / עובד לא נמצא — ריק; ההודעה והסקלטון מוצגים רק בכרטיס */}
+        <div className="mt-6 flex min-h-0 min-w-0 flex-1 flex-col">
+          {!notFound && !loading && employee && (
             // key — במעבר לעובד אחר התוכן נבנה מחדש ולא נשאר בו state של העובד הקודם
             <div key={employeeId} className="flex min-h-0 flex-1 flex-col [&>*]:min-h-0 [&>*]:flex-1">
               <Outlet context={{ mfeConfig }} />

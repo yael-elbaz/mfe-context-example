@@ -69,7 +69,157 @@ const MOCK_TABS: RawTabConfig[] = [
       { CODE_SUG_PARAMETER: '', PARAMETER_KEY: 'TITLE', PARAMETER_VALUE: 'נוכחות' },
     ],
   },
+  // טאבים נוספים — יש להם נתונים רק אצל העובדים עם המידע הרב (MOCK_TAB_DATA_BY_EMPLOYEE),
+  // ולכן אצל השאר הם מוסתרים (טאב בלי נתונים לא מוצג)
+  ...([
+    ['ביטחון', 'Security', 'shield-outline', '#4A5568'],
+    ['השכלה', 'Education', 'school-outline', '#2B6CB0'],
+    ['הכשרות', 'Training', 'certificate-outline', '#2F855A'],
+    ['רכב', 'Vehicle', 'car-outline', '#B7791F'],
+    ['ציוד', 'Equipment', 'laptop', '#6B46C1'],
+    ['הערכות', 'Reviews', 'star-outline', '#D69E2E'],
+    ['משמעת', 'Discipline', 'gavel', '#C53030'],
+    ['שחרור', 'Release', 'logout', '#718096'],
+  ] as const).map(([title, name, icon, color], i): RawTabConfig => {
+    const order = String(4 + i);
+    return {
+      CODE_SUG_OBJECT: 1, ICON_URL: `https://api.iconify.design/mdi/${icon}.svg`, IDNT_MENU_ITEM: 104 + i, IDNT_MENU_ITEM_AV: '',
+      IDNT_OBJECT: '1', LOGI_HTTPS: true, LOGI_PARTIAL_ICON_URL: false, LOGI_PARTIAL_URL: false,
+      LOGI_PNIMI: false, LOGI_SUG_OBJECT_MISMACH: false, OPEN_IN_IE: false, ORDER_BY: order,
+      TEXT_MENU: '', TEXT_MENU_ITEM: title, TEXT_MENU_TARGET: '', TEXT_NATIV: '',
+      TEXT_OBJECT_NAME: name,
+      Menu_Params_list: [
+        { CODE_SUG_PARAMETER: '', PARAMETER_KEY: 'COLOR', PARAMETER_VALUE: color },
+        { CODE_SUG_PARAMETER: '', PARAMETER_KEY: 'Getdata', PARAMETER_VALUE: `https://api-emp.example.il/Get${name}?` },
+        { CODE_SUG_PARAMETER: '', PARAMETER_KEY: 'ORDER', PARAMETER_VALUE: order },
+        { CODE_SUG_PARAMETER: '', PARAMETER_KEY: 'TITLE', PARAMETER_VALUE: title },
+      ],
+    };
+  }),
 ];
+
+const EMPTY_TAB_DATA: TabData = { basicData: {}, murchavData: {}, hatrraa: {}, links: {} };
+
+// עובדים לבדיקת עומס: 1009 — הרבה שדות, התראות, לינקים וטאבים; 1010 — ערכים ארוכים מאוד
+const MOCK_TAB_DATA_BY_EMPLOYEE: Record<string, Record<string, TabData>> = {
+  '1009': {
+    GetDetails: {
+      basicData: {
+        'שם מלא': 'עומר נחום', 'מספר עובד': '1009', 'תפקיד': 'ראש צוות תפעול', 'מחלקה': 'תפעול',
+        'יחידה': 'מרחב צפון', 'דרגה': 'רס״ב', 'מעמד': 'קבע', 'מנהל ישיר': 'יעל שרון',
+        'מיקום': 'חיפה', 'טלפון': '052-9988776', 'דוא״ל': 'omer.nahum@org.co.il', 'מצב משפחתי': 'נשוי + 3',
+      },
+      murchavData: {
+        'תאריך כניסה': '12/08/2011', 'ותק': '15 שנים', 'היקף משרה': '100%', 'סוג חוזה': 'קבוע',
+        'תאריך לידה': '04/02/1984', 'עיר מגורים': 'קריית ביאליק', 'שפות': 'עברית, אנגלית, רוסית',
+        'קבוצת דם': 'A+', 'סיווג ביטחוני': 'סודי', 'מספר רישיון': '7781234', 'קוד שכר': 'B-14',
+        'מרכז עלות': '4410', 'תאריך קידום אחרון': '01/01/2024', 'תאריך הערכה הבאה': '15/12/2026',
+        'שעות שבועיות': '42.5', 'אתר עבודה משני': 'נמל חיפה',
+      },
+      hatrraa: {
+        'תעודת זהות': 'תוקף בעוד חודשיים', 'הכשרה שנתית': 'חסרה', 'בדיקה רפואית': 'פגה לפני שבוע',
+        'סיווג ביטחוני': 'נדרש חידוש', 'טופס 101': 'לא הוגש', 'חוזה': 'מסתיים בעוד 3 חודשים',
+      },
+      links: {
+        'תיק עובד': 'https://example.il/employee/1009', 'אישורי העסקה': 'https://example.il/certs/1009',
+        'תיק רפואי': 'https://example.il/medical/1009', 'היסטוריית תפקידים': 'https://example.il/roles/1009',
+        'טפסים': 'https://example.il/forms/1009',
+      },
+    },
+    GetSalary: {
+      basicData: {
+        'שכר ברוטו': '₪24,800', 'שכר נטו': '₪16,950', 'רכיב עיקרי': '₪19,000', 'תוספת ותק': '₪2,300',
+        'תוספת פיקוד': '₪1,500', 'החזר נסיעות': '₪640', 'שעות נוספות': '₪1,360', 'דרגת שכר': '14',
+      },
+      murchavData: {
+        'ביטוח לאומי': '₪1,650', 'מס הכנסה': '₪4,900', 'ביטוח בריאות': '₪310', 'פנסיה': '₪1,980',
+        'קרן השתלמות': '₪620', 'נקודות זיכוי': '5.25', 'בנק': 'לאומי 10-845', 'חשבון': '12345678',
+        'הלוואה פעילה': '₪25,000', 'יתרת הלוואה': '₪11,200', 'קיזוז ציוד': '₪0', 'מענק שנתי': '₪6,000',
+      },
+      hatrraa: { 'תיאום מס': 'פג תוקף', 'הלוואה': 'תשלום אחרון בעוד חודש' },
+      links: { 'תלוש שכר אחרון': 'https://example.il/payslip/1009', 'טופס 106': 'https://example.il/106/1009' },
+    },
+    GetAttendance: {
+      basicData: {
+        'ימי עבודה החודש': '22', 'ימי נוכחות': '18', 'ימי היעדרות': '4', 'שעות נוספות': '17',
+        'איחורים': '3', 'יציאות מוקדמות': '1', 'משמרות לילה': '6',
+      },
+      murchavData: {
+        'ימי חופשה שנתית': '9 / 24', 'ימי מחלה השנה': '11', 'ימי כוננות': '8', 'ימי מילואים': '21',
+        'עבודה מהבית': '2 ימים בשבוע', 'שעון נוכחות': 'כרטיס 5521', 'משמרת קבועה': 'בוקר',
+      },
+      hatrraa: { 'איחורים החודש': '3 פעמים', 'ימי מחלה': 'מעל הממוצע', 'חופשה צבורה': 'עומדת לפוג' },
+      links: { 'דוח נוכחות': 'https://example.il/attendance/1009' },
+    },
+    GetSecurity: {
+      basicData: { 'סיווג': 'סודי', 'תאריך סיווג': '03/05/2020', 'תוקף': '03/05/2026', 'גורם מאשר': 'קב״ט מרחב' },
+      murchavData: { 'תחקיר אחרון': '2020', 'הרשאות כניסה': 'בסיס צפון, נמל חיפה', 'כרטיס כניסה': '88-1234' },
+      hatrraa: { 'סיווג': 'פג תוקף' },
+      links: {},
+    },
+    GetEducation: {
+      basicData: { 'השכלה': 'תואר ראשון', 'מוסד': 'הטכניון', 'תחום': 'הנדסת תעשייה וניהול', 'שנת סיום': '2009' },
+      murchavData: { 'תואר שני': 'בלימודים', 'מוסד תואר שני': 'אוניברסיטת חיפה', 'מימון': 'קרן השתלמות' },
+      hatrraa: {},
+      links: { 'תעודות': 'https://example.il/edu/1009' },
+    },
+    GetTraining: {
+      basicData: { 'קורסים שהושלמו': '14', 'שעות הכשרה השנה': '36', 'קורס אחרון': 'ניהול צוותים', 'קורס הבא': 'בטיחות בעבודה' },
+      murchavData: { 'עזרה ראשונה': 'בתוקף', 'מלגזה': 'בתוקף', 'עבודה בגובה': 'פג', 'כיבוי אש': 'בתוקף' },
+      hatrraa: { 'עבודה בגובה': 'נדרש רענון' },
+      links: {},
+    },
+    GetVehicle: {
+      basicData: { 'רכב צמוד': 'כן', 'דגם': 'סקודה אוקטביה', 'מספר רישוי': '12-345-67', 'קבוצת רכב': '3' },
+      murchavData: { 'ק״מ החודש': '2,140', 'דלקן': '4421', 'שווי שימוש': '₪3,010' },
+      hatrraa: {},
+      links: {},
+    },
+    GetEquipment: {
+      basicData: { 'מחשב נייד': 'Dell 7440', 'טלפון': 'iPhone 15', 'כרטיס חכם': 'כן' },
+      murchavData: { 'מספר נכס מחשב': 'IT-55120', 'מספר נכס טלפון': 'IT-55121' },
+      hatrraa: {},
+      links: {},
+    },
+    GetReviews: {
+      basicData: { 'ציון אחרון': '4.6 / 5', 'שנת הערכה': '2025', 'מעריך': 'יעל שרון' },
+      murchavData: { 'ציון קודם': '4.3 / 5', 'יעדים שהושגו': '7 / 8' },
+      hatrraa: {},
+      links: { 'טופס הערכה': 'https://example.il/review/1009' },
+    },
+    GetDiscipline: {
+      basicData: { 'הליכים פתוחים': '0', 'הליכים סגורים': '1' },
+      murchavData: {},
+      hatrraa: {},
+      links: {},
+    },
+    GetRelease: {
+      basicData: { 'תאריך שחרור צפוי': '08/2031', 'זכאות לפנסיה': 'מלאה' },
+      murchavData: { 'מענק שחרור משוער': '₪180,000' },
+      hatrraa: {},
+      links: {},
+    },
+  },
+  '1010': {
+    GetDetails: {
+      basicData: {
+        'שם מלא': 'תמר אדלר', 'מספר עובד': '1010',
+        'תפקיד': 'אחראית תחום רכש, התקשרויות ומכרזים בינלאומיים',
+        'מחלקה': 'אגף לוגיסטיקה, רכש ושרשרת אספקה',
+        'מנהל ישיר': 'פרופ׳ אלכסנדר בן־ציון רוזנבלום',
+        'מיקום': 'קריית הממשלה, מגדל צפוני, קומה 14, חדר 1407',
+      },
+      murchavData: {
+        'הערה כללית': 'העובדת נמצאת בתהליך מעבר בין יחידות ויש לעדכן את כל ההרשאות בהתאם עד סוף הרבעון',
+        'כתובת מגורים': 'רחוב הרב קוק 128, דירה 42, מבשרת ציון',
+        'תאריך כניסה': '15/02/2016',
+        'סוג חוזה': 'חוזה אישי לתקופה קצובה עם אופציה להארכה',
+      },
+      hatrraa: { 'מעבר יחידה': 'יש לעדכן הרשאות לפני 31/12 — אחרת הגישה למערכות הרכש תיחסם אוטומטית' },
+      links: { 'תיק עובד': 'https://example.il/employee/1010' },
+    },
+  },
+};
 
 const MOCK_TAB_DATA: Record<string, TabData> = {
   GetDetails: {
@@ -146,8 +296,9 @@ async function loadTabsConfig(): Promise<TabConfig[]> {
 export async function fetchTabData(dataUrl: string, employeeId: string): Promise<TabData> {
   if (!TABS_CONFIG_URL) {
     await new Promise(r => setTimeout(r, 300));
-    const key = Object.keys(MOCK_TAB_DATA).find(k => dataUrl.includes(k)) ?? '';
-    return MOCK_TAB_DATA[key] ?? { basicData: {}, murchavData: {}, hatrraa: {}, links: {} };
+    // "Get<Name>?" מתוך ה-URL — התאמה מדויקת, כדי ש-GetDetails לא יתפוס גם טאב אחר
+    const key = dataUrl.match(/\/(Get\w+)\?/)?.[1] ?? '';
+    return MOCK_TAB_DATA_BY_EMPLOYEE[employeeId]?.[key] ?? MOCK_TAB_DATA[key] ?? EMPTY_TAB_DATA;
   }
   const { data } = await http.get<TabData>(`${dataUrl}employeeId=${employeeId}`);
   return data;

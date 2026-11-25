@@ -1,78 +1,157 @@
 import React from 'react';
-import type { EmployeeProfile } from '../store/personStore';
+import type { AnyPerson } from '../store/personStore';
 import type { PersonType } from '../types/openService';
 import { SWITCHABLE } from '../hooks/usePersonSwitch';
 import PersonSwitchButton from './PersonSwitchButton';
 
-const SummaryField: React.FC<{ label: string; value: string }> = ({ label, value }) => (
-  <div className="flex min-w-0 flex-col">
-    <span className="text-sm leading-tight text-navy/70">{label}</span>
-    <span className="truncate text-base leading-tight text-navy tabular-nums">{value}</span>
+/**
+ * החלקים של ה-shell בכרטיס תיק העובד. ה-MFE (variant="details") פורס אותם בשורה 1 של הכרטיס
+ * סביב הטאבים — ה-shell נשאר הבעלים של הזהות ושל ההחלפה (ההתנהגות, ה-store, ה-ConfirmDialog).
+ */
+
+const UserIcon: React.FC = () => (
+  <svg width="28" height="28" viewBox="0 0 24 24" aria-hidden fill="none" stroke="#A0AEC0" strokeWidth="1.6" strokeLinecap="round">
+    <circle cx="12" cy="8" r="4" />
+    <path d="M4 21c0-4 3.6-7 8-7s8 3 8 7" />
+  </svg>
+);
+
+const ArrowRightIcon: React.FC = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M5 12h14" />
+    <path d="m13 6 6 6-6 6" />
+  </svg>
+);
+
+const IdField: React.FC<{ label: string; value: string }> = ({ label, value }) => (
+  <div className="flex shrink-0 flex-col">
+    <span className="text-xs leading-tight text-[#4A5568]">{label}</span>
+    <span className="text-sm font-medium leading-tight text-[#00033D] tabular-nums">{value}</span>
   </div>
 );
 
-interface Props {
-  employee: EmployeeProfile | null;
-  onClose: () => void;
-  /** נבחר אדם אחר בחלונית "החלפה" — התיק נשאר פתוח ומתעדכן */
-  onSwitch: (idnt: string, personType: PersonType) => void;
-  /** טאבי העובד והמידע של הטאב הפעיל — מוצגים תמיד מתחת להדר */
-  children: React.ReactNode;
+const Bar: React.FC<{ className: string }> = ({ className }) => (
+  <span aria-hidden className={`block animate-pulse rounded bg-[#E2E8F0] ${className}`} />
+);
+
+/** מה מציגים בזהות לכל סוג אדם — הטקסטים נגזרים מ-person.type */
+function identityView(person: AnyPerson) {
+  if (person.type === 'customer') {
+    return { title: 'תיק לקוח', image: '', fields: [{ label: 'מס׳ לקוח', value: person.id }] };
+  }
+  return {
+    title: 'תיק עובד',
+    image: person.image,
+    fields: [
+      { label: 'מס׳ עובד', value: person.employeeNumber },
+      { label: 'ת.ז.', value: person.tz },
+    ],
+  };
 }
 
-/**
- * ההדר הפנימי של תיק העובד.
- * שורה 1 — פרטי הזיהוי הקבועים (תמונה, שם, ת.ז., מס׳ עובד). הם לא שייכים לאף טאב ולא משתנים במעבר בין טאבים.
- * שורה 2 — טאבי העובד והמידע של הטאב הפעיל, גלויים תמיד (בלי ריחוף/לחיצה).
- * ההדר כולו נדבק לראש המסך בגלילה.
- */
-const EmployeePortfolioHeader: React.FC<Props> = ({ employee, onClose, onSwitch, children }) => (
-  <div className="sticky top-[calc(var(--header-height)_+_16px)] z-20">
-    <div className="flex items-center justify-between gap-4 border-b border-gray-2 bg-portfolio-header-bg px-6 py-3">
-      {employee ? (
-        <div className="flex min-w-0 items-center gap-4">
-          <img
-            src={employee.image}
-            alt=""
-            className="size-11 shrink-0 rounded-full border border-navy object-cover"
-          />
-          <div className="flex min-w-0 flex-col">
-            <span className="text-sm leading-tight text-navy/70">תיק עובד</span>
-            <span className="truncate text-lg font-medium leading-tight text-blue-heading">
-              {employee.firstName} {employee.lastName}
-            </span>
-          </div>
-          <span aria-hidden className="h-8 w-px shrink-0 bg-navy/20" />
-          <div className="flex min-w-0 items-center gap-6">
-            <SummaryField label="ת.ז." value={employee.tz} />
-            <SummaryField label="מס׳ עובד" value={employee.employeeNumber} />
+/** תמונה, "תיק עובד/לקוח", שם, מס׳ עובד/לקוח (+ ת.ז. לעובד) — הקצה הימני של שורה 1. בלי אדם (טעינה) — סקלטון */
+export const PortfolioIdentity: React.FC<{ person: AnyPerson | null }> = ({ person }) => {
+  if (!person) {
+    return (
+      <div className="flex shrink-0 items-center gap-5" aria-busy="true" aria-label="טוען תיק">
+        <div className="flex items-center gap-3">
+          <Bar className="size-[52px] rounded-xl" />
+          <div className="flex flex-col gap-1.5">
+            <Bar className="h-2.5 w-12" />
+            <Bar className="h-4 w-28" />
           </div>
         </div>
-      ) : (
-        <span className="text-base text-navy/70">⏳ טוען תיק עובד...</span>
-      )}
-
-      <div className="flex shrink-0 items-center gap-2">
-        <PersonSwitchButton
-          onPick={onSwitch}
-          objectType={SWITCHABLE}
-          buttonClassName="px-3 py-1 hover:bg-white/40"
-        />
-        <button
-          type="button"
-          onClick={onClose}
-          className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg px-2 py-1 text-base text-navy/70 hover:bg-white/40 hover:text-navy"
-        >
-          <span className="whitespace-nowrap">סגירת תיק</span>
-          <span aria-hidden className="text-lg leading-none">×</span>
-        </button>
+        {['w-12', 'w-20'].map(w => (
+          <div key={w} className="flex flex-col gap-1.5">
+            <Bar className="h-2.5 w-12" />
+            <Bar className={`h-3.5 ${w}`} />
+          </div>
+        ))}
       </div>
-    </div>
+    );
+  }
 
-    <div className="border-b border-gray-2 bg-white px-6 pt-1 pb-3">
-      {children}
+  const { title, image, fields } = identityView(person);
+
+  return (
+    <div className="flex shrink-0 items-center gap-5">
+      <div className="flex items-center gap-3">
+        <div className="grid size-[52px] shrink-0 place-items-center overflow-hidden rounded-xl border border-[#E2E8F0] bg-white">
+          {image ? <img src={image} alt="" className="size-full object-cover" /> : <UserIcon />}
+        </div>
+        <div className="flex min-w-0 flex-col">
+          <span className="text-xs leading-tight text-[#4A5568]">{title}</span>
+          <span className="truncate text-lg font-semibold leading-tight text-[#00033D]">
+            {person.firstName} {person.lastName}
+          </span>
+        </div>
+      </div>
+      {fields.map(f => (
+        <IdField key={f.label} label={f.label} value={f.value} />
+      ))}
     </div>
-  </div>
+  );
+};
+
+/** כפתור "החלפת עובד" — הקצה השמאלי של שורה 1 */
+export const PortfolioSwitchButton: React.FC<{ onSwitch: (idnt: string, personType: PersonType) => void }> = ({ onSwitch }) => (
+  <PersonSwitchButton onPick={onSwitch} objectType={SWITCHABLE} label="החלפת עובד" />
 );
 
-export default EmployeePortfolioHeader;
+/** סגירת התיק — כפתור חץ בשורה נפרדת מעל הכרטיס, צמוד לימין */
+export const PortfolioCloseButton: React.FC<{ onClose: () => void }> = ({ onClose }) => (
+  <button
+    type="button"
+    onClick={onClose}
+    aria-label="סגירת תיק"
+    title="סגירת תיק"
+    className="grid size-9 cursor-pointer place-items-center rounded-md border border-[#006AFF] bg-white p-1.5 text-[#006AFF] hover:bg-[#F0F6FF]"
+  >
+    <ArrowRightIcon />
+  </button>
+);
+
+/**
+ * כשה-MFE לא מוצג (טעינת העובד / עובד לא נמצא) — ה-shell מצייר את הכרטיס בעצמו,
+ * כדי שאפשר יהיה להחליף עובד גם אז.
+ *  loading — סקלטון (זהות, טאבים, שדות).
+ *  notFound — "עובד לא נמצא" + החלפת עובד, בשורה אחת.
+ */
+export const PortfolioHeaderFallback: React.FC<{
+  state: 'loading' | 'notFound';
+  onSwitch: (idnt: string, personType: PersonType) => void;
+}> = ({ state, onSwitch }) => {
+  if (state === 'notFound') {
+    return (
+      <div className="flex h-[76px] items-center justify-between gap-5 rounded-xl bg-[#F7FAFC] px-5">
+        <span className="text-base text-[#00033D]">עובד לא נמצא</span>
+        <PortfolioSwitchButton onSwitch={onSwitch} />
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col" aria-busy="true">
+      <div className="flex h-[76px] items-center gap-5 rounded-t-xl border-b border-[#E2E8F0] bg-[#F7FAFC] px-5">
+        <PortfolioIdentity person={null} />
+        <div className="flex min-w-0 flex-1 items-center gap-6 overflow-hidden" aria-hidden>
+          {['w-20', 'w-16', 'w-24', 'w-16', 'w-20'].map((w, i) => (
+            <div key={i} className="flex shrink-0 items-center gap-1.5">
+              <Bar className="size-[18px] rounded-full" />
+              <Bar className={`h-3.5 ${w}`} />
+            </div>
+          ))}
+        </div>
+        <PortfolioSwitchButton onSwitch={onSwitch} />
+      </div>
+      <div className="flex min-h-9 items-center gap-9 overflow-hidden px-5 py-3" aria-hidden>
+        {['w-16', 'w-24', 'w-20', 'w-28', 'w-16', 'w-20'].map((w, i) => (
+          <div key={i} className="flex shrink-0 flex-col gap-1.5">
+            <Bar className="h-2.5 w-12" />
+            <Bar className={`h-3.5 ${w}`} />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};

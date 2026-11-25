@@ -11,11 +11,18 @@ interface Props {
   /** בחירת אדם בחיפוש — ההחלפה עצמה (כולל אישור אם יש שירות פתוח) אצל הקורא */
   onPick: (idnt: string, personType: PersonType) => void;
   objectType?: PersonType[] | null;
-  /** עיצוב הכפתור — שונה בהדר תיק העובד ובעמודת הלקוח */
-  buttonClassName?: string;
   /** מיקום החלונית ביחס לכפתור (left-0 / right-0 וכו') */
   panelClassName?: string;
+  /** הטקסט על הכפתור — "החלפת עובד" / "החלפת לקוח" לפי התיק */
+  label: string;
 }
+
+const SwitchIcon: React.FC = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+    <path d="M4 8h14l-4-4" />
+    <path d="M20 16H6l4 4" />
+  </svg>
+);
 
 /** ה-input נוצר בתוך ה-MFE (lazy) — האפקט של אח באותו Suspense רץ רק אחרי שהוא נכנס ל-DOM */
 const FocusFirstInput: React.FC<{ scope: React.RefObject<HTMLElement | null> }> = ({ scope }) => {
@@ -26,14 +33,14 @@ const FocusFirstInput: React.FC<{ scope: React.RefObject<HTMLElement | null> }> 
 };
 
 /**
- * כפתור "החלפה" + חלונית איתור אדם צמודה אליו (לא מודאלית — בלי רקע כהה, הדף נשאר גלוי).
+ * כפתור "החלפת עובד/לקוח" (בעיצוב הפיגמה — אותו כפתור בתיק העובד ובתיק הלקוח) + חלונית איתור אדם צמודה אליו (לא מודאלית — בלי רקע כהה, הדף נשאר גלוי).
  * בחירה מחליפה מיד; לחיצה מחוץ לחלונית או Esc סוגרות.
  */
 const PersonSwitchButton: React.FC<Props> = ({
   onPick,
   objectType,
-  buttonClassName = '',
   panelClassName = 'left-0',
+  label,
 }) => {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -76,12 +83,12 @@ const PersonSwitchButton: React.FC<Props> = ({
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
         aria-controls={open ? panelId : undefined}
-        className={`flex shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-lg border text-base text-navy ${
-          open ? 'border-blue-outline bg-white' : 'border-navy/30'
-        } ${buttonClassName}`}
+        className={`flex h-8 shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-md border border-[#006AFF] bg-white pr-5 pl-4 text-sm font-medium text-[#006AFF] hover:bg-[#F0F6FF] ${
+          open ? 'ring-1 ring-[#006AFF]' : ''
+        }`}
       >
-        <span aria-hidden className="text-lg leading-none">⇄</span>
-        <span className="whitespace-nowrap">החלפה</span>
+        <SwitchIcon />
+        <span className="whitespace-nowrap">{label}</span>
       </button>
 
       {open && (

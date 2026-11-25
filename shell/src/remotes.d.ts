@@ -14,10 +14,12 @@ declare module 'mfe_search_employee/App' {
 
 declare module 'mfe_employee_portfolio/App' {
   const App: React.ComponentType<{
-    navigate?: (to: string) => void;
     extendedTabDataUrl?: string | null;
     selectedActiveTab?: number;
-    variant?: 'card' | 'details';
+    /** קצה שמאל של שורה 1 (RTL): כפתור החלפת עובד */
+    headerStart?: React.ReactNode;
+    /** קצה ימין של שורה 1 (RTL): פרטי הזיהוי */
+    headerEnd?: React.ReactNode;
   }>;
   export default App;
 }
